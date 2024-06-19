@@ -1,5 +1,5 @@
-from database.vars import engine, Base
-
-
-def init_db():
-    Base.metadata.create_all(engine)
+from database.conf import *
+from database.entities import *
+from database.loader import init_db
+from database.repository import *
+from database.session_privider import get_session

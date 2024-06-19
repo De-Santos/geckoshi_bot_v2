@@ -1,19 +1,27 @@
-import logging
-
 from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
 
-from message_text_provider import MessageKey as msgK
-from message_text_provider import get_message
+from database import get_user_by_tg, get_session, User, save_user, is_good_user
+from providers.message_text_provider import MessageKey as msgK
+from providers.message_text_provider import get_message
+from providers.tg_arg_provider import TgArg, ArgType
 
 router = Router(name=__name__)
 
 
 @router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
-    start_arguments = message.text.split()
-    logging.info(str(start_arguments))
+    session = get_session()
+    user = get_user_by_tg(session, message.from_user.id)
+
+    if user is None:
+        ref_arg = TgArg.get_arg(ArgType.REFERRAL, message.text)
+        if ref_arg is not None and is_good_user(session, ref_arg.get()):
+            user = User(telegram_id=message.from_user.id, referred_by_id=ref_arg.get())
+        else:
+            user = User(telegram_id=message.from_user.id)
+        save_user(session, user)
     await message.answer(get_message(msgK.START))
 
 
