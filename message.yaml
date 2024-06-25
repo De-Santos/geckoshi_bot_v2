@@ -4,5 +4,27 @@ start: "
 ____
 
 
-Geckoshi Airdrop the world's first investment meme coin 🦎 Below, select the language that suits you 🌐 and start earning $GMEME right now!</b>"
+Geckoshi Airdrop the world's first investment meme coin 🦎 Below, select the lang that suits you 🌐 and start earning $GMEME right now!</b>"
+
+russian:
+  lang_change: "Язык успешно изменён на русский !"
+  start_required_subscription: "<b>🦎 Для продолжения вы должны быть подписаны на наши каналы:</b>"
+  start_required_subscription_successful: "✅ Вы успешно подписались!"
+
+kb:
+  russian:
+    start_required_subscription:
+      1:
+        text: "text 1"
+        ref: "https://t.me/dropto_data"
+      2:
+        text: "text 2"
+        ref: "https://t.me/dropto_data"
+      3:
+        text: "text 3"
+        ref: "https://t.me/dropto_data"
+      4:
+        text: "✅ Подписался"
+
+
 

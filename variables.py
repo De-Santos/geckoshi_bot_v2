@@ -11,5 +11,5 @@ from redis.asyncio import Redis
 load_dotenv()
 redis = Redis.from_url(url=os.getenv('REDIS_URL'))
 storage = RedisStorage(redis)
-dp = Dispatcher()
+dp = Dispatcher(storage=storage)
 bot: Bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode=ParseMode.HTML))

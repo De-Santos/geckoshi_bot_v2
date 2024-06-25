@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 import cache
 from database import User
+from lang.lang_based_text_provider import Lang
 
 
 def get_user_by_tg(s: Session, tg_user_id: int) -> User:
@@ -30,3 +31,16 @@ def is_good_user(s: Session, user_id: int) -> bool:
 def save_user(s: Session, user: User) -> None:
     s.add(user)
     s.commit()
+
+
+def update_user_language(s: Session, tg_user_id: int, lang: Lang) -> None:
+    s.begin()
+    user = get_user_by_tg(s, tg_user_id)
+    user.language = lang
+    s.commit()
+
+
+def get_user_language(s: Session, tg_user_id: int) -> Lang:
+    stmt = select(User.language).where(User.telegram_id.__eq__(tg_user_id))
+    result = s.execute(stmt)
+    return result.scalar()

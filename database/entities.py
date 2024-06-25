@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
 from database.enums import TransactionOperation, TransactionStatus
+from lang.lang_based_text_provider import Lang
 
 
 class BaseInfo:
@@ -23,6 +24,7 @@ class User(BaseInfo, Base):
     balance: Mapped[int] = mapped_column(type_=Numeric, default=0)
     referred_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.id'), type_=BigInteger)
     blocked: Mapped[bool] = mapped_column(default=False)
+    language: Mapped[Lang] = mapped_column(SQLEnum(Lang), default=Lang.EN)
 
     referrals: Mapped[List["User"]] = relationship("User", backref="referred_by", remote_side='User.id')
 

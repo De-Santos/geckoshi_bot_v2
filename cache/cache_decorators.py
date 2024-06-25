@@ -42,3 +42,9 @@ def cacheable(ttl: str):
         return wrapper
 
     return decorator
+
+
+async def drop_cache(func: Callable, **kwargs):
+    key = generate_cache_key(func, kwargs)
+    logging.info(f"delete cached call of function: {key}")
+    await redis.delete(key)
