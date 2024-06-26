@@ -4,13 +4,16 @@ from aiogram.types import CallbackQuery
 
 from callbacks.start import LangSetCallback
 from database import get_session, update_user_language
-from filters.base_filters import UserExistsFilter
+from filters.base_filters import UserExistsFilter, ChatTypeFilter
 from lang.lang_based_text_provider import MessageKey
 from lang.lang_based_text_provider import get_message
 from lang.lang_provider import cache_lang
 from states.settings import SettingsStates
 
 router = Router(name="start_router")
+
+router.message.filter(ChatTypeFilter())
+router.callback_query.filter(ChatTypeFilter())
 
 
 @router.callback_query(UserExistsFilter(), LangSetCallback.filter(), SettingsStates.language)

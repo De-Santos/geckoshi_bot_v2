@@ -10,6 +10,8 @@ russian:
   lang_change: "Язык успешно изменён на русский !"
   start_required_subscription: "<b>🦎 Для продолжения вы должны быть подписаны на наши каналы:</b>"
   start_required_subscription_successful: "✅ Вы успешно подписались!"
+  start_required_subscription_failed: "⛔️ Подпишитесь на наши каналы и попробуйте ещё раз!"
+  menu_message: "<b>🦎 В этом боте ты можешь:</b>"
 
 kb:
   russian:
@@ -17,14 +19,45 @@ kb:
       1:
         text: "text 1"
         ref: "https://t.me/dropto_data"
+        id: "@dropto_data"
       2:
         text: "text 2"
         ref: "https://t.me/dropto_data"
+        id: "@dropto_data"
       3:
         text: "text 3"
         ref: "https://t.me/dropto_data"
+        id: "@dropto_data"
       4:
         text: "✅ Подписался"
+    menu:
+      text: "/menu"
+    admin_menu:
+      text: "/admin_panel"
+    inline_menu:
+      1:
+        1:
+          text: "💸 Заработать"
+        2:
+          text: "🎁 Бонус"
+      2:
+        1:
+          text: "📣 Задания"
+        2:
+          text: "🏷 Чеки"
+      3:
+        1:
+          text: "🗳 P2P"
+        2:
+          text: "🎰 Слоты"
+      4:
+        1:
+          text: "🧩 NFT"
+        2:
+          text: "💼 Профиль"
+      5:
+        1:
+          text: "📊 Статистика"
 
 
 

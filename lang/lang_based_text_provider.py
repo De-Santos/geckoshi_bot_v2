@@ -17,10 +17,15 @@ class MessageKey(Enum):
     lANG_CHANGE = "lang_change"
     START_REQUIRE_SUBSCRIPTION = "start_required_subscription"
     START_REQUIRE_SUBSCRIPTION_SUCCESSFUL = "start_required_subscription_successful"
+    START_REQUIRE_SUBSCRIPTION_FAILED = "start_required_subscription_failed"
+    MENU_MESSAGE = "menu_message"
 
 
 class KeyboardKey(Enum):
     START_REQUIRE_SUBSCRIPTION_KB = "start_required_subscription"
+    MENU = "menu"
+    ADMIN_MENU = "admin_menu"
+    INLINE_MENU = "inline_menu"
 
 
 class KeyboardMetadata:

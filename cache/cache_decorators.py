@@ -1,7 +1,7 @@
 import json
 import logging
 from functools import wraps
-from typing import Callable
+from typing import Callable, Any
 
 import humanfriendly
 
@@ -21,22 +21,27 @@ def generate_cache_key(func: Callable, kwargs: dict) -> str:
         raise Exception("cache_id is not defined!")
 
 
-def cacheable(ttl: str):
+def cacheable(ttl: str = None, associate_none_as: Any = None):
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             cache_key = generate_cache_key(func, kwargs)
-
-            cached_result = await redis.get(cache_key)
-            if cached_result:
-                logging.info(f"cached call of function: {cache_key}")
-                return json.loads(cached_result)
+            if not kwargs.pop('force', False):
+                cached_result = await redis.get(cache_key)
+                if cached_result:
+                    logging.info(f"cached call of function: {cache_key}")
+                    return json.loads(cached_result)
+                elif associate_none_as is not None:
+                    return associate_none_as
 
             result = await func(*args, **kwargs)
             seconds_ttl = humanfriendly.parse_timespan(ttl)
             logging.info(f"caching call of function: {cache_key}")
             json_obj = json.dumps(result)
-            await redis.setex(cache_key, int(seconds_ttl), json_obj)
+            if ttl is not None:
+                await redis.setex(cache_key, int(seconds_ttl), json_obj)
+            else:
+                await redis.set(cache_key, json_obj)
             return result
 
         return wrapper

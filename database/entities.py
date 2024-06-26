@@ -25,6 +25,8 @@ class User(BaseInfo, Base):
     referred_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.id'), type_=BigInteger)
     blocked: Mapped[bool] = mapped_column(default=False)
     language: Mapped[Lang] = mapped_column(SQLEnum(Lang), default=Lang.EN)
+    is_admin: Mapped[bool] = mapped_column(default=False)
+    is_bot_start_completed: Mapped[bool] = mapped_column(default=False)
 
     referrals: Mapped[List["User"]] = relationship("User", backref="referred_by", remote_side='User.id')
 
