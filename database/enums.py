@@ -12,3 +12,7 @@ class TransactionStatus(Enum):
     COMPLETED = 1
     FAILED = 2
     ABORTED = 3
+
+
+class SettingsKey(Enum):
+    PAY_FOR_REFERRAL = 1

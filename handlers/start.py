@@ -1,4 +1,4 @@
-from aiogram import Router, types, F
+from aiogram import Router, types, F, Bot
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
@@ -6,14 +6,14 @@ from aiogram.types import Message, CallbackQuery
 import cache
 from callbacks.start import LangSetCallback, CheckStartMembershipCallback
 from chat_processor.member import check_membership
-from database import get_session, User, save_user, is_good_user, is_user_exists_by_tg, update_user_language, \
-    update_user_is_bot_start_completed_by_tg_id
+from database import get_session, User, save_user, is_user_exists_by_tg, update_user_language, \
+    update_user_is_bot_start_completed_by_tg_id, is_good_user_by_tg, get_user_by_tg
 from filters.base_filters import UserExistsFilter, IsGoodUserFilter, ChatTypeFilter
 from keyboard_markup.custom_user_kb import get_reply_keyboard_kbm
 from keyboard_markup.inline_user_kb import get_start_user_kbm, get_require_subscription_kbm, get_user_menu_kbm
 from lang.lang_based_text_provider import MessageKey as msgK, MessageKey, Lang, get_keyboard
 from lang.lang_based_text_provider import get_message
-from lang.lang_provider import cache_lang
+from lang.lang_provider import cache_lang, get_cached_lang
 from middleware.metadata_providers import LangProviderMiddleware, IsAdminProviderMiddleware
 from providers.tg_arg_provider import TgArg, ArgType
 from states.start import StartStates
@@ -31,12 +31,16 @@ router.callback_query.filter(ChatTypeFilter())
 
 
 @router.message(CommandStart())
-async def command_start_handler(message: Message, state: FSMContext) -> None:
+async def command_start_handler(message: Message, state: FSMContext, bot: Bot) -> None:
     session = get_session()
     if not await is_user_exists_by_tg(session, message.from_user.id, cache_id=message.from_user.id):
         ref_arg = TgArg.get_arg(ArgType.REFERRAL, message.text)
-        if ref_arg is not None and is_good_user(session, ref_arg.get()):
+        if ref_arg is not None and is_good_user_by_tg(session, ref_arg.get()):
             user = User(telegram_id=message.from_user.id, referred_by_id=ref_arg.get())
+            await bot.send_message(chat_id=ref_arg.get(),
+                                   text=get_message(MessageKey.REF_INVITED_STEP_ONE,
+                                                    await get_cached_lang(ref_arg.get())).format(
+                                       user_link=message.from_user.id))
         else:
             user = User(telegram_id=message.from_user.id)
         save_user(session, user)
@@ -76,12 +80,11 @@ async def check_subscription(query: CallbackQuery, callback_data: CheckStartMemb
         await require_subscription(query.message, callback_data.lang)
     else:
         await state.clear()
-        session = get_session()
-        update_user_is_bot_start_completed_by_tg_id(session, query.from_user.id, True)
+        update_user_is_bot_start_completed_by_tg_id(get_session(), query.from_user.id, True)
         await query.message.delete()
         await query.message.answer(text=get_message(MessageKey.START_REQUIRE_SUBSCRIPTION_SUCCESSFUL, lang),
                                    reply_markup=get_reply_keyboard_kbm(lang, is_admin))
-        # TODO: add paying if it's a referral user
+        user: User = get_user_by_tg(get_session(), query.from_user.id)
 
 
 @router.message(IsGoodUserFilter(), F.text == "/menu")

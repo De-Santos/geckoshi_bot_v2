@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
-from database.enums import TransactionOperation, TransactionStatus
+from database.enums import TransactionOperation, TransactionStatus, SettingsKey
 from lang.lang_based_text_provider import Lang
 
 
@@ -19,24 +19,45 @@ class BaseInfo:
 class User(BaseInfo, Base):
     __tablename__ = 'users'
 
-    id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True)
-    telegram_id: Mapped[int] = mapped_column(type_=BigInteger, unique=True, index=True)
+    telegram_id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True)
     balance: Mapped[int] = mapped_column(type_=Numeric, default=0)
-    referred_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.id'), type_=BigInteger)
+    referred_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger)
     blocked: Mapped[bool] = mapped_column(default=False)
     language: Mapped[Lang] = mapped_column(SQLEnum(Lang), default=Lang.EN)
     is_admin: Mapped[bool] = mapped_column(default=False)
     is_bot_start_completed: Mapped[bool] = mapped_column(default=False)
 
-    referrals: Mapped[List["User"]] = relationship("User", backref="referred_by", remote_side='User.id')
+    referrals: Mapped[List["User"]] = relationship("User", backref="referred_by", remote_side='User.telegram_id')
+    transactions_created: Mapped[List["Transaction"]] = relationship("Transaction", back_populates="created_by",
+                                                                     foreign_keys='Transaction.created_by_id')
+    transactions_received: Mapped[List["Transaction"]] = relationship("Transaction", back_populates="destination",
+                                                                      foreign_keys='Transaction.destination_id')
 
 
 class Transaction(Base):
     __tablename__ = 'transactions'
+
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     operation: Mapped[TransactionOperation] = mapped_column(SQLEnum(TransactionOperation), nullable=False)
     amount: Mapped[int] = mapped_column(type_=BigInteger)
+    balance_before: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
+    balance_after: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
     status: Mapped[TransactionStatus] = mapped_column(SQLEnum(TransactionStatus))
     description: Mapped[str] = mapped_column()
+    destination_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger)
+    destination: Mapped[User] = relationship("User", back_populates="transactions_received",
+                                             foreign_keys='destination_id')
+    created_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger)
+    created_by: Mapped[User] = relationship("User", back_populates="transactions_created",
+                                            foreign_keys='created_by_id')
     createdAt = Column(DateTime, default=datetime.datetime.now(datetime.UTC))
     abortedAt = Column(DateTime)
+
+
+class Setting(Base):
+    __tablename__ = 'settings'
+
+    id: Mapped[SettingsKey] = mapped_column(SQLEnum(SettingsKey), primary_key=True)
+    int_val: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)
+    str_val: Mapped[str] = mapped_column(nullable=True)
+

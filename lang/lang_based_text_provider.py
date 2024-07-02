@@ -19,6 +19,8 @@ class MessageKey(Enum):
     START_REQUIRE_SUBSCRIPTION_SUCCESSFUL = "start_required_subscription_successful"
     START_REQUIRE_SUBSCRIPTION_FAILED = "start_required_subscription_failed"
     MENU_MESSAGE = "menu_message"
+    REF_INVITED_STEP_ONE = "ref_invited_1"
+    REF_INVITED_STEP_TWO = "ref_invited_2"
 
 
 class KeyboardKey(Enum):
