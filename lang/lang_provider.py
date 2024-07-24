@@ -2,7 +2,7 @@ import logging
 from typing import Union
 
 from database import get_session, get_user_language
-from lang.lang_based_text_provider import Lang
+from lang.lang_based_provider import Lang
 from variables import redis
 
 

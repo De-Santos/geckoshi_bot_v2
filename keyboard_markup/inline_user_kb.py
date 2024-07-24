@@ -1,9 +1,8 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from callbacks.start import CheckStartMembershipCallback, LangSetCallback
-from lang.lang_based_text_provider import *
-from callbacks.user_menu import *
+from lang.lang_based_provider import *
+from lang_based_variable import Lang, KeyboardKey, LangSetCallback
 
 TEXT = "text"
 REF = "ref"
@@ -11,6 +10,25 @@ REF = "ref"
 
 def __get_builder():
     return InlineKeyboardBuilder()
+
+
+def build_inline_keyboard_button(m: M, **kwargs) -> InlineKeyboardButton:
+    if not m.__dict__.__contains__('callback_class'):
+        return InlineKeyboardButton(text=m.text,
+                                    url=m.url)
+    else:
+        return InlineKeyboardButton(text=m.text,
+                                    callback_data=m.get_callback_instance(**kwargs).pack())
+
+
+def build_markup(lng: Lang, k: KeyboardKey) -> InlineKeyboardMarkup:
+    builder = __get_builder()
+    for row in get_keyboard(k, lng):
+        kbs: list["InlineKeyboardButton"] = []
+        for m in row:
+            kbs.append(build_inline_keyboard_button(m, kbk=k, lang=lng))
+        builder.row(*kbs)
+    return builder.as_markup()
 
 
 def get_start_user_kbm() -> InlineKeyboardMarkup:
@@ -21,47 +39,8 @@ def get_start_user_kbm() -> InlineKeyboardMarkup:
 
 
 def get_require_subscription_kbm(lng: Lang) -> InlineKeyboardMarkup:
-    builder = __get_builder()
-    kbs = get_keyboard(KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB, lng)
-    builder.row(
-        InlineKeyboardButton(text=kbs.get(1).get(TEXT), url=kbs.get(1).get(REF)),
-        InlineKeyboardButton(text=kbs.get(2).get(TEXT), url=kbs.get(2).get(REF))
-    )
-    builder.row(
-        InlineKeyboardButton(text=kbs.get(3).get(TEXT), url=kbs.get(3).get(REF))
-    )
-    builder.row(
-        InlineKeyboardButton(
-            text=kbs.get(4).get(TEXT),
-            callback_data=CheckStartMembershipCallback(kbk=KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB, lang=lng).pack()))
-    return builder.as_markup()
+    return build_markup(lng, KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB)
 
 
 def get_user_menu_kbm(lng: Lang) -> InlineKeyboardMarkup:
-    builder = __get_builder()
-    kbs = get_keyboard(KeyboardKey.INLINE_MENU, lng)
-    row = 1
-    builder.row(
-        InlineKeyboardButton(text=kbs.get(row).get(1).get(TEXT), callback_data=MenuToRefCallback().pack()),
-        InlineKeyboardButton(text=kbs.get(row).get(2).get(TEXT), callback_data=MenuToBonusCallback().pack())
-    )
-    row += 1
-    builder.row(
-        InlineKeyboardButton(text=kbs.get(row).get(1).get(TEXT), callback_data=MenuToTasksCallback().pack()),
-        InlineKeyboardButton(text=kbs.get(row).get(2).get(TEXT), callback_data=MenuToChequeCallback().pack())
-    )
-    row += 1
-    builder.row(
-        InlineKeyboardButton(text=kbs.get(row).get(1).get(TEXT), callback_data=MenuToP2PCallback().pack()),
-        InlineKeyboardButton(text=kbs.get(row).get(2).get(TEXT), callback_data=MenuToSlotsCallback().pack())
-    )
-    row += 1
-    builder.row(
-        InlineKeyboardButton(text=kbs.get(row).get(1).get(TEXT), callback_data=MenuToNFTCallback().pack()),
-        InlineKeyboardButton(text=kbs.get(row).get(2).get(TEXT), callback_data=MenuToProfileCallback().pack())
-    )
-    row += 1
-    builder.row(
-        InlineKeyboardButton(text=kbs.get(row).get(1).get(TEXT), callback_data=MenuToStatistic().pack()),
-    )
-    return builder.as_markup()
+    return build_markup(lng, KeyboardKey.INLINE_MENU)

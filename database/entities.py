@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
 from database.enums import TransactionOperation, TransactionStatus, SettingsKey
-from lang.lang_based_text_provider import Lang
+from lang.lang_based_provider import Lang
 
 
 class BaseInfo:
@@ -28,10 +28,6 @@ class User(BaseInfo, Base):
     is_bot_start_completed: Mapped[bool] = mapped_column(default=False)
 
     referrals: Mapped[List["User"]] = relationship("User", backref="referred_by", remote_side='User.telegram_id')
-    transactions_created: Mapped[List["Transaction"]] = relationship("Transaction", back_populates="created_by",
-                                                                     foreign_keys='Transaction.created_by_id')
-    transactions_received: Mapped[List["Transaction"]] = relationship("Transaction", back_populates="destination",
-                                                                      foreign_keys='Transaction.destination_id')
 
 
 class Transaction(Base):
@@ -45,11 +41,9 @@ class Transaction(Base):
     status: Mapped[TransactionStatus] = mapped_column(SQLEnum(TransactionStatus))
     description: Mapped[str] = mapped_column()
     destination_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger)
-    destination: Mapped[User] = relationship("User", back_populates="transactions_received",
-                                             foreign_keys='destination_id')
+    destination: Mapped[User] = relationship("User", foreign_keys=[destination_id])
     created_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger)
-    created_by: Mapped[User] = relationship("User", back_populates="transactions_created",
-                                            foreign_keys='created_by_id')
+    created_by: Mapped[User] = relationship("User", foreign_keys=[created_by_id])
     createdAt = Column(DateTime, default=datetime.datetime.now(datetime.UTC))
     abortedAt = Column(DateTime)
 
@@ -60,4 +54,3 @@ class Setting(Base):
     id: Mapped[SettingsKey] = mapped_column(SQLEnum(SettingsKey), primary_key=True)
     int_val: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)
     str_val: Mapped[str] = mapped_column(nullable=True)
-

@@ -4,7 +4,7 @@ from aiogram.types import Message
 import settings
 import transaction_manager
 from database import get_user_by_tg, User, get_session, is_good_user_by_tg, TransactionOperation, SettingsKey
-from lang.lang_based_text_provider import Lang, get_message, MessageKey
+from lang.lang_based_provider import Lang, get_message, MessageKey
 from lang.lang_provider import get_cached_lang
 
 

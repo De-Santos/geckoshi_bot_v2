@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 import cache
 from database import User, Setting, SettingsKey
-from lang.lang_based_text_provider import Lang
+from lang.lang_based_provider import Lang
 
 
 def get_user_by_tg(s: Session, tg_user_id: int) -> User:
