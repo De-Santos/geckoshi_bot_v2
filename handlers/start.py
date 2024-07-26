@@ -6,28 +6,18 @@ from aiogram.types import Message, CallbackQuery
 import cache
 from chat_processor.member import check_membership
 from database import get_session, User, save_user, is_user_exists_by_tg, update_user_language, \
-    update_user_is_bot_start_completed_by_tg_id, is_good_user_by_tg, get_user_by_tg
-from filters.base_filters import UserExistsFilter, IsGoodUserFilter, ChatTypeFilter
+    update_user_is_bot_start_completed_by_tg_id, is_good_user_by_tg, get_user_by_tg, Settings, SettingsKey
+from filters.base_filters import UserExistsFilter, IsGoodUserFilter
 from keyboard_markup.custom_user_kb import get_reply_keyboard_kbm
 from keyboard_markup.inline_user_kb import get_start_user_kbm, get_require_subscription_kbm, get_user_menu_kbm
 from lang.lang_based_provider import MessageKey as msgK, MessageKey, Lang, get_keyboard
 from lang.lang_based_provider import get_message
 from lang.lang_provider import cache_lang, get_cached_lang
 from lang_based_variable import LangSetCallback, CheckStartMembershipCallback, KeyboardKey
-from middleware.metadata_providers import LangProviderMiddleware, IsAdminProviderMiddleware
 from providers.tg_arg_provider import TgArg, ArgType
 from states.start import StartStates
 
 router = Router(name="start_router")
-
-router.message.middleware(LangProviderMiddleware())
-router.callback_query.middleware(LangProviderMiddleware())
-
-router.message.middleware(IsAdminProviderMiddleware())
-router.callback_query.middleware(IsAdminProviderMiddleware())
-
-router.message.filter(ChatTypeFilter())
-router.callback_query.filter(ChatTypeFilter())
 
 
 @router.message(CommandStart())
@@ -35,7 +25,7 @@ async def command_start_handler(message: Message, state: FSMContext, bot: Bot) -
     session = get_session()
     if not await is_user_exists_by_tg(session, message.from_user.id, cache_id=message.from_user.id):
         ref_arg = TgArg.get_arg(ArgType.REFERRAL, message.text)
-        if ref_arg is not None and is_good_user_by_tg(session, ref_arg.get()):
+        if ref_arg is not None and await is_good_user_by_tg(session, ref_arg.get(), cache_id=ref_arg.get()):
             user = User(telegram_id=message.from_user.id, referred_by_id=ref_arg.get())
             await bot.send_message(chat_id=ref_arg.get(),
                                    text=get_message(MessageKey.REF_INVITED_STEP_ONE,
@@ -100,3 +90,11 @@ async def menu(message: types.Message, lang: Lang) -> None:
     await message.delete()
     await message.answer(text=get_message(MessageKey.MENU_MESSAGE, lang),
                          reply_markup=get_user_menu_kbm(lang))
+
+
+@router.message(IsGoodUserFilter(), F.text == "/aaa")
+async def test() -> None:
+    session = get_session()
+    # TEMP TODO: DELETE ME
+    session.add(Settings(id=SettingsKey.PAY_FOR_REFERRAL, int_val=1500))
+    session.commit()

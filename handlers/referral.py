@@ -1,18 +1,26 @@
-from aiogram import Bot
-from aiogram.types import Message
+from aiogram import Bot, Router
+from aiogram.types import Message, CallbackQuery, FSInputFile
 
 import settings
 import transaction_manager
-from database import get_user_by_tg, User, get_session, is_good_user_by_tg, TransactionOperation, SettingsKey
-from lang.lang_based_provider import Lang, get_message, MessageKey
+from database import get_user_by_tg, User, get_session, is_good_user_by_tg, TransactionOperation, SettingsKey, \
+    get_user_referrals_count
+from filters.base_filters import UserExistsFilter
+from keyboard_markup.inline_user_kb import get_user_share_ref_link_kbm
+from lang.lang_based_provider import Lang, get_message, MessageKey, format_string
 from lang.lang_provider import get_cached_lang
+from lang_based_variable import MenuToRefCallback
+from providers.tg_arg_provider import TgArg, ArgType
+from settings import get_setting
+
+router = Router(name="referral_router")
 
 
 async def process_paying_for_referral(message: Message, bot: Bot, lang: Lang) -> None:
     session = get_session()
     user: User = get_user_by_tg(session, message.from_user.id)
     if user.referred_by_id is not None and is_good_user_by_tg(session, user.referred_by_id):
-        ref_pay_amount = settings.get_setting(session, SettingsKey.PAY_FOR_REFERRAL)
+        ref_pay_amount = await settings.get_setting(session, SettingsKey.PAY_FOR_REFERRAL)
         transaction_manager.make_transaction(tg_user_id=user.telegram_id, created_by=user.referred_by_id,
                                              operation=TransactionOperation.INCREMENT,
                                              amount=ref_pay_amount,
@@ -21,3 +29,21 @@ async def process_paying_for_referral(message: Message, bot: Bot, lang: Lang) ->
                                text=get_message(MessageKey.REF_INVITED_STEP_TWO,
                                                 await get_cached_lang(user.referred_by_id)).format(
                                    user_link=message.from_user.id, amount=ref_pay_amount))
+
+
+def build_ref_link(message: Message) -> str:
+    arg = TgArg(ArgType.REFERRAL, message.from_user.id)
+    return arg.get()
+
+
+@router.callback_query(UserExistsFilter(), MenuToRefCallback.filter())
+async def process_menu_to_ref_callback(query: CallbackQuery, lang: Lang, bot: Bot) -> None:
+    ref_link = TgArg.of(ArgType.REFERRAL, query.from_user.id)
+    await bot.send_photo(chat_id=query.message.chat.id,
+                         photo=FSInputFile(path="files/photo_2024-06-25_21-08-12.jpg"),
+                         caption=format_string(get_message(MessageKey.REF_INVITE, lang),
+                                               ref_invite_pay=await get_setting(SettingsKey.PAY_FOR_REFERRAL),
+                                               link=ref_link,
+                                               ref_invite_count=await get_user_referrals_count(get_session(), query.from_user.id, cache_id=query.from_user.id)),
+                         reply_markup=get_user_share_ref_link_kbm(lang, [
+                             ("ref_link", ref_link)]))

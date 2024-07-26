@@ -48,7 +48,7 @@ class Transaction(Base):
     abortedAt = Column(DateTime)
 
 
-class Setting(Base):
+class Settings(Base):
     __tablename__ = 'settings'
 
     id: Mapped[SettingsKey] = mapped_column(SQLEnum(SettingsKey), primary_key=True)

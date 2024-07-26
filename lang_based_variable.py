@@ -4,6 +4,7 @@ from typing import Any
 from aiogram.filters.callback_data import CallbackData
 
 KEYBOARD = "kb"
+BOT_TG_URL = "https://t.me/Geckoshi_bot"
 
 
 class Lang(Enum):
@@ -30,13 +31,15 @@ class KeyboardKey(Enum):
     MENU = "menu"
     ADMIN_MENU = "admin_menu"
     INLINE_MENU = "inline_menu"
+    REF_LINK_SHARE = "ref_link_share"
 
 
 class M:
     id_: str = None
     text: str
     url: str = None
-    callback_class: Any
+    with_url_placeholder: bool = False
+    callback_class: Any = None
 
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
@@ -111,7 +114,7 @@ message_data = {
         MessageKey.MENU_MESSAGE: "<b>🦎 В этом боте ты можешь:</b>",
         MessageKey.REF_INVITED_STEP_ONE: "👥 Вы пригласили <a href=\"{user_link}\">друга!</a> Вы получите 1500 $GMEME, как только ваш друг подпишется на каналы!",
         MessageKey.REF_INVITED_STEP_TWO: "👥 Вы получили {amount} $GMEME за регистрацию вашего <a href=\"{user_link}\">друга</a> в боте",
-        MessageKey.REF_INVITE: """👥 Приглашай друзей и получай по {ref_invite_pay} $GMEME\n\n🔗 Твоя ссылка: {link}\n\n🗣 Ты всего пригласил: {ref_invite_count} чел"""
+        MessageKey.REF_INVITE: """👥 Приглашай друзей и получай по {ref_invite_pay} $GMEME\n\n🔗 Твоя ссылка: <code>https://t.me/TeestttgeckoshiBot?start={link}</code>\n\n🗣 Ты всего пригласил: {ref_invite_count} чел"""
     },
 }
 
@@ -159,6 +162,11 @@ keyboard_data = {
             [
                 M(text="📊 Статистика", callback_class=MenuToStatistic),
             ],
+        ],
+        KeyboardKey.REF_LINK_SHARE: [
+            [
+                M(text="🔗 Выслать приглашение", url="https://t.me/share/url?url=https://t.me/TeestttgeckoshiBot?start={ref_link}", with_url_placeholder=True)
+            ]
         ]
     }
 }

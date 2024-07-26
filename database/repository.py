@@ -1,8 +1,8 @@
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 import cache
-from database import User, Setting, SettingsKey
+from database import User, Settings, SettingsKey
 from lang.lang_based_provider import Lang
 
 
@@ -72,7 +72,13 @@ def update_user_is_bot_start_completed_by_tg_id(s: Session, tg_user_id: int, val
     s.commit()
 
 
-def get_setting_by_id(s: Session, key: SettingsKey) -> Setting:
-    stmt = select(Setting).where(Setting.id.__eq__(key))
+def get_setting_by_id(s: Session, key: SettingsKey) -> Settings:
+    stmt = select(Settings).where(Settings.id.__eq__(key))
     result = s.execute(stmt)
     return result.scalar()
+
+
+@cache.cacheable(ttl="10s")
+async def get_user_referrals_count(s: Session, tg_user_id: int) -> int:
+    stmt = s.query(func.count(User.telegram_id)).where(User.referred_by_id.__eq__(tg_user_id))
+    return stmt.scalar()

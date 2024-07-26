@@ -11,9 +11,9 @@ class TgArg:
     text: str
     parsed_value: Any
 
-    def __init__(self, arg_type: ArgType, text: str):
+    def __init__(self, arg_type: ArgType, text: Any):
         self.arg_type = arg_type
-        self.text = text
+        self.text = str(text)
         self.__parce_text()
 
     def __parce_text(self):
@@ -37,3 +37,8 @@ class TgArg:
             return TgArg(arg_type, args[1])
         else:
             return None
+
+    @staticmethod
+    def of(arg_type: ArgType, text: Any) -> str:
+        prefix, type_func = arg_type.value
+        return f"{prefix}{type_func(text)}"
