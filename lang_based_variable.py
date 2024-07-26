@@ -99,12 +99,7 @@ class CheckStartMembershipCallback(CallbackData, prefix="check-start-membership"
 
 
 message_data = {
-    MessageKey.START: """
-    <b>Geckoshi Аирдроп первый в мире инвестиционной мем монеты 🦎 Ниже выберите подходящий вам язык 🌐 и начните зарабатывать $GMEME прямо сейчас!
-    ____
-    
-    Geckoshi Airdrop the world's first investment meme coin 🦎 Below, select the lang that suits you 🌐 and start earning $GMEME right now!</b>
-    """,
+    MessageKey.START: """<b>Geckoshi Аирдроп первый в мире инвестиционной мем монеты 🦎 Ниже выберите подходящий вам язык 🌐 и начните зарабатывать $GMEME прямо сейчас!\n\n____\n\n\nGeckoshi Airdrop the world's first investment meme coin 🦎 Below, select the lang that suits you 🌐 and start earning $GMEME right now!</b>""",
 
     Lang.RU: {
         MessageKey.LANG_CHANGE: "Язык успешно изменён на русский !",

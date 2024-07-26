@@ -8,9 +8,10 @@ from chat_processor.member import check_membership
 from database import get_session, User, save_user, is_user_exists_by_tg, update_user_language, \
     update_user_is_bot_start_completed_by_tg_id, is_good_user_by_tg, get_user_by_tg, Settings, SettingsKey
 from filters.base_filters import UserExistsFilter, IsGoodUserFilter
+from handlers.referral import process_paying_for_referral
 from keyboard_markup.custom_user_kb import get_reply_keyboard_kbm
 from keyboard_markup.inline_user_kb import get_start_user_kbm, get_require_subscription_kbm, get_user_menu_kbm
-from lang.lang_based_provider import MessageKey as msgK, MessageKey, Lang, get_keyboard
+from lang.lang_based_provider import MessageKey as msgK, MessageKey, Lang, get_keyboard, format_string
 from lang.lang_based_provider import get_message
 from lang.lang_provider import cache_lang, get_cached_lang
 from lang_based_variable import LangSetCallback, CheckStartMembershipCallback, KeyboardKey
@@ -27,10 +28,7 @@ async def command_start_handler(message: Message, state: FSMContext, bot: Bot) -
         ref_arg = TgArg.get_arg(ArgType.REFERRAL, message.text)
         if ref_arg is not None and await is_good_user_by_tg(session, ref_arg.get(), cache_id=ref_arg.get()):
             user = User(telegram_id=message.from_user.id, referred_by_id=ref_arg.get())
-            await bot.send_message(chat_id=ref_arg.get(),
-                                   text=get_message(MessageKey.REF_INVITED_STEP_ONE,
-                                                    await get_cached_lang(ref_arg.get())).format(
-                                       user_link=message.from_user.id))
+            await bot.send_message(chat_id=ref_arg.get(), text=format_string(get_message(MessageKey.REF_INVITED_STEP_ONE, await get_cached_lang(ref_arg.get())), user_link=message.from_user.id))
         else:
             user = User(telegram_id=message.from_user.id)
         save_user(session, user)
@@ -71,7 +69,7 @@ def get_ids(kbk: KeyboardKey, lang: Lang) -> list[str]:
 
 @router.callback_query(CheckStartMembershipCallback.filter(), UserExistsFilter(), StartStates.subscription)
 async def check_subscription(query: CallbackQuery, callback_data: CheckStartMembershipCallback, state: FSMContext,
-                             lang: Lang, is_admin: bool) -> None:
+                             lang: Lang, is_admin: bool, bot: Bot) -> None:
     r = [await check_membership(query.from_user.id, link) for link in get_ids(callback_data.kbk, callback_data.lang)]
     if False in r:
         await query.message.answer(text=get_message(MessageKey.START_REQUIRE_SUBSCRIPTION_FAILED, lang))
@@ -82,7 +80,7 @@ async def check_subscription(query: CallbackQuery, callback_data: CheckStartMemb
         await query.message.delete()
         await query.message.answer(text=get_message(MessageKey.START_REQUIRE_SUBSCRIPTION_SUCCESSFUL, lang),
                                    reply_markup=get_reply_keyboard_kbm(lang, is_admin))
-        user: User = get_user_by_tg(get_session(), query.from_user.id)
+        await process_paying_for_referral(query.from_user.id, bot)
 
 
 @router.message(IsGoodUserFilter(), F.text == "/menu")
@@ -93,7 +91,7 @@ async def menu(message: types.Message, lang: Lang) -> None:
 
 
 @router.message(IsGoodUserFilter(), F.text == "/aaa")
-async def test() -> None:
+async def test(message) -> None:
     session = get_session()
     # TEMP TODO: DELETE ME
     session.add(Settings(id=SettingsKey.PAY_FOR_REFERRAL, int_val=1500))
