@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
-from database.enums import TransactionOperation, TransactionStatus, SettingsKey
+from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType
 from lang.lang_based_provider import Lang
 
 
@@ -24,7 +24,8 @@ class User(BaseInfo, Base):
     referred_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger)
     blocked: Mapped[bool] = mapped_column(default=False)
     language: Mapped[Lang] = mapped_column(SQLEnum(Lang), default=Lang.EN)
-    is_admin: Mapped[bool] = mapped_column(default=False)
+    is_admin: Mapped[bool] = mapped_column(default=False, nullable=False)
+    is_premium: Mapped[bool] = mapped_column(default=False, nullable=False)
     is_bot_start_completed: Mapped[bool] = mapped_column(default=False)
 
     referrals: Mapped[List["User"]] = relationship("User", backref="referred_by", remote_side='User.telegram_id')
@@ -35,6 +36,7 @@ class Transaction(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     operation: Mapped[TransactionOperation] = mapped_column(SQLEnum(TransactionOperation), nullable=False)
+    type: Mapped[TransactionType] = mapped_column(SQLEnum(TransactionType), nullable=False)
     amount: Mapped[int] = mapped_column(type_=BigInteger)
     balance_before: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
     balance_after: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
@@ -42,6 +44,8 @@ class Transaction(Base):
     description: Mapped[str] = mapped_column()
     destination_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger)
     destination: Mapped[User] = relationship("User", foreign_keys=[destination_id])
+    source_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=True)
+    source: Mapped[User] = relationship("User", foreign_keys=[source_id])
     created_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger)
     created_by: Mapped[User] = relationship("User", foreign_keys=[created_by_id])
     createdAt = Column(DateTime, default=datetime.datetime.now(datetime.UTC))

@@ -1,5 +1,4 @@
 import logging
-from typing import Union
 
 from database import get_session, get_user_language
 from lang.lang_based_provider import Lang
@@ -14,7 +13,7 @@ async def cache_lang(user_tg_id: int, lang: Lang) -> None:
     await redis.set(get_redis_lang_key(user_tg_id), lang.value)
 
 
-async def get_cached_lang(user_tg_id: int) -> Union[Lang, None]:
+async def get_cached_lang(user_tg_id: int) -> Lang | None:
     lang_value = await redis.get(get_redis_lang_key(user_tg_id))
     if lang_value:
         return Lang(lang_value.decode('utf-8'))

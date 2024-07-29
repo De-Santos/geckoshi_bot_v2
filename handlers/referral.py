@@ -21,15 +21,16 @@ async def process_paying_for_referral(user_id: int, bot: Bot) -> None:
     user: User = get_user_by_tg(session, user_id)
     if user.referred_by_id is None:
         return
-    if is_good_user_by_tg(session, user.referred_by_id):
+    if await is_good_user_by_tg(session, user.referred_by_id):
         ref_pay_amount = await settings.get_setting(SettingsKey.PAY_FOR_REFERRAL)
-        transaction_manager.make_transaction(tg_user_id=user.telegram_id, created_by=user.referred_by_id,
+        transaction_manager.make_transaction(tg_user_id=user.telegram_id,
+                                             source_user_id=None,
+                                             created_by=user.referred_by_id,
                                              operation=TransactionOperation.INCREMENT,
                                              amount=ref_pay_amount,
                                              description="Payment for referral")
         await bot.send_message(chat_id=user.referred_by_id,
-                               text=format_string(get_message(MessageKey.REF_INVITED_STEP_TWO,
-                                                              await get_cached_lang(user.referred_by_id)),
+                               text=format_string(get_message(MessageKey.REF_INVITED_STEP_TWO, await get_cached_lang(user.referred_by_id)),
                                                   user_link=user_id, amount=ref_pay_amount))
     else:
         user.referred_by_id = None
@@ -41,7 +42,7 @@ def build_ref_link(message: Message) -> str:
     return arg.get()
 
 
-@router.callback_query(UserExistsFilter(), MenuToRefCallback.filter())
+@router.callback_query(MenuToRefCallback.filter(), UserExistsFilter())
 async def process_menu_to_ref_callback(query: CallbackQuery, lang: Lang, bot: Bot) -> None:
     ref_link = TgArg.of(ArgType.REFERRAL, query.from_user.id)
     await bot.send_photo(chat_id=query.message.chat.id,
@@ -49,8 +50,5 @@ async def process_menu_to_ref_callback(query: CallbackQuery, lang: Lang, bot: Bo
                          caption=format_string(get_message(MessageKey.REF_INVITE, lang),
                                                ref_invite_pay=await get_setting(SettingsKey.PAY_FOR_REFERRAL),
                                                link=ref_link,
-                                               ref_invite_count=await get_user_referrals_count(get_session(),
-                                                                                               query.from_user.id,
-                                                                                               cache_id=query.from_user.id)),
-                         reply_markup=get_user_share_ref_link_kbm(lang, [
-                             ("ref_link", ref_link)]))
+                                               ref_invite_count=await get_user_referrals_count(get_session(), query.from_user.id, cache_id=query.from_user.id)),
+                         reply_markup=get_user_share_ref_link_kbm(lang, [("ref_link", ref_link)]))

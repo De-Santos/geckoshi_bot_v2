@@ -82,3 +82,8 @@ def get_setting_by_id(s: Session, key: SettingsKey) -> Settings:
 async def get_user_referrals_count(s: Session, tg_user_id: int) -> int:
     stmt = s.query(func.count(User.telegram_id)).where(User.referred_by_id.__eq__(tg_user_id))
     return stmt.scalar()
+
+
+def is_premium_user(s: Session, tg_user_id: int) -> bool:
+    stmt = select(User.is_premium).where(User.telegram_id.__eq__(tg_user_id))
+    return s.execute(stmt).scalar()

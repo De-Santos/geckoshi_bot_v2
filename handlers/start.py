@@ -5,12 +5,11 @@ from aiogram.types import Message, CallbackQuery
 
 import cache
 from chat_processor.member import check_membership
-from database import get_session, User, save_user, is_user_exists_by_tg, update_user_language, \
-    update_user_is_bot_start_completed_by_tg_id, is_good_user_by_tg, get_user_by_tg, Settings, SettingsKey
+from database import get_session, User, save_user, is_user_exists_by_tg, update_user_language, update_user_is_bot_start_completed_by_tg_id, is_good_user_by_tg, Settings, SettingsKey
 from filters.base_filters import UserExistsFilter, IsGoodUserFilter
 from handlers.referral import process_paying_for_referral
 from keyboard_markup.custom_user_kb import get_reply_keyboard_kbm
-from keyboard_markup.inline_user_kb import get_start_user_kbm, get_require_subscription_kbm, get_user_menu_kbm
+from keyboard_markup.inline_user_kb import get_lang_kbm, get_require_subscription_kbm, get_user_menu_kbm
 from lang.lang_based_provider import MessageKey as msgK, MessageKey, Lang, get_keyboard, format_string
 from lang.lang_based_provider import get_message
 from lang.lang_provider import cache_lang, get_cached_lang
@@ -33,13 +32,13 @@ async def command_start_handler(message: Message, state: FSMContext, bot: Bot) -
             user = User(telegram_id=message.from_user.id)
         save_user(session, user)
         await state.set_state(StartStates.language)
-        await message.answer(get_message(msgK.START), reply_markup=get_start_user_kbm())
+        await message.answer(get_message(msgK.START), reply_markup=get_lang_kbm())
         await cache.drop_cache(is_user_exists_by_tg, cache_id=message.from_user.id)
     else:
         await message.delete()
 
 
-@router.callback_query(UserExistsFilter(), LangSetCallback.filter(), StartStates.language)
+@router.callback_query(LangSetCallback.filter(), StartStates.language, UserExistsFilter())
 async def change_lang_handler(query: CallbackQuery, callback_data: LangSetCallback,
                               state: FSMContext) -> None:
     session = get_session()
@@ -67,7 +66,7 @@ def get_ids(kbk: KeyboardKey, lang: Lang) -> list[str]:
     return ids
 
 
-@router.callback_query(CheckStartMembershipCallback.filter(), UserExistsFilter(), StartStates.subscription)
+@router.callback_query(CheckStartMembershipCallback.filter(), StartStates.subscription, UserExistsFilter())
 async def check_subscription(query: CallbackQuery, callback_data: CheckStartMembershipCallback, state: FSMContext,
                              lang: Lang, is_admin: bool, bot: Bot) -> None:
     r = [await check_membership(query.from_user.id, link) for link in get_ids(callback_data.kbk, callback_data.lang)]
@@ -83,16 +82,17 @@ async def check_subscription(query: CallbackQuery, callback_data: CheckStartMemb
         await process_paying_for_referral(query.from_user.id, bot)
 
 
-@router.message(IsGoodUserFilter(), F.text == "/menu")
+@router.message(F.text == "/menu", IsGoodUserFilter())
 async def menu(message: types.Message, lang: Lang) -> None:
     await message.delete()
     await message.answer(text=get_message(MessageKey.MENU_MESSAGE, lang),
                          reply_markup=get_user_menu_kbm(lang))
 
 
-@router.message(IsGoodUserFilter(), F.text == "/aaa")
+@router.message(F.text == "/aaa", IsGoodUserFilter())
 async def test(message) -> None:
     session = get_session()
     # TEMP TODO: DELETE ME
     session.add(Settings(id=SettingsKey.PAY_FOR_REFERRAL, int_val=1500))
+    session.add(Settings(id=SettingsKey.MIN_WITHDRAW_IN_AIRDROP, int_val=0))
     session.commit()

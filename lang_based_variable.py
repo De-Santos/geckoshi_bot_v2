@@ -24,6 +24,9 @@ class MessageKey(Enum):
     REF_INVITED_STEP_ONE = "ref_invited_1"
     REF_INVITED_STEP_TWO = "ref_invited_2"
     REF_INVITE = "ref_invite"
+    USER_PROFILE = "user_profile"
+    LANG_MENU = "lang_menu"
+    FUNCTION_NOT_IMPLEMENTED = "function_not_implemented"
 
 
 class KeyboardKey(Enum):
@@ -32,6 +35,8 @@ class KeyboardKey(Enum):
     ADMIN_MENU = "admin_menu"
     INLINE_MENU = "inline_menu"
     REF_LINK_SHARE = "ref_link_share"
+    PROFILE = "profile"
+    EXIT = "exit"
 
 
 class M:
@@ -89,13 +94,33 @@ class MenuToStatistic(CallbackData, prefix="menu-to-statistic"):
     pass
 
 
-class LangSetCallback(CallbackData, prefix="start-set-lang"):
+class LangSetCallback(CallbackData, prefix="set-lang"):
     lang: Lang
 
 
 class CheckStartMembershipCallback(CallbackData, prefix="check-start-membership"):
     kbk: KeyboardKey
     lang: Lang
+
+
+class ProfileWithdraw(CallbackData, prefix="profile-withdraw"):
+    pass
+
+
+class BuyPremium(CallbackData, prefix="buy-premium"):
+    pass
+
+
+class ActivatePromo(CallbackData, prefix="activate-promo"):
+    pass
+
+
+class SetLangMenu(CallbackData, prefix="set-lang-menu"):
+    pass
+
+
+class Exit(CallbackData, prefix="exit"):
+    pass
 
 
 message_data = {
@@ -107,9 +132,12 @@ message_data = {
         MessageKey.START_REQUIRE_SUBSCRIPTION_SUCCESSFUL: "✅ Вы успешно подписались!",
         MessageKey.START_REQUIRE_SUBSCRIPTION_FAILED: "⛔️ Подпишитесь на наши каналы и попробуйте ещё раз!",
         MessageKey.MENU_MESSAGE: "<b>🦎 В этом боте ты можешь:</b>",
-        MessageKey.REF_INVITED_STEP_ONE: "👥 Вы пригласили <a href=\"{user_link}\">друга!</a> Вы получите 1500 $GMEME, как только ваш друг подпишется на каналы!",
-        MessageKey.REF_INVITED_STEP_TWO: "👥 Вы получили {amount} $GMEME за регистрацию вашего <a href=\"{user_link}\">друга</a> в боте",
-        MessageKey.REF_INVITE: """👥 Приглашай друзей и получай по {ref_invite_pay} $GMEME\n\n🔗 Твоя ссылка: <code>https://t.me/TeestttgeckoshiBot?start={link}</code>\n\n🗣 Ты всего пригласил: {ref_invite_count} чел"""
+        MessageKey.REF_INVITED_STEP_ONE: "👥 Вы пригласили <a href=\"tg://user?id={user_link}\">друга!</a> Вы получите 1500 $GMEME, как только ваш друг подпишется на каналы!",
+        MessageKey.REF_INVITED_STEP_TWO: "👥 Вы получили {amount} $GMEME за регистрацию вашего <a href=\"tg://user?id={user_link}\">друга</a> в боте",
+        MessageKey.REF_INVITE: """👥 Приглашай друзей и получай по {ref_invite_pay} $GMEME\n\n🔗 Твоя ссылка: <code>https://t.me/TeestttgeckoshiBot?start={link}</code>\n\n🗣 Ты всего пригласил: {ref_invite_count} чел""",
+        MessageKey.USER_PROFILE: """📝 Имя: <a href=\"tg://user?id={user_link}\">{user_name}</a>\n🆔 Ваш ID: <code>{user_tg_id}</code>\n🔥 Премиум аккаунт: {is_premium_account}\n💎 Баланс: {balance} $GMEME\n👥 Всего рефералов: {ref_count}\n🦎 ВЫВЕДЕНО: {withdrew} $GMEME\n<b>📣 Мы сообщим заранее о выплатах!\n🔥 Следите за новостями!\n⛔️ МИНИМАЛЬНЫЙ ВЫВОД БУДЕТ {min_withdraw_in_airdrop} В ДЕНЬ АИРДРОПА!</b>""",
+        MessageKey.LANG_MENU: "Выберите желаемый язык",
+        MessageKey.FUNCTION_NOT_IMPLEMENTED: "К сожалению данная функция сейчас недоступна",
     },
 }
 
@@ -161,6 +189,23 @@ keyboard_data = {
         KeyboardKey.REF_LINK_SHARE: [
             [
                 M(text="🔗 Выслать приглашение", url="https://t.me/share/url?url=https://t.me/TeestttgeckoshiBot?start={ref_link}", with_url_placeholder=True)
+            ]
+        ],
+        KeyboardKey.PROFILE: [
+            [
+                M(text="📤 Вывести", callback_class=ProfileWithdraw),
+                M(text="🔥 Премиум", callback_class=BuyPremium)
+            ],
+            [
+                M(text="🎟 Активировать промокод", callback_class=ActivatePromo)
+            ],
+            [
+                M(text="🔄 Изменить язык", callback_class=SetLangMenu)
+            ],
+        ],
+        KeyboardKey.EXIT: [
+            [
+                M(text="⬅️ Выйти", callback_class=Exit)
             ]
         ]
     }

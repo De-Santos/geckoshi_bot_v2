@@ -7,6 +7,11 @@ class TransactionOperation(Enum):
     OVERRIDE = 2
 
 
+class TransactionType(Enum):
+    INTERNAL = 0
+    WITHDRAW = 1
+
+
 class TransactionStatus(Enum):
     PENDING = 0
     COMPLETED = 1
@@ -16,3 +21,4 @@ class TransactionStatus(Enum):
 
 class SettingsKey(Enum):
     PAY_FOR_REFERRAL = 1
+    MIN_WITHDRAW_IN_AIRDROP = 2
