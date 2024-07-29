@@ -23,9 +23,9 @@ async def process_paying_for_referral(user_id: int, bot: Bot) -> None:
         return
     if await is_good_user_by_tg(session, user.referred_by_id):
         ref_pay_amount = await settings.get_setting(SettingsKey.PAY_FOR_REFERRAL)
-        transaction_manager.make_transaction(tg_user_id=user.telegram_id,
+        transaction_manager.make_transaction(tg_user_id=user.referred_by_id,
                                              source_user_id=None,
-                                             created_by=user.referred_by_id,
+                                             created_by=user.telegram_id,
                                              operation=TransactionOperation.INCREMENT,
                                              amount=ref_pay_amount,
                                              description="Payment for referral")
