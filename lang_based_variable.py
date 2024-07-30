@@ -31,6 +31,7 @@ class MessageKey(Enum):
     PREMIUM_BUY_MENU = "premium_buy_menu"
     NOT_ENOUGH_TO_BUY_PREMIUM = "not_enough_to_buy_premium"
     PREMIUM_HAS_BOUGHT = "premium_has_bought"
+    SOON = "soon"
 
 
 class KeyboardKey(Enum):
@@ -150,7 +151,8 @@ message_data = {
         MessageKey.PREMIUM_ALREADY_BOUGHT: "❗ У вас уже имеется Премиум!",
         MessageKey.PREMIUM_BUY_MENU: "🦎 Цена премиума: {premium_gmeme_price} $GMEME",
         MessageKey.NOT_ENOUGH_TO_BUY_PREMIUM: "❗ Для покупки не хватает {not_enough} $GMEME",
-        MessageKey.PREMIUM_HAS_BOUGHT: "🥳 Вы приобрели \"Премиум\""
+        MessageKey.PREMIUM_HAS_BOUGHT: "🥳 Вы приобрели \"Премиум\"",
+        MessageKey.SOON: "Скоро 🔜"
     },
 }
 

@@ -8,6 +8,10 @@ from handlers.referral import router as referral_router
 from handlers.self_member import router as bot_router
 from handlers.settings import router as settings_router
 from handlers.start import router as start_router
+from handlers.cheque import router as cheque_router
+from handlers.p2p import router as p2p_router
+from handlers.slots import router as slots_router
+from handlers.nft import router as nft_router
 from middleware.metadata_providers import LangProviderMiddleware, IsAdminProviderMiddleware
 
 base_router = Router(name="base_router")
@@ -28,3 +32,8 @@ base_router.include_router(referral_router)
 base_router.include_router(profile_router)
 base_router.include_router(exit_router)
 base_router.include_router(premium_router)
+base_router.include_router(cheque_router)
+base_router.include_router(p2p_router)
+base_router.include_router(slots_router)
+base_router.include_router(nft_router)
+
