@@ -19,6 +19,13 @@ class TransactionStatus(Enum):
     ABORTED = 3
 
 
+class TransactionInitiatorType(Enum):
+    SYSTEM = 0
+    ADMIN = 1
+    USER = 2
+
+
 class SettingsKey(Enum):
     PAY_FOR_REFERRAL = 1
     MIN_WITHDRAW_IN_AIRDROP = 2
+    PREMIUM_GMEME_PRICE = 3

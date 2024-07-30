@@ -68,3 +68,7 @@ def get_profile_kbm(lng: Lang) -> InlineKeyboardMarkup:
 
 def add_exit_button(markup: InlineKeyboardMarkup, lng: Lang) -> InlineKeyboardMarkup:
     return build_markup(lng, KeyboardKey.EXIT, source_markup=markup)
+
+
+def get_buy_premium_menu(lng: Lang) -> InlineKeyboardMarkup:
+    return build_markup(lng, KeyboardKey.BUY_PREMIUM_MENU)

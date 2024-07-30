@@ -27,6 +27,10 @@ class MessageKey(Enum):
     USER_PROFILE = "user_profile"
     LANG_MENU = "lang_menu"
     FUNCTION_NOT_IMPLEMENTED = "function_not_implemented"
+    PREMIUM_ALREADY_BOUGHT = "premium_already_bought"
+    PREMIUM_BUY_MENU = "premium_buy_menu"
+    NOT_ENOUGH_TO_BUY_PREMIUM = "not_enough_to_buy_premium"
+    PREMIUM_HAS_BOUGHT = "premium_has_bought"
 
 
 class KeyboardKey(Enum):
@@ -37,6 +41,7 @@ class KeyboardKey(Enum):
     REF_LINK_SHARE = "ref_link_share"
     PROFILE = "profile"
     EXIT = "exit"
+    BUY_PREMIUM_MENU = "buy_premium_menu"
 
 
 class M:
@@ -107,6 +112,10 @@ class ProfileWithdraw(CallbackData, prefix="profile-withdraw"):
     pass
 
 
+class BuyPremiumMenu(CallbackData, prefix="buy-premium-menu"):
+    pass
+
+
 class BuyPremium(CallbackData, prefix="buy-premium"):
     pass
 
@@ -136,8 +145,12 @@ message_data = {
         MessageKey.REF_INVITED_STEP_TWO: "👥 Вы получили {amount} $GMEME за регистрацию вашего <a href=\"tg://user?id={user_link}\">друга</a> в боте",
         MessageKey.REF_INVITE: """👥 Приглашай друзей и получай по {ref_invite_pay} $GMEME\n\n🔗 Твоя ссылка: <code>https://t.me/TeestttgeckoshiBot?start={link}</code>\n\n🗣 Ты всего пригласил: {ref_invite_count} чел""",
         MessageKey.USER_PROFILE: """📝 Имя: <a href=\"tg://user?id={user_link}\">{user_name}</a>\n🆔 Ваш ID: <code>{user_tg_id}</code>\n🔥 Премиум аккаунт: {is_premium_account}\n💎 Баланс: {balance} $GMEME\n👥 Всего рефералов: {ref_count}\n🦎 ВЫВЕДЕНО: {withdrew} $GMEME\n<b>📣 Мы сообщим заранее о выплатах!\n🔥 Следите за новостями!\n⛔️ МИНИМАЛЬНЫЙ ВЫВОД БУДЕТ {min_withdraw_in_airdrop} В ДЕНЬ АИРДРОПА!</b>""",
-        MessageKey.LANG_MENU: "Выберите желаемый язык",
+        MessageKey.LANG_MENU: "Выберите желаемый язык:",
         MessageKey.FUNCTION_NOT_IMPLEMENTED: "К сожалению данная функция сейчас недоступна",
+        MessageKey.PREMIUM_ALREADY_BOUGHT: "❗ У вас уже имеется Премиум!",
+        MessageKey.PREMIUM_BUY_MENU: "🦎 Цена премиума: {premium_gmeme_price} $GMEME",
+        MessageKey.NOT_ENOUGH_TO_BUY_PREMIUM: "❗ Для покупки не хватает {not_enough} $GMEME",
+        MessageKey.PREMIUM_HAS_BOUGHT: "🥳 Вы приобрели \"Премиум\""
     },
 }
 
@@ -194,7 +207,7 @@ keyboard_data = {
         KeyboardKey.PROFILE: [
             [
                 M(text="📤 Вывести", callback_class=ProfileWithdraw),
-                M(text="🔥 Премиум", callback_class=BuyPremium)
+                M(text="🔥 Премиум", callback_class=BuyPremiumMenu)
             ],
             [
                 M(text="🎟 Активировать промокод", callback_class=ActivatePromo)
@@ -206,6 +219,11 @@ keyboard_data = {
         KeyboardKey.EXIT: [
             [
                 M(text="⬅️ Выйти", callback_class=Exit)
+            ]
+        ],
+        KeyboardKey.BUY_PREMIUM_MENU: [
+            [
+                M(text="🔥 Купить премиум", callback_class=BuyPremium)
             ]
         ]
     }

@@ -17,6 +17,13 @@ async def is_user_exists_by_tg(s: Session, tg_user_id: int) -> bool:
     return s.scalar(stmt)
 
 
+@cache.cacheable(ttl="10m")
+async def has_premium(s: Session, tg_user_id: int) -> bool:
+    stmt = select(User.is_premium).where(User.telegram_id.__eq__(tg_user_id))
+    result = s.execute(stmt)
+    return result.scalar()
+
+
 # def is_good_user(s: Session, user_id: int) -> bool:
 #     ext = select(User) \
 #         .where(User.id.__eq__(user_id)) \
@@ -87,3 +94,10 @@ async def get_user_referrals_count(s: Session, tg_user_id: int) -> int:
 def is_premium_user(s: Session, tg_user_id: int) -> bool:
     stmt = select(User.is_premium).where(User.telegram_id.__eq__(tg_user_id))
     return s.execute(stmt).scalar()
+
+
+def update_user_premium(s: Session, tg_user_id: int, premium: bool) -> None:
+    s.begin()
+    user = get_user_by_tg(s, tg_user_id)
+    user.is_premium = premium
+    s.commit()

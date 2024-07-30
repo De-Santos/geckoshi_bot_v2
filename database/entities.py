@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
-from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType
+from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType, TransactionInitiatorType
 from lang.lang_based_provider import Lang
 
 
@@ -38,15 +38,18 @@ class Transaction(Base):
     operation: Mapped[TransactionOperation] = mapped_column(SQLEnum(TransactionOperation), nullable=False)
     type: Mapped[TransactionType] = mapped_column(SQLEnum(TransactionType), nullable=False)
     amount: Mapped[int] = mapped_column(type_=BigInteger)
-    balance_before: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
-    balance_after: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
+    destination_balance_before: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
+    destination_balance_after: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
+    source_balance_before: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
+    source_balance_after: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
     status: Mapped[TransactionStatus] = mapped_column(SQLEnum(TransactionStatus))
+    initiator_type: Mapped[TransactionInitiatorType] = mapped_column(SQLEnum(TransactionInitiatorType), nullable=False)
     description: Mapped[str] = mapped_column()
-    destination_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger)
+    destination_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=True)
     destination: Mapped[User] = relationship("User", foreign_keys=[destination_id])
     source_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=True)
     source: Mapped[User] = relationship("User", foreign_keys=[source_id])
-    created_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger)
+    created_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=True)
     created_by: Mapped[User] = relationship("User", foreign_keys=[created_by_id])
     createdAt = Column(DateTime, default=datetime.datetime.now(datetime.UTC))
     abortedAt = Column(DateTime)

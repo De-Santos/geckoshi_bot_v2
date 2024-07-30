@@ -1,1 +1,2 @@
 from transaction_manager.manager import make_transaction
+from transaction_manager.manager import make_transaction_from_system

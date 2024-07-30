@@ -95,4 +95,5 @@ async def test(message) -> None:
     # TEMP TODO: DELETE ME
     session.add(Settings(id=SettingsKey.PAY_FOR_REFERRAL, int_val=1500))
     session.add(Settings(id=SettingsKey.MIN_WITHDRAW_IN_AIRDROP, int_val=0))
+    session.add(Settings(id=SettingsKey.PREMIUM_GMEME_PRICE, int_val=30000))
     session.commit()

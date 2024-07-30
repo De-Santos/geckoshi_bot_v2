@@ -1,3 +1,5 @@
+import os
+
 from aiogram import Bot, Router
 from aiogram.types import CallbackQuery, FSInputFile
 
@@ -18,7 +20,7 @@ async def process_profile_callback(query: CallbackQuery, lang: Lang, bot: Bot) -
     user: User = get_user_by_tg(s, query.from_user.id)
     await query.message.delete()
     await bot.send_photo(chat_id=query.message.chat.id,
-                         photo=FSInputFile(path="files/photo_2024-06-25_21-08-12.jpg"),
+                         photo=FSInputFile(path=os.getenv("PHOTO_01_PATH")),
                          caption=format_string(
                              get_message(MessageKey.USER_PROFILE, lang),
                              user_link=user.telegram_id,
