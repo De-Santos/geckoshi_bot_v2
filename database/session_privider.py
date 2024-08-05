@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
-from database import engine
+from database import get_db_session
 
 
 def get_session() -> Session:
-    return Session(engine)
+    return next(get_db_session())

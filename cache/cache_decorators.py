@@ -8,11 +8,14 @@ import humanfriendly
 from variables import redis
 
 
-def generate_cache_key(func: Callable, args: tuple, kwargs: dict) -> str:
+def generate_cache_key(func: Callable, args: tuple, kwargs: dict, just_function_name: bool = False) -> str:
     """
     Generate a cache key based on function name, args, and kwargs.
     """
     cache_id = kwargs.pop('cache_id', None)
+
+    if just_function_name:
+        return f"{func.__name__}"
 
     if cache_id is None:
         # Fall back to using a specific argument
@@ -29,11 +32,11 @@ def generate_cache_key(func: Callable, args: tuple, kwargs: dict) -> str:
     return f"{func.__name__}:{str(cache_id)}"
 
 
-def cacheable(ttl: str = None, associate_none_as: Any = None):
+def cacheable(ttl: str = None, associate_none_as: Any = None, function_name_as_id: bool = False):
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            cache_key = generate_cache_key(func, args, kwargs)
+            cache_key = generate_cache_key(func, args, kwargs, function_name_as_id)
             if not kwargs.pop('force', False):
                 cached_result = await redis.get(cache_key)
                 if cached_result:

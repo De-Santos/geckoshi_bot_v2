@@ -1,3 +1,4 @@
+from datetime import timedelta
 from enum import Enum
 from typing import Any
 
@@ -32,6 +33,10 @@ class MessageKey(Enum):
     NOT_ENOUGH_TO_BUY_PREMIUM = "not_enough_to_buy_premium"
     PREMIUM_HAS_BOUGHT = "premium_has_bought"
     SOON = "soon"
+    ADMIN_PANEL = "admin_panel"
+    ADMIN_NOW = "admin_now"
+    ADMIN_CHANGE_REF_PAY = "admin_change_ref_pay"
+    ADMIN_CHANGE_REF_PAY_SUCCESSFULLY = "admin_change_ref_pay_successfully"
 
 
 class KeyboardKey(Enum):
@@ -43,6 +48,7 @@ class KeyboardKey(Enum):
     PROFILE = "profile"
     EXIT = "exit"
     BUY_PREMIUM_MENU = "buy_premium_menu"
+    ADMIN_PANEL = "admin_panel"
 
 
 class M:
@@ -51,6 +57,7 @@ class M:
     url: str = None
     with_url_placeholder: bool = False
     callback_class: Any = None
+    with_callback_param_required: bool = False
 
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
@@ -121,7 +128,7 @@ class BuyPremium(CallbackData, prefix="buy-premium"):
     pass
 
 
-class ActivatePromo(CallbackData, prefix="activate-promo"):
+class ActivateVoucher(CallbackData, prefix="activate-voucher"):
     pass
 
 
@@ -131,6 +138,31 @@ class SetLangMenu(CallbackData, prefix="set-lang-menu"):
 
 class Exit(CallbackData, prefix="exit"):
     pass
+
+
+class Mailing(CallbackData, prefix="mailing"):
+    pass
+
+
+class UserManagement(CallbackData, prefix="user-management"):
+    pass
+
+
+class CreateVoucher(CallbackData, prefix="create-voucher"):
+    pass
+
+
+class TaskMenu(CallbackData, prefix="task-menu"):
+    pass
+    # id: int
+
+
+class ChangeRefPay(CallbackData, prefix="change-ref-pay"):
+    pass
+
+
+class RefTop(CallbackData, prefix="ref-top"):
+    duration: int | None
 
 
 message_data = {
@@ -152,7 +184,11 @@ message_data = {
         MessageKey.PREMIUM_BUY_MENU: "🦎 Цена премиума: {premium_gmeme_price} $GMEME",
         MessageKey.NOT_ENOUGH_TO_BUY_PREMIUM: "❗ Для покупки не хватает {not_enough} $GMEME",
         MessageKey.PREMIUM_HAS_BOUGHT: "🥳 Вы приобрели \"Премиум\"",
-        MessageKey.SOON: "Скоро 🔜"
+        MessageKey.SOON: "Скоро 🔜",
+        MessageKey.ADMIN_PANEL: "Админ-панель:\n\n🕰Аптайм бота: {uptime}\n👥Пользователей в боте: {user_count}",
+        MessageKey.ADMIN_NOW: "Вам наданы права админестратора",
+        MessageKey.ADMIN_CHANGE_REF_PAY: "Введите новвую сумму для вознограждения за реферала.\nТекущее значение: {pay_for_ref}",
+        MessageKey.ADMIN_CHANGE_REF_PAY_SUCCESSFULLY: "Вознаграждение за реферала измененно на: {pay_for_ref}"
     },
 }
 
@@ -212,7 +248,7 @@ keyboard_data = {
                 M(text="🔥 Премиум", callback_class=BuyPremiumMenu)
             ],
             [
-                M(text="🎟 Активировать промокод", callback_class=ActivatePromo)
+                M(text="🎟 Активировать промокод", callback_class=ActivateVoucher)
             ],
             [
                 M(text="🔄 Изменить язык", callback_class=SetLangMenu)
@@ -227,6 +263,21 @@ keyboard_data = {
             [
                 M(text="🔥 Купить премиум", callback_class=BuyPremium)
             ]
+        ],
+        KeyboardKey.ADMIN_PANEL: [
+            [
+                M(text="✉️ Рассылка", callback_class=Mailing),
+                M(text="🔎 Управление", callback_class=UserManagement),
+            ],
+            [
+                M(text="👥 Топ рефоводов", callback_class=RefTop, with_callback_param_required=True),
+                M(text="за неделю", callback_class=RefTop, with_callback_param_required=True),
+                M(text="👥 Плата за реф", callback_class=ChangeRefPay),
+            ],
+            [
+                M(text="🦎 Создать промокод", callback_class=CreateVoucher),
+                M(text="📝 Задание", callback_class=TaskMenu),
+            ],
         ]
     }
 }

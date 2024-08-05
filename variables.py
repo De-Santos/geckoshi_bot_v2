@@ -1,3 +1,4 @@
+import datetime
 import os
 
 from aiogram import Bot
@@ -13,3 +14,4 @@ redis = Redis.from_url(url=os.getenv('REDIS_URL'))
 storage = RedisStorage(redis)
 dp = Dispatcher(storage=storage)
 bot: Bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+start_time = datetime.datetime.now()

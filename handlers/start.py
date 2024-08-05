@@ -5,7 +5,7 @@ from aiogram.types import Message, CallbackQuery
 
 import cache
 from chat_processor.member import check_membership
-from database import get_session, User, save_user, is_user_exists_by_tg, update_user_language, update_user_is_bot_start_completed_by_tg_id, is_good_user_by_tg, Settings, SettingsKey
+from database import get_session, User, save_user, is_user_exists_by_tg, update_user_language, update_user_is_bot_start_completed_by_tg_id, is_good_user_by_tg, Setting, SettingsKey
 from filters.base_filters import UserExistsFilter, IsGoodUserFilter
 from handlers.referral import process_paying_for_referral
 from keyboard_markup.custom_user_kb import get_reply_keyboard_kbm
@@ -93,7 +93,7 @@ async def menu(message: types.Message, lang: Lang) -> None:
 async def test(message) -> None:
     session = get_session()
     # TEMP TODO: DELETE ME
-    session.add(Settings(id=SettingsKey.PAY_FOR_REFERRAL, int_val=1500))
-    session.add(Settings(id=SettingsKey.MIN_WITHDRAW_IN_AIRDROP, int_val=0))
-    session.add(Settings(id=SettingsKey.PREMIUM_GMEME_PRICE, int_val=30000))
+    session.add(Setting(id=SettingsKey.PAY_FOR_REFERRAL, int_val=1500))
+    session.add(Setting(id=SettingsKey.MIN_WITHDRAW_IN_AIRDROP, int_val=0))
+    session.add(Setting(id=SettingsKey.PREMIUM_GMEME_PRICE, int_val=30000))
     session.commit()

@@ -11,12 +11,11 @@ from database.enums import TransactionOperation, TransactionStatus, SettingsKey,
 from lang.lang_based_provider import Lang
 
 
-class BaseInfo:
-    createdAt = Column(DateTime, default=datetime.datetime.now(datetime.UTC))
-    deletedAt = Column(DateTime, default=None)
+def now():
+    datetime.datetime.now(datetime.UTC)
 
 
-class User(BaseInfo, Base):
+class User(Base):
     __tablename__ = 'users'
 
     telegram_id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True)
@@ -27,6 +26,8 @@ class User(BaseInfo, Base):
     is_admin: Mapped[bool] = mapped_column(default=False, nullable=False)
     is_premium: Mapped[bool] = mapped_column(default=False, nullable=False)
     is_bot_start_completed: Mapped[bool] = mapped_column(default=False)
+    createdAt = Column(DateTime, default=now, index=True)
+    deletedAt = Column(DateTime, default=None)
 
     referrals: Mapped[List["User"]] = relationship("User", backref="referred_by", remote_side='User.telegram_id')
 
@@ -51,11 +52,11 @@ class Transaction(Base):
     source: Mapped[User] = relationship("User", foreign_keys=[source_id])
     created_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=True)
     created_by: Mapped[User] = relationship("User", foreign_keys=[created_by_id])
-    createdAt = Column(DateTime, default=datetime.datetime.now(datetime.UTC))
+    createdAt = Column(DateTime, default=datetime.datetime.now(datetime.UTC), index=True)
     abortedAt = Column(DateTime)
 
 
-class Settings(Base):
+class Setting(Base):
     __tablename__ = 'settings'
 
     id: Mapped[SettingsKey] = mapped_column(SQLEnum(SettingsKey), primary_key=True)

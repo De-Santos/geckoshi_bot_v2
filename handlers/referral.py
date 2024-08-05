@@ -23,7 +23,7 @@ async def process_paying_for_referral(user_id: int, bot: Bot) -> None:
     user: User = get_user_by_tg(session, user_id)
     if user.referred_by_id is None:
         return
-    if await is_good_user_by_tg(session, user.referred_by_id):
+    if await is_good_user_by_tg(session, user.referred_by_id, cache_id=user.referred_by_id):
         ref_pay_amount = await settings.get_setting(SettingsKey.PAY_FOR_REFERRAL)
         transaction_manager.make_transaction_from_system(target=user.referred_by_id,
                                                          created_by=user.telegram_id,

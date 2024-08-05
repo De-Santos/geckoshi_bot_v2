@@ -6,7 +6,7 @@ from aiogram.types import CallbackQuery, FSInputFile
 import transaction_manager
 from database import get_session, get_user_by_tg, SettingsKey, TransactionOperation, update_user_premium
 from filters.base_filters import UserExistsFilter
-from keyboard_markup.inline_user_kb import get_buy_premium_menu
+from keyboard_markup.inline_user_kb import get_buy_premium_menu_kbm
 from lang.lang_based_provider import get_message, format_string
 from lang_based_variable import BuyPremium, Lang, MessageKey, BuyPremiumMenu
 from middleware.metadata_providers import IsPremiumUserMiddleware
@@ -26,7 +26,7 @@ async def buy_premium_menu(query: CallbackQuery, is_premium: bool, lang: Lang, b
     await bot.send_photo(chat_id=query.message.chat.id,
                          photo=FSInputFile(path=os.getenv("PHOTO_01_PATH")),
                          caption=format_string(get_message(MessageKey.PREMIUM_BUY_MENU, lang), premium_gmeme_price=await get_setting(SettingsKey.PREMIUM_GMEME_PRICE)),
-                         reply_markup=get_buy_premium_menu(lang))
+                         reply_markup=get_buy_premium_menu_kbm(lang))
 
 
 @router.callback_query(BuyPremium.filter(), UserExistsFilter())

@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -24,19 +26,28 @@ def build_inline_keyboard_button(m: M, url_param=None, **kwargs) -> InlineKeyboa
                                     callback_data=m.get_callback_instance(**kwargs).pack())
 
 
-def build_markup(lng: Lang, k: KeyboardKey, source_markup: InlineKeyboardMarkup = None, url_params: list = None) -> InlineKeyboardMarkup:
+def build_markup(lng: Lang, k: KeyboardKey,
+                 source_markup: InlineKeyboardMarkup = None,
+                 url_params: list = None,
+                 callback_data_param: list = None) -> InlineKeyboardMarkup:
     if url_params is None:
         url_params = []
+    if callback_data_param is None:
+        callback_data_param = []
     if source_markup is not None:
         source_markup = source_markup.inline_keyboard
     builder = __get_builder(markup=source_markup)
     url_params_p = 0
+    callback_data_param_p = 0
     for row in get_keyboard(k, lng):
         kbs: list["InlineKeyboardButton"] = []
         for m in row:
             if m.with_url_placeholder:
                 kbs.append(build_inline_keyboard_button(m, url_params[url_params_p], kbk=k, lang=lng))
                 url_params_p += 1
+            elif m.with_callback_param_required:
+                kbs.append(build_inline_keyboard_button(m, **callback_data_param[callback_data_param_p]))
+                callback_data_param_p += 1
             else:
                 kbs.append(build_inline_keyboard_button(m, kbk=k, lang=lng))
         builder.row(*kbs)
@@ -66,9 +77,13 @@ def get_profile_kbm(lng: Lang) -> InlineKeyboardMarkup:
     return build_markup(lng, KeyboardKey.PROFILE)
 
 
-def add_exit_button(markup: InlineKeyboardMarkup, lng: Lang) -> InlineKeyboardMarkup:
+def with_exit_button(lng: Lang, markup: InlineKeyboardMarkup | None = None) -> InlineKeyboardMarkup:
     return build_markup(lng, KeyboardKey.EXIT, source_markup=markup)
 
 
-def get_buy_premium_menu(lng: Lang) -> InlineKeyboardMarkup:
+def get_buy_premium_menu_kbm(lng: Lang) -> InlineKeyboardMarkup:
     return build_markup(lng, KeyboardKey.BUY_PREMIUM_MENU)
+
+
+def get_admin_menu_kbm(lng: Lang) -> InlineKeyboardMarkup:
+    return build_markup(lng, KeyboardKey.ADMIN_PANEL, callback_data_param=[{"duration": None}, {"duration": timedelta(weeks=1).total_seconds()}])

@@ -3,7 +3,7 @@ import logging
 import sys
 
 import handlers
-from database import init_db, get_session, Settings, SettingsKey
+from database import init_db, get_session, Setting, SettingsKey
 from kafka_processor import Topic
 from message_processor.executor import message_elevator_thread_launcher
 from message_processor.handlers import message_observer
