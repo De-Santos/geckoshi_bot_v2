@@ -29,3 +29,17 @@ class SettingsKey(Enum):
     PAY_FOR_REFERRAL = 1
     MIN_WITHDRAW_IN_AIRDROP = 2
     PREMIUM_GMEME_PRICE = 3
+
+
+class MailingStatus(Enum):
+    IN_PROGRESS = 0
+    COMPLETED = 1
+    CANCELED = 2
+
+
+class MailingMessageStatus(Enum):
+    IN_PROGRESS = 0
+    IN_QUEUE = 1
+    COMPLETED = 2
+    FAILED = 3
+    CANCELED = 4

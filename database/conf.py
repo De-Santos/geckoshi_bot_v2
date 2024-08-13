@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, scoped_session
 
 load_dotenv()
 
@@ -15,12 +15,13 @@ engine = create_engine(
     pool_recycle=1800,  # Recycle connections after the given number of seconds, default is -1 (no recycling)
     pool_pre_ping=True,  # If True, the connection pool will test connections for liveness upon each checkout
 )
-SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+SessionFactory = sessionmaker(bind=engine, autocommit=False, autoflush=False, expire_on_commit=False)
+ScopedSession = scoped_session(SessionFactory)
 Base = declarative_base()
 
 
 def get_db_session() -> Session:
-    db = SessionLocal()
+    db = SessionFactory()
     try:
         yield db
     finally:

@@ -1,2 +1,2 @@
-from rabbit.conf import connection
-from rabbit.producers import *
+from rabbit.conf import Queue
+from rabbit.consumers import IReconnectingConsumer, ReconnectingMessageConsumer

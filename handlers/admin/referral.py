@@ -11,9 +11,9 @@ from lang.lang_based_provider import format_string, get_message
 from lang_based_variable import RefTop, ChangeRefPay, Lang, MessageKey
 from settings import get_setting
 from settings.settings_manager import update_setting
-from states.settings import SettingsStates
+from states.states import SettingsStates
 
-router = Router(name="referral_router")
+router = Router(name="admin_referral_router")
 
 
 @router.callback_query(RefTop.filter(), UserExistsFilter())

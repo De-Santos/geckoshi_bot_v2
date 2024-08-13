@@ -2,17 +2,17 @@ import datetime
 import uuid
 from typing import List, Optional
 
-from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Numeric
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Numeric, Text, func
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
-from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType, TransactionInitiatorType
+from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType, TransactionInitiatorType, MailingStatus, MailingMessageStatus
 from lang.lang_based_provider import Lang
 
 
-def now():
-    datetime.datetime.now(datetime.UTC)
+def now() -> datetime.datetime:
+    return datetime.datetime.now(datetime.UTC)
 
 
 class User(Base):
@@ -26,8 +26,8 @@ class User(Base):
     is_admin: Mapped[bool] = mapped_column(default=False, nullable=False)
     is_premium: Mapped[bool] = mapped_column(default=False, nullable=False)
     is_bot_start_completed: Mapped[bool] = mapped_column(default=False)
-    createdAt = Column(DateTime, default=now, index=True)
-    deletedAt = Column(DateTime, default=None)
+    created_at = mapped_column("created_at", DateTime, default=now, index=True)
+    deleted_at = Column(DateTime, default=None)
 
     referrals: Mapped[List["User"]] = relationship("User", backref="referred_by", remote_side='User.telegram_id')
 
@@ -52,7 +52,7 @@ class Transaction(Base):
     source: Mapped[User] = relationship("User", foreign_keys=[source_id])
     created_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=True)
     created_by: Mapped[User] = relationship("User", foreign_keys=[created_by_id])
-    createdAt = Column(DateTime, default=datetime.datetime.now(datetime.UTC), index=True)
+    created_at = mapped_column("created_at", DateTime, default=now)
     abortedAt = Column(DateTime)
 
 
@@ -62,3 +62,32 @@ class Setting(Base):
     id: Mapped[SettingsKey] = mapped_column(SQLEnum(SettingsKey), primary_key=True)
     int_val: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)
     str_val: Mapped[str] = mapped_column(nullable=True)
+
+
+class Mailing(Base):
+    __tablename__ = 'mailings'
+
+    id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True, autoincrement=True)
+    files: Mapped[list[str]] = mapped_column(JSONB, server_default=func.jsonb('[]'))
+    text: Mapped[str] = mapped_column(type_=Text, nullable=True)
+    markup: Mapped[dict] = mapped_column(type_=JSONB, default=None, comment="serialized 'InlineKeyboardMarkup'")
+    status: Mapped[MailingStatus] = mapped_column(SQLEnum(MailingStatus))
+    created_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
+    created_by: Mapped[User] = relationship("User", foreign_keys=[created_by_id])
+    created_at = mapped_column("created_at", DateTime, default=now)
+    finished_at = mapped_column("finished_at", DateTime, nullable=True)
+
+
+class MailingMessage(Base):
+    __tablename__ = 'mailing_messages'
+
+    id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    text: Mapped[str] = mapped_column(type_=Text, nullable=True)
+    status: Mapped[MailingMessageStatus] = mapped_column(SQLEnum(MailingMessageStatus))
+    destination_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
+    destination: Mapped[User] = relationship("User", foreign_keys=[destination_id])
+    mailing_id: Mapped[int] = mapped_column(ForeignKey('mailings.id'), type_=BigInteger, nullable=False)
+    mailing: Mapped[Mailing] = relationship("Mailing", foreign_keys=[mailing_id])
+    created_at = mapped_column("created_at", DateTime, default=now)
+    sent_at = mapped_column(DateTime, nullable=True)
+    failed_message: Mapped[str] = mapped_column(type_=Text, nullable=True)

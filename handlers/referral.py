@@ -45,6 +45,7 @@ def build_ref_link(message: Message) -> str:
 
 @router.callback_query(MenuToRefCallback.filter(), UserExistsFilter())
 async def process_menu_to_ref_callback(query: CallbackQuery, lang: Lang, bot: Bot) -> None:
+    await query.message.delete()
     ref_link = TgArg.of(ArgType.REFERRAL, query.from_user.id)
     await bot.send_photo(chat_id=query.message.chat.id,
                          photo=FSInputFile(path=os.getenv("PHOTO_01_PATH")),

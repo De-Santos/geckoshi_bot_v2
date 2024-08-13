@@ -9,7 +9,7 @@ from lang.lang_based_provider import MessageKey
 from lang.lang_based_provider import get_message
 from lang.lang_provider import cache_lang
 from lang_based_variable import LangSetCallback, SetLangMenu, Lang
-from states.settings import SettingsStates
+from states.states import SettingsStates
 
 router = Router(name="settings_router")
 

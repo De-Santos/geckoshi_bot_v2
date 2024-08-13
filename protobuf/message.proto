@@ -1,6 +1,0 @@
-syntax = "proto3";
-
-message Message {
-  int64 chat_id = 1;
-  string text = 2;
-}

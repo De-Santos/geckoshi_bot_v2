@@ -1,11 +1,7 @@
-from datetime import timedelta
 from enum import Enum
 from typing import Any
 
 from aiogram.filters.callback_data import CallbackData
-
-KEYBOARD = "kb"
-BOT_TG_URL = "https://t.me/Geckoshi_bot"
 
 
 class Lang(Enum):
@@ -37,6 +33,18 @@ class MessageKey(Enum):
     ADMIN_NOW = "admin_now"
     ADMIN_CHANGE_REF_PAY = "admin_change_ref_pay"
     ADMIN_CHANGE_REF_PAY_SUCCESSFULLY = "admin_change_ref_pay_successfully"
+    ADMIN_ENTER_MAILING_MESSAGE = "admin_enter_mailing_message"
+    ADMIN_MAILING_HAS_INLINE_BUTTON = "admin_mailing_has_inline_button"
+    ADMIN_MAILING_ENTER_INLINE_BUTTON_TEXT = "admin_mailing_enter_inline_button_text"
+    ADMIN_MAILING_ENTER_INLINE_BUTTON_URL = "admin_mailing_enter_inline_button_url"
+    ADMIN_MAILING_ADD_INLINE_BUTTON = "admin_mailing_add_inline_button"
+    ADMIN_MAILING_INLINE_BUTTON_PREVIEW = "admin_mailing_inline_button_preview"
+    ADMIN_MAILING_MESSAGE_LOOKS_LIKE = "admin_mailing_message_looks_like"
+    ADMIN_MAILING_STATS = "admin_mailing_stats"
+    REQUEST_PROCESSING = "request_processing"
+    ADMIN_MAILING_CANCEL_FAILED = "admin_mailing_cancel_failed"
+    ADMIN_MAILING_CANCEL_SUCCESSFUL = "admin_mailing_cancel_successful"
+    ADMIN_MAILING_FAILED_TO_SEND_MESSAGES_IN_QUEUE = "admin_mailing_start_retry"
 
 
 class KeyboardKey(Enum):
@@ -47,8 +55,15 @@ class KeyboardKey(Enum):
     REF_LINK_SHARE = "ref_link_share"
     PROFILE = "profile"
     EXIT = "exit"
+    STEP_BACK = "step_back"
     BUY_PREMIUM_MENU = "buy_premium_menu"
     ADMIN_PANEL = "admin_panel"
+    YES_NO = "yes_no"
+    ADMIN_MAILING_ADD_BUTTON_OR_PREVIEW = "admin_mailing_add_button_or_preview"
+    ADMIN_MAILING_INLINE_BUTTON_PREVIEW = "admin_mailing_inline_button_preview"
+    ADMIN_MAILING_START = "admin_mailing_start"
+    ADMIN_MAILING_MENU = "admin_mailing_menu"
+    ADMIN_MAILING_QUEUE_FILL_RETRY = "admin_mailing_queue_fill_retry"
 
 
 class M:
@@ -140,7 +155,11 @@ class Exit(CallbackData, prefix="exit"):
     pass
 
 
-class Mailing(CallbackData, prefix="mailing"):
+class StepBack(CallbackData, prefix="step-back"):
+    pass
+
+
+class MailingCallback(CallbackData, prefix="mailing"):
     pass
 
 
@@ -165,6 +184,42 @@ class RefTop(CallbackData, prefix="ref-top"):
     duration: int | None
 
 
+class Yes(CallbackData, prefix="yes"):
+    pass
+
+
+class No(CallbackData, prefix="no"):
+    pass
+
+
+class AddMoreInlineButton(CallbackData, prefix="add-more-inline-button"):
+    pass
+
+
+class MailingMessagePreview(CallbackData, prefix="mailing-message-preview"):
+    pass
+
+
+class ApproveInlineButton(CallbackData, prefix="approve-inline-button"):
+    pass
+
+
+class StartMailing(CallbackData, prefix="start-mailing"):
+    pass
+
+
+class StopMailing(CallbackData, prefix="stop-mailing"):
+    mailing_id: int
+
+
+class QueueFillMailingRetry(CallbackData, prefix="queue-fill-retry"):
+    mailing_id: int
+
+
+class UpdateMailingStatistic(CallbackData, prefix="update-mailing-stat"):
+    mailing_id: int
+
+
 message_data = {
     MessageKey.START: """<b>Geckoshi Аирдроп первый в мире инвестиционной мем монеты 🦎 Ниже выберите подходящий вам язык 🌐 и начните зарабатывать $GMEME прямо сейчас!\n\n____\n\n\nGeckoshi Airdrop the world's first investment meme coin 🦎 Below, select the lang that suits you 🌐 and start earning $GMEME right now!</b>""",
 
@@ -176,7 +231,7 @@ message_data = {
         MessageKey.MENU_MESSAGE: "<b>🦎 В этом боте ты можешь:</b>",
         MessageKey.REF_INVITED_STEP_ONE: "👥 Вы пригласили <a href=\"tg://user?id={user_link}\">друга!</a> Вы получите 1500 $GMEME, как только ваш друг подпишется на каналы!",
         MessageKey.REF_INVITED_STEP_TWO: "👥 Вы получили {amount} $GMEME за регистрацию вашего <a href=\"tg://user?id={user_link}\">друга</a> в боте",
-        MessageKey.REF_INVITE: """👥 Приглашай друзей и получай по {ref_invite_pay} $GMEME\n\n🔗 Твоя ссылка: <code>https://t.me/TeestttgeckoshiBot?start={link}</code>\n\n🗣 Ты всего пригласил: {ref_invite_count} чел""",
+        MessageKey.REF_INVITE: """👥 Приглашай друзей и получай по {ref_invite_pay} $GMEME\n\n🔗 Твоя ссылка: <code>https://t.me/gcococococotest_bot?start={link}</code>\n\n🗣 Ты всего пригласил: {ref_invite_count} чел""",
         MessageKey.USER_PROFILE: """📝 Имя: <a href=\"tg://user?id={user_link}\">{user_name}</a>\n🆔 Ваш ID: <code>{user_tg_id}</code>\n🔥 Премиум аккаунт: {is_premium_account}\n💎 Баланс: {balance} $GMEME\n👥 Всего рефералов: {ref_count}\n🦎 ВЫВЕДЕНО: {withdrew} $GMEME\n<b>📣 Мы сообщим заранее о выплатах!\n🔥 Следите за новостями!\n⛔️ МИНИМАЛЬНЫЙ ВЫВОД БУДЕТ {min_withdraw_in_airdrop} В ДЕНЬ АИРДРОПА!</b>""",
         MessageKey.LANG_MENU: "Выберите желаемый язык:",
         MessageKey.FUNCTION_NOT_IMPLEMENTED: "К сожалению данная функция сейчас недоступна",
@@ -188,7 +243,19 @@ message_data = {
         MessageKey.ADMIN_PANEL: "Админ-панель:\n\n🕰Аптайм бота: {uptime}\n👥Пользователей в боте: {user_count}",
         MessageKey.ADMIN_NOW: "Вам наданы права админестратора",
         MessageKey.ADMIN_CHANGE_REF_PAY: "Введите новвую сумму для вознограждения за реферала.\nТекущее значение: {pay_for_ref}",
-        MessageKey.ADMIN_CHANGE_REF_PAY_SUCCESSFULLY: "Вознаграждение за реферала измененно на: {pay_for_ref}"
+        MessageKey.ADMIN_CHANGE_REF_PAY_SUCCESSFULLY: "Вознаграждение за реферала измененно на: {pay_for_ref}",
+        MessageKey.ADMIN_ENTER_MAILING_MESSAGE: "Введите текст рассылки или отправьте изображение:",
+        MessageKey.ADMIN_MAILING_HAS_INLINE_BUTTON: "Добавить плавающую кнопку-ссылку ?",
+        MessageKey.ADMIN_MAILING_ENTER_INLINE_BUTTON_TEXT: "Введите текст для плавающей кнопки-ссылки:",
+        MessageKey.ADMIN_MAILING_ENTER_INLINE_BUTTON_URL: "Введите url для плавающей кнопки-ссылки:",
+        MessageKey.ADMIN_MAILING_ADD_INLINE_BUTTON: "Плавающая кнопка-ссылка успешно добавлена!",
+        MessageKey.ADMIN_MAILING_INLINE_BUTTON_PREVIEW: "Кнопка будет выглядеть так:",
+        MessageKey.ADMIN_MAILING_MESSAGE_LOOKS_LIKE: "^^^ - так будет выглядеть сообщение для рассылки.",
+        MessageKey.ADMIN_MAILING_STATS: "Статистика рассылки №{mailing_id}:\n Юзеров захвачено: {user_captured}\n Статус: {status}\n Успешно: {successfully}\n В очереди: {in_queue}\n Неуспешно: {failed}\n Отменено: {canceled}\n Всего обработано: {messages_processed} ({messages_processed_percents})\n Время обработки: {processing_time}",
+        MessageKey.REQUEST_PROCESSING: "Запрос обрабатываеться...",
+        MessageKey.ADMIN_MAILING_CANCEL_FAILED: "Не возможно отменить рассылку.",
+        MessageKey.ADMIN_MAILING_CANCEL_SUCCESSFUL: "Рассылка №{mailing_id} отменена успешно!",
+        MessageKey.ADMIN_MAILING_FAILED_TO_SEND_MESSAGES_IN_QUEUE: "Произошла ошибка при добалвении сообщений в queue.",
     },
 }
 
@@ -256,7 +323,12 @@ keyboard_data = {
         ],
         KeyboardKey.EXIT: [
             [
-                M(text="⬅️ Выйти", callback_class=Exit)
+                M(text="❌ Выйти", callback_class=Exit)
+            ]
+        ],
+        KeyboardKey.STEP_BACK: [
+            [
+                M(text="⬅️ Назад", callback_class=StepBack)
             ]
         ],
         KeyboardKey.BUY_PREMIUM_MENU: [
@@ -266,7 +338,7 @@ keyboard_data = {
         ],
         KeyboardKey.ADMIN_PANEL: [
             [
-                M(text="✉️ Рассылка", callback_class=Mailing),
+                M(text="✉️ Рассылка", callback_class=MailingCallback),
                 M(text="🔎 Управление", callback_class=UserManagement),
             ],
             [
@@ -278,6 +350,41 @@ keyboard_data = {
                 M(text="🦎 Создать промокод", callback_class=CreateVoucher),
                 M(text="📝 Задание", callback_class=TaskMenu),
             ],
-        ]
+        ],
+        KeyboardKey.YES_NO: [
+            [
+                M(text="Да", callback_class=Yes),
+                M(text="Нет", callback_class=No)
+            ]
+        ],
+        KeyboardKey.ADMIN_MAILING_ADD_BUTTON_OR_PREVIEW: [
+            [
+                M(text="Добавить ещё кнопку", callback_class=AddMoreInlineButton),
+            ],
+            [
+                M(text="Просмотреть сообщение", callback_class=MailingMessagePreview),
+            ],
+        ],
+        KeyboardKey.ADMIN_MAILING_INLINE_BUTTON_PREVIEW: [
+            [
+                M(text="Добавить", callback_class=ApproveInlineButton),
+            ],
+        ],
+        KeyboardKey.ADMIN_MAILING_START: [
+            [
+                M(text="Начать рассылку", callback_class=StartMailing),
+            ],
+        ],
+        KeyboardKey.ADMIN_MAILING_MENU: [
+            [
+                M(text="Отменить рассылку", callback_class=StopMailing, with_callback_param_required=True),
+                M(text="Обновить", callback_class=UpdateMailingStatistic, with_callback_param_required=True),
+            ],
+        ],
+        KeyboardKey.ADMIN_MAILING_QUEUE_FILL_RETRY: [
+            [
+                M(text="Повторить поптыку", callback_class=QueueFillMailingRetry, with_callback_param_required=True),
+            ],
+        ],
     }
 }
