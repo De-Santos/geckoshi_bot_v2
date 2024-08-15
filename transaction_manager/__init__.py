@@ -1,2 +1,3 @@
 from transaction_manager.manager import make_transaction
 from transaction_manager.manager import make_transaction_from_system
+from transaction_manager.trace_processor import TraceType, generate_trace

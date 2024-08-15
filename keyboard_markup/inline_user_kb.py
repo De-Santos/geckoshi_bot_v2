@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Optional, List, Union
 
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -14,43 +15,59 @@ def get_builder(markup=None):
     return InlineKeyboardBuilder(markup=markup)
 
 
-def build_inline_keyboard_button(m: M, url_param=None, **kwargs) -> InlineKeyboardButton:
+def build_inline_keyboard_button(m: M, text_param=None, url_param=None, **kwargs) -> InlineKeyboardButton:
+    text = m.text
+    if m.with_text_param_required:
+        text = format_string(m.text, **text_param)
     if url_param is not None and m.callback_class is None:
-        return InlineKeyboardButton(text=m.text,
+        return InlineKeyboardButton(text=text,
                                     url=format_string(m.url, **dict([url_param])))
     elif m.callback_class is None:
-        return InlineKeyboardButton(text=m.text,
+        return InlineKeyboardButton(text=text,
                                     url=m.url)
     else:
-        return InlineKeyboardButton(text=m.text,
+        return InlineKeyboardButton(text=text,
                                     callback_data=m.get_callback_instance(**kwargs).pack())
 
 
-def build_markup(lang: Lang, k: KeyboardKey,
+def build_markup(lang: Lang | None, k: KeyboardKey,
                  source_markup: InlineKeyboardMarkup = None,
-                 url_params: list = None,
-                 callback_data_param: list = None) -> InlineKeyboardMarkup:
+                 url_params: Optional[List[Union[str, dict]]] = None,
+                 callback_data_param: Optional[List[dict]] = None,
+                 text_params: Optional[List[dict]] = None) -> InlineKeyboardMarkup:
     if url_params is None:
         url_params = []
     if callback_data_param is None:
         callback_data_param = []
+    if text_params is None:
+        text_params = []
     if source_markup is not None:
         source_markup = source_markup.inline_keyboard
     builder = get_builder(markup=source_markup)
     url_params_p = 0
     callback_data_param_p = 0
+    text_params_p = 0
+
     for row in get_keyboard(k, lang):
-        kbs: list["InlineKeyboardButton"] = []
+        kbs: list[InlineKeyboardButton] = []
         for m in row:
+            url_param = None
+            text_param = None
             if m.with_url_placeholder:
-                kbs.append(build_inline_keyboard_button(m, url_params[url_params_p], kbk=k, lang=lang))
+                url_param = url_params[url_params_p]
                 url_params_p += 1
-            elif m.with_callback_param_required:
-                kbs.append(build_inline_keyboard_button(m, **callback_data_param[callback_data_param_p]))
+            if m.with_text_param_required:
+                text_param = text_params[text_params_p]
+                text_params_p += 1
+
+            if m.with_callback_param_required:
+                kbs.append(build_inline_keyboard_button(m, url_param=url_param, text_param=text_param, **callback_data_param[callback_data_param_p]))
                 callback_data_param_p += 1
             else:
-                kbs.append(build_inline_keyboard_button(m, kbk=k, lang=lang))
+                kbs.append(build_inline_keyboard_button(m, url_param=url_param, text_param=text_param, kbk=k, lang=lang))
+
         builder.row(*kbs)
+
     return builder.as_markup()
 
 
@@ -115,3 +132,24 @@ def get_mailing_menu_kbm(lang: Lang, params: list[dict]) -> InlineKeyboardMarkup
 
 def get_mailing_queue_fill_retry_kbm(lang: Lang, params: list[dict]) -> InlineKeyboardMarkup:
     return build_markup(lang, KeyboardKey.ADMIN_MAILING_QUEUE_FILL_RETRY, callback_data_param=params)
+
+
+def get_slots_menu_kbm(lang: Lang) -> InlineKeyboardMarkup:
+    params = [
+        {'amount': 100},
+        {'amount': 250},
+        {'amount': 500},
+        {'amount': 1000},
+        {'amount': 2500},
+        {'amount': 5000},
+        {'amount': 10000},
+    ]
+    return with_back_to_menu_button(lang, build_markup(None, KeyboardKey.SLOTS_MENU, text_params=params, callback_data_param=params))
+
+
+def get_slots_continue_kbm(lang: Lang, params: list[dict]) -> InlineKeyboardMarkup:
+    return build_markup(lang, KeyboardKey.SLOTS_CONTINUE_PLAY, callback_data_param=params)
+
+
+def with_back_to_menu_button(lang: Lang, source_markup: InlineKeyboardMarkup = None, remove_source: bool = False) -> InlineKeyboardMarkup:
+    return build_markup(lang, KeyboardKey.BACK_TO_MENU, source_markup=source_markup, callback_data_param=[{'remove_source': remove_source}])

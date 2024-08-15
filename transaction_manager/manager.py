@@ -1,4 +1,5 @@
 from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 from database import TransactionOperation, get_session, Transaction, get_user_by_tg, User, TransactionStatus, TransactionType, TransactionInitiatorType
 
@@ -44,12 +45,17 @@ def make_transaction(destination: int | None, source_user_id: int | None, create
     session.commit()
 
 
-def make_transaction_from_system(target: int, operation: TransactionOperation, amount: int,
+def make_transaction_from_system(target: int,
+                                 operation: TransactionOperation,
+                                 amount: int,
                                  transaction_type: TransactionType = TransactionType.INTERNAL,
                                  created_by: int | None = None,
-                                 description: str = None):
-    session = get_session()
-    session.begin()
+                                 description: str = None,
+                                 trace: dict = None,
+                                 session: Session = None):
+    if session is None:
+        session = get_session()
+        session.begin()
     user: User = get_user_by_tg(session, target)
     new_balance = __process_operation(user.balance, operation, amount)
     transaction = Transaction(
@@ -64,7 +70,8 @@ def make_transaction_from_system(target: int, operation: TransactionOperation, a
         destination_id=user.telegram_id,
         created_by_id=created_by,
         description=description,
-        initiator_type=TransactionInitiatorType.SYSTEM
+        initiator_type=TransactionInitiatorType.SYSTEM,
+        trace=trace
     )
     session.add(transaction)
     user.balance = new_balance

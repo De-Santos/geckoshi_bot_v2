@@ -43,3 +43,8 @@ class MailingMessageStatus(Enum):
     COMPLETED = 2
     FAILED = 3
     CANCELED = 4
+
+
+class BetType(Enum):
+    WIN = 0
+    LOSS = 1

@@ -5,7 +5,7 @@ from aiogram.types import Message, CallbackQuery
 
 import cache
 from chat_processor.member import check_membership
-from database import get_session, User, save_user, is_user_exists_by_tg, update_user_language, update_user_is_bot_start_completed_by_tg_id, is_good_user_by_tg, Setting, SettingsKey, is_admin
+from database import get_session, User, save_user, is_user_exists_by_tg, update_user_language, update_user_is_bot_start_completed_by_tg_id, is_good_user_by_tg, Setting, SettingsKey
 from filters.base_filters import UserExistsFilter, IsGoodUserFilter
 from handlers.referral import process_paying_for_referral
 from keyboard_markup.custom_user_kb import get_reply_keyboard_kbm
@@ -13,7 +13,7 @@ from keyboard_markup.inline_user_kb import get_lang_kbm, get_require_subscriptio
 from lang.lang_based_provider import MessageKey as msgK, MessageKey, Lang, get_keyboard, format_string
 from lang.lang_based_provider import get_message
 from lang.lang_provider import cache_lang, get_cached_lang
-from lang_based_variable import LangSetCallback, CheckStartMembershipCallback, KeyboardKey
+from lang_based_variable import LangSetCallback, CheckStartMembershipCallback, KeyboardKey, BackToMenu
 from providers.tg_arg_provider import TgArg, ArgType
 from states.states import StartStates
 
@@ -82,9 +82,19 @@ async def check_subscription(query: CallbackQuery, callback_data: CheckStartMemb
         await process_paying_for_referral(query.from_user.id, bot)
 
 
+@router.callback_query(BackToMenu.filter(), IsGoodUserFilter())
+async def back_to_menu(query: CallbackQuery, callback_data: BackToMenu, state: FSMContext, lang: Lang):
+    await state.clear()
+    if callback_data.remove_source:
+        await query.message.delete()
+    await query.message.answer(text=get_message(MessageKey.MENU_MESSAGE, lang),
+                               reply_markup=get_user_menu_kbm(lang))
+
+
 @router.message(F.text == "/menu", IsGoodUserFilter())
-async def menu(message: types.Message, lang: Lang) -> None:
+async def menu(message: types.Message, lang: Lang, state: FSMContext) -> None:
     await message.delete()
+    await state.clear()
     await message.answer(text=get_message(MessageKey.MENU_MESSAGE, lang),
                          reply_markup=get_user_menu_kbm(lang))
 

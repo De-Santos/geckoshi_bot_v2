@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
-from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType, TransactionInitiatorType, MailingStatus, MailingMessageStatus
+from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType, TransactionInitiatorType, MailingStatus, MailingMessageStatus, BetType
 from lang.lang_based_provider import Lang
 
 
@@ -54,6 +54,7 @@ class Transaction(Base):
     created_by: Mapped[User] = relationship("User", foreign_keys=[created_by_id])
     created_at = mapped_column("created_at", DateTime, default=now)
     abortedAt = Column(DateTime)
+    trace: Mapped[dict] = mapped_column(JSONB, server_default=func.jsonb('{}'))
 
 
 class Setting(Base):
@@ -91,3 +92,16 @@ class MailingMessage(Base):
     created_at = mapped_column("created_at", DateTime, default=now)
     sent_at = mapped_column(DateTime, nullable=True)
     failed_message: Mapped[str] = mapped_column(type_=Text, nullable=True)
+
+
+class SlotsBetHistory(Base):
+    __tablename__ = 'slots_bet_history'
+
+    id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True, autoincrement=True)
+    bet_amount: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
+    win_amount: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)
+    type: Mapped[BetType] = mapped_column(SQLEnum(BetType))
+    player_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
+    player: Mapped[User] = relationship("User", foreign_keys=[player_id])
+    created_at = mapped_column("created_at", DateTime, default=now)
+    trace_uuid: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), default=uuid.uuid4)

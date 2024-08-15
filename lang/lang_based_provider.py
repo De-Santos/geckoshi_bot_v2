@@ -33,8 +33,11 @@ def get_message(m: MessageKey, lng: Lang = None) -> str:
     return msg
 
 
-def get_keyboard(k: KeyboardKey, lng: Lang) -> list[list["M"]]:
-    d: dict = keyboard_data[lng][k]
+def get_keyboard(k: KeyboardKey, lng: Lang = None) -> list[list["M"]]:
+    if lng:
+        d: dict = keyboard_data[lng][k]
+    else:
+        d: dict = keyboard_data[k]
     if d is None or not isinstance(d, list):
         raise ValueError("The message is not a valid dict")
     return d

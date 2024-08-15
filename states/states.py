@@ -19,3 +19,8 @@ class MailingStates(StatesGroup):
     preview_inline_button = State()
     preview = State()
     queue_fill_failed = State()
+
+
+class SlotsStates(StatesGroup):
+    enter_amount = State()
+    play = State()

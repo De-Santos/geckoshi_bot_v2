@@ -21,6 +21,7 @@ def calculate_uptime() -> str:
     return humanfriendly.format_timespan(uptime_seconds)
 
 
+@router.message(F.text == "/a", UserExistsFilter())
 @router.message(F.text == "/admin_panel", UserExistsFilter())
 async def admin_menu_handler(message: Message, lang: Lang) -> None:
     await message.delete()

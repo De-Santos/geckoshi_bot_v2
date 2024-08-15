@@ -45,6 +45,10 @@ class MessageKey(Enum):
     ADMIN_MAILING_CANCEL_FAILED = "admin_mailing_cancel_failed"
     ADMIN_MAILING_CANCEL_SUCCESSFUL = "admin_mailing_cancel_successful"
     ADMIN_MAILING_FAILED_TO_SEND_MESSAGES_IN_QUEUE = "admin_mailing_start_retry"
+    SLOTS_GAME_MENU = "slots_game_menu"
+    SLOTS_NOT_ENOUGH_TO_PLAY = "slots_not_enough_to_play"
+    SLOTS_WIN = "slots_win"
+    SLOTS_LOSS = "slots_loss"
 
 
 class KeyboardKey(Enum):
@@ -64,6 +68,9 @@ class KeyboardKey(Enum):
     ADMIN_MAILING_START = "admin_mailing_start"
     ADMIN_MAILING_MENU = "admin_mailing_menu"
     ADMIN_MAILING_QUEUE_FILL_RETRY = "admin_mailing_queue_fill_retry"
+    SLOTS_MENU = "slots_menu"
+    SLOTS_CONTINUE_PLAY = "slots_continue_play"
+    BACK_TO_MENU = "back_to_menu"
 
 
 class M:
@@ -73,6 +80,7 @@ class M:
     with_url_placeholder: bool = False
     callback_class: Any = None
     with_callback_param_required: bool = False
+    with_text_param_required: bool = False
 
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
@@ -220,6 +228,18 @@ class UpdateMailingStatistic(CallbackData, prefix="update-mailing-stat"):
     mailing_id: int
 
 
+class SlotsPlay(CallbackData, prefix="slots-play"):
+    amount: int
+
+
+class InlineKeyboardChange(CallbackData, prefix="inline-keyboard-change"):
+    pass
+
+
+class BackToMenu(CallbackData, prefix="back-to-menu"):
+    remove_source: bool
+
+
 message_data = {
     MessageKey.START: """<b>Geckoshi Аирдроп первый в мире инвестиционной мем монеты 🦎 Ниже выберите подходящий вам язык 🌐 и начните зарабатывать $GMEME прямо сейчас!\n\n____\n\n\nGeckoshi Airdrop the world's first investment meme coin 🦎 Below, select the lang that suits you 🌐 and start earning $GMEME right now!</b>""",
 
@@ -256,10 +276,36 @@ message_data = {
         MessageKey.ADMIN_MAILING_CANCEL_FAILED: "Не возможно отменить рассылку.",
         MessageKey.ADMIN_MAILING_CANCEL_SUCCESSFUL: "Рассылка №{mailing_id} отменена успешно!",
         MessageKey.ADMIN_MAILING_FAILED_TO_SEND_MESSAGES_IN_QUEUE: "Произошла ошибка при добалвении сообщений в queue.",
+        MessageKey.SLOTS_GAME_MENU: """Добро пожаловать в раздел слотов.\nЗдесь ты можешь выграть много денег, вот выйгрышные комбинации:\n1. 🦎🦎🦎 - x10\n2.  🏜️🏜️🏜️ - x5\n3. 🏖️🏖️🏖️ - x3\n4. 🏕️🏕️🏕️ - x2\n5. ✈️✈️✈️ - x1.8\n6. 🚀🚀🚀 - x1.7\n7. 🪲🪲🪲 - x1.5\n8. 🐞🐞🐞 - x1.2\n9. 🐝🐝🐝 - x1.05\nУдачи! - она тебе пригодиться.\nНа сколько $GMEME играем ?""",
+        MessageKey.SLOTS_NOT_ENOUGH_TO_PLAY: "У тебя недостаточно баланса чтоб играть. Попробуй другую сумму.",
+        MessageKey.SLOTS_WIN: "Поздравляем ты выйграл: {amount} $GMEME\nТвоя выгрышная комбинация: {combination}",
+        MessageKey.SLOTS_LOSS: "К сложелению в этот раз тебе не повезло - ты проиграл ставку ({amount} $GMEME).\nТвоя комбинация: {combination}\nПопробуй ещё раз, тебе обязательно повезёт!",
     },
 }
-
 keyboard_data = {
+    KeyboardKey.SLOTS_MENU: [
+        [
+            M(text="{amount} $GMEME", callback_class=SlotsPlay, with_callback_param_required=True, with_text_param_required=True),
+        ],
+        [
+            M(text="{amount} $GMEME", callback_class=SlotsPlay, with_callback_param_required=True, with_text_param_required=True),
+        ],
+        [
+            M(text="{amount} $GMEME", callback_class=SlotsPlay, with_callback_param_required=True, with_text_param_required=True),
+        ],
+        [
+            M(text="{amount} $GMEME", callback_class=SlotsPlay, with_callback_param_required=True, with_text_param_required=True),
+        ],
+        [
+            M(text="{amount} $GMEME", callback_class=SlotsPlay, with_callback_param_required=True, with_text_param_required=True),
+        ],
+        [
+            M(text="{amount} $GMEME", callback_class=SlotsPlay, with_callback_param_required=True, with_text_param_required=True),
+        ],
+        [
+            M(text="{amount} $GMEME", callback_class=SlotsPlay, with_callback_param_required=True, with_text_param_required=True),
+        ],
+    ],
     Lang.RU: {
         KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB: [
             [
@@ -386,5 +432,18 @@ keyboard_data = {
                 M(text="Повторить поптыку", callback_class=QueueFillMailingRetry, with_callback_param_required=True),
             ],
         ],
-    }
+        KeyboardKey.SLOTS_CONTINUE_PLAY: [
+            [
+                M(text="Повторить ставку", callback_class=SlotsPlay, with_callback_param_required=True),
+            ],
+            [
+                M(text="Изменить ставку", callback_class=InlineKeyboardChange),
+            ],
+        ],
+        KeyboardKey.BACK_TO_MENU: [
+            [
+                M(text="❌ Вернуться в меню", callback_class=BackToMenu, with_callback_param_required=True),
+            ],
+        ],
+    },
 }
