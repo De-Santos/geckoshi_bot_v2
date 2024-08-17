@@ -1,13 +1,13 @@
 import datetime
 import uuid
-from typing import List, Optional
+from typing import Optional
 
 from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Numeric, Text, func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
-from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType, TransactionInitiatorType, MailingStatus, MailingMessageStatus, BetType
+from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType, TransactionInitiatorType, MailingStatus, MailingMessageStatus, BetType, TaskType, CurrencyType
 from lang.lang_based_provider import Lang
 
 
@@ -20,6 +20,7 @@ class User(Base):
 
     telegram_id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True)
     balance: Mapped[int] = mapped_column(type_=Numeric, default=0)
+    bmeme_balance: Mapped[int] = mapped_column(type_=Numeric, default=0)
     referred_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger)
     blocked: Mapped[bool] = mapped_column(default=False)
     language: Mapped[Lang] = mapped_column(SQLEnum(Lang), default=Lang.EN)
@@ -29,8 +30,6 @@ class User(Base):
     created_at = mapped_column("created_at", DateTime, default=now, index=True)
     deleted_at = Column(DateTime, default=None)
 
-    referrals: Mapped[List["User"]] = relationship("User", backref="referred_by", remote_side='User.telegram_id')
-
 
 class Transaction(Base):
     __tablename__ = 'transactions'
@@ -39,6 +38,7 @@ class Transaction(Base):
     operation: Mapped[TransactionOperation] = mapped_column(SQLEnum(TransactionOperation), nullable=False)
     type: Mapped[TransactionType] = mapped_column(SQLEnum(TransactionType), nullable=False)
     amount: Mapped[int] = mapped_column(type_=BigInteger)
+    currency_type: Mapped[CurrencyType] = mapped_column(SQLEnum(CurrencyType), nullable=False)
     destination_balance_before: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
     destination_balance_after: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
     source_balance_before: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
@@ -75,8 +75,8 @@ class Mailing(Base):
     status: Mapped[MailingStatus] = mapped_column(SQLEnum(MailingStatus))
     created_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
     created_by: Mapped[User] = relationship("User", foreign_keys=[created_by_id])
-    created_at = mapped_column("created_at", DateTime, default=now)
-    finished_at = mapped_column("finished_at", DateTime, nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime, default=now)
+    finished_at: Mapped[datetime.datetime] = mapped_column("finished_at", DateTime, nullable=True)
 
 
 class MailingMessage(Base):
@@ -89,8 +89,8 @@ class MailingMessage(Base):
     destination: Mapped[User] = relationship("User", foreign_keys=[destination_id])
     mailing_id: Mapped[int] = mapped_column(ForeignKey('mailings.id'), type_=BigInteger, nullable=False)
     mailing: Mapped[Mailing] = relationship("Mailing", foreign_keys=[mailing_id])
-    created_at = mapped_column("created_at", DateTime, default=now)
-    sent_at = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime, default=now)
+    sent_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
     failed_message: Mapped[str] = mapped_column(type_=Text, nullable=True)
 
 
@@ -103,5 +103,48 @@ class SlotsBetHistory(Base):
     type: Mapped[BetType] = mapped_column(SQLEnum(BetType))
     player_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
     player: Mapped[User] = relationship("User", foreign_keys=[player_id])
-    created_at = mapped_column("created_at", DateTime, default=now)
+    created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime, default=now)
     trace_uuid: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), default=uuid.uuid4)
+
+
+class Task(Base):
+    __tablename__ = 'tasks'
+
+    id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True, autoincrement=True)
+
+    type: Mapped[TaskType] = mapped_column(SQLEnum(TaskType))
+    title: Mapped[str] = mapped_column(type_=Text, nullable=True)
+    text: Mapped[str] = mapped_column(type_=Text, nullable=True)
+    markup: Mapped[dict] = mapped_column(type_=JSONB, default=None, comment="serialized 'InlineKeyboardMarkup'")
+    require_subscriptions: Mapped[list] = mapped_column(type_=JSONB, server_default=func.jsonb('[]'))
+
+    coin_type: Mapped[CurrencyType] = mapped_column(SQLEnum(CurrencyType), nullable=False)
+
+    done_limit: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)
+    coin_pool: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)
+    done_reward: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)
+
+    created_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
+    created_by: Mapped[User] = relationship("User", foreign_keys=[created_by_id])
+
+    created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime, default=now)
+    expires_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
+
+    deleted_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=True)
+    deleted_by: Mapped[User] = relationship("User", foreign_keys=[deleted_by_id])
+    deleted_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
+
+    trace_uuid: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), default=uuid.uuid4)
+
+
+class TaskDoneHistory(Base):
+    __tablename__ = 'tasks_done_history'
+
+    id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True, autoincrement=True)
+    reward: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)
+
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
+    user: Mapped[User] = relationship("User", foreign_keys=[user_id])
+
+    task_id: Mapped[int] = mapped_column(ForeignKey('tasks.id'), type_=BigInteger, nullable=False)
+    task: Mapped[Mailing] = relationship("Task", foreign_keys=[task_id])

@@ -4,6 +4,7 @@ from typing import Optional, List, Union
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from database import TaskType
 from lang.lang_based_provider import *
 from lang_based_variable import Lang, KeyboardKey, LangSetCallback
 
@@ -114,12 +115,12 @@ def get_yes_no_kbm(lang: Lang) -> InlineKeyboardMarkup:
     return build_markup(lang, KeyboardKey.YES_NO)
 
 
-def get_mailing_add_button_or_preview_kbm(lang: Lang) -> InlineKeyboardMarkup:
-    return build_markup(lang, KeyboardKey.ADMIN_MAILING_ADD_BUTTON_OR_PREVIEW)
+def get_add_button_or_preview_kbm(lang: Lang) -> InlineKeyboardMarkup:
+    return build_markup(lang, KeyboardKey.ADMIN_ADD_BUTTON_OR_PREVIEW)
 
 
-def get_mailing_inline_button_preview_kbm(lang: Lang, markup: InlineKeyboardMarkup | None = None) -> InlineKeyboardMarkup:
-    return build_markup(lang, KeyboardKey.ADMIN_MAILING_INLINE_BUTTON_PREVIEW, source_markup=markup)
+def get_inline_button_preview_kbm(lang: Lang, markup: InlineKeyboardMarkup | None = None) -> InlineKeyboardMarkup:
+    return build_markup(lang, KeyboardKey.ADMIN_INLINE_BUTTON_PREVIEW, source_markup=markup)
 
 
 def get_mailing_start_kbm(lang: Lang) -> InlineKeyboardMarkup:
@@ -153,3 +154,28 @@ def get_slots_continue_kbm(lang: Lang, params: list[dict]) -> InlineKeyboardMark
 
 def with_back_to_menu_button(lang: Lang, source_markup: InlineKeyboardMarkup = None, remove_source: bool = False) -> InlineKeyboardMarkup:
     return build_markup(lang, KeyboardKey.BACK_TO_MENU, source_markup=source_markup, callback_data_param=[{'remove_source': remove_source}])
+
+
+def get_task_menu_kbm(lang: Lang) -> InlineKeyboardMarkup:
+    return build_markup(lang, KeyboardKey.TASK_MENU)
+
+
+def get_task_type_menu_kbm() -> InlineKeyboardMarkup:
+    params = [{'task_type': i} for i in TaskType]
+    return build_markup(None, KeyboardKey.TASK_TYPE_MENU, callback_data_param=params)
+
+
+def get_add_more_buttons_or_continue_kbm(lang: Lang) -> InlineKeyboardMarkup:
+    return build_markup(lang, KeyboardKey.ADMIN_ADD_MORE_BUTTONS_OR_CONTINUE)
+
+
+def get_continue_or_retry_kbm(lang: Lang) -> InlineKeyboardMarkup:
+    return build_markup(lang, KeyboardKey.CONTINUE_OR_RETRY)
+
+
+def get_save_kbm(lang: Lang, source_markup: InlineKeyboardMarkup = None) -> InlineKeyboardMarkup:
+    return build_markup(lang, KeyboardKey.SAVE, source_markup=source_markup)
+
+
+def get_delete_task_menu_kbm(lang: Lang, task_id: int) -> InlineKeyboardMarkup:
+    return build_markup(lang, KeyboardKey.DELETE_TASK_MENU, callback_data_param=[{'task_id': task_id}])

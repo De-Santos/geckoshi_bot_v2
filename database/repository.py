@@ -3,11 +3,12 @@ import uuid
 from datetime import datetime
 from typing import Any, Sequence
 
-from sqlalchemy import select, func, desc, Row, update
+from sqlalchemy import and_, or_, func
+from sqlalchemy import select, desc, Row, update, ScalarResult
 from sqlalchemy.orm import Session
 
 import cache
-from database import User, Setting, SettingsKey, MailingMessageStatus, MailingMessage, Mailing, now, MailingStatus
+from database import User, Setting, SettingsKey, MailingMessageStatus, MailingMessage, Mailing, now, MailingStatus, Task, TaskType, TaskDoneHistory
 from lang.lang_based_provider import Lang
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ async def has_premium(s: Session, tg_user_id: int) -> bool:
     return result.scalar()
 
 
-@cache.cacheable(ttl="10m")
+@cache.cacheable(ttl="1m")
 async def is_good_user_by_tg(s: Session, tg_user_id: int) -> bool:
     ext = select(User) \
         .where(User.telegram_id.__eq__(tg_user_id)) \
@@ -257,3 +258,99 @@ def finish_mailing(s: Session, mailing_id: int) -> None:
         s.execute(stmt)
     except Exception as e:
         logger.error(f"Failed to finish mailing by id: {mailing_id}: {e}")
+
+
+def get_admin_ids(s: Session) -> ScalarResult[Any]:
+    stmt = (select(User.telegram_id)
+            .where(User.is_admin.__eq__(True)))
+    result = s.execute(stmt).scalars()
+    return result
+
+
+def get_active_tasks(session: Session):
+    # Subquery to count the number of times each DONE_BASED task has been completed
+    done_subquery = (
+        session.query(
+            TaskDoneHistory.task_id,
+            func.count(TaskDoneHistory.id).label('done_count')
+        )
+        .group_by(TaskDoneHistory.task_id)
+        .subquery()
+    )
+
+    # Join the Task table with both subqueries
+    active_tasks = session.query(Task).outerjoin(
+        done_subquery, Task.id == done_subquery.c.task_id
+    ).filter(
+        or_(
+            # Time-based tasks: Not expired or no expiration time set
+            and_(
+                Task.type == TaskType.TIME_BASED,
+                or_(Task.expires_at.is_(None), Task.expires_at > now())
+            ),
+            # Subscription-based tasks: done_limit is greater than the count of completed tasks
+            and_(
+                Task.type == TaskType.DONE_BASED,
+                or_(Task.done_limit.is_(None), Task.done_limit > done_subquery.c.done_count)
+            ),
+            # Pool-based tasks: coin_pool is greater than the sum of distributed rewards
+            and_(
+                Task.type == TaskType.POOL_BASED,
+                or_(Task.coin_pool.is_(None), Task.done_limit > done_subquery.c.done_count)
+            )
+        )
+    ).all()
+
+    return active_tasks
+
+
+def get_active_task_by_id(session: Session, id_: int):
+    # Subquery to count the number of times each DONE_BASED task has been completed
+    done_subquery = (
+        session.query(
+            TaskDoneHistory.task_id,
+            func.count(TaskDoneHistory.id).label('done_count')
+        )
+        .group_by(TaskDoneHistory.task_id)
+        .subquery()
+    )
+
+    # Join the Task table with both subqueries
+    active_task = session.query(Task).outerjoin(
+        done_subquery, Task.id == done_subquery.c.task_id
+    ).filter(
+        and_(
+            Task.id.__eq__(id_),
+            Task.deleted_at.__eq__(None),
+            or_(
+                # Time-based tasks: Not expired or no expiration time set
+                and_(
+                    Task.type == TaskType.TIME_BASED,
+                    or_(Task.expires_at.is_(None), Task.expires_at > now())
+                ),
+                # Subscription-based tasks: done_limit is greater than the count of completed tasks
+                and_(
+                    Task.type == TaskType.DONE_BASED,
+                    or_(Task.done_limit.is_(None), Task.done_limit > done_subquery.c.done_count)
+                ),
+                # Pool-based tasks: coin_pool is greater than the sum of distributed rewards
+                and_(
+                    Task.type == TaskType.POOL_BASED,
+                    or_(Task.coin_pool.is_(None), Task.done_limit > done_subquery.c.done_count)
+                )
+            )
+        )
+    ).one_or_none()
+
+    return active_task
+
+
+def delete_task_by_id(s: Session, task_id: int, deleted_by_id: int) -> None:
+    stmt = (
+        update(Task)
+        .where(Task.id.__eq__(task_id))
+        .values(deleted_at=now(), deleted_by_id=deleted_by_id)
+    )
+    s.execute(stmt)
+    s.commit()
+    s.close()

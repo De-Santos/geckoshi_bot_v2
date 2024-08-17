@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Any
 
 from aiogram.filters.callback_data import CallbackData
+from pydantic import BaseModel
 
 
 class Lang(Enum):
@@ -35,10 +36,10 @@ class MessageKey(Enum):
     ADMIN_CHANGE_REF_PAY_SUCCESSFULLY = "admin_change_ref_pay_successfully"
     ADMIN_ENTER_MAILING_MESSAGE = "admin_enter_mailing_message"
     ADMIN_MAILING_HAS_INLINE_BUTTON = "admin_mailing_has_inline_button"
-    ADMIN_MAILING_ENTER_INLINE_BUTTON_TEXT = "admin_mailing_enter_inline_button_text"
-    ADMIN_MAILING_ENTER_INLINE_BUTTON_URL = "admin_mailing_enter_inline_button_url"
-    ADMIN_MAILING_ADD_INLINE_BUTTON = "admin_mailing_add_inline_button"
-    ADMIN_MAILING_INLINE_BUTTON_PREVIEW = "admin_mailing_inline_button_preview"
+    ADMIN_ENTER_INLINE_BUTTON_TEXT = "admin_enter_inline_button_text"
+    ADMIN_ENTER_INLINE_BUTTON_URL = "admin_enter_inline_button_url"
+    ADMIN_ADD_INLINE_BUTTON = "admin_add_inline_button"
+    ADMIN_INLINE_BUTTON_PREVIEW = "admin_inline_button_preview"
     ADMIN_MAILING_MESSAGE_LOOKS_LIKE = "admin_mailing_message_looks_like"
     ADMIN_MAILING_STATS = "admin_mailing_stats"
     REQUEST_PROCESSING = "request_processing"
@@ -49,6 +50,19 @@ class MessageKey(Enum):
     SLOTS_NOT_ENOUGH_TO_PLAY = "slots_not_enough_to_play"
     SLOTS_WIN = "slots_win"
     SLOTS_LOSS = "slots_loss"
+    ADMIN_TASK_MENU = "admin_task_menu"
+    ADMIN_TASK_TYPE_SELECT = "admin_task_type_select"
+    ADMIN_TASK_TITLE_REQUEST = "admin_task_title_request"
+    ADMIN_TASK_TEXT_REQUEST = "admin_task_text_request"
+    ADMIN_TASK_CHAT_SUBSCRIPTIONS_REQUIRE_REQUEST = "admin_task_chat_subscription_require_request"
+    ADMIN_TASK_EXPIRE_TIME_REQUEST = "admin_task_expire_time_request"
+    ADMIN_TASK_GMEME_DONE_REWARD_REQUEST = "admin_task_gmeme_done_reward_request"
+    ADMIN_TASK_BMEME_DONE_REWARD_REQUEST = "admin_task_bmeme_done_reward_request"
+    TIME_BASED_TASK = "time_based_task"
+    ADMIN_TASK_SAVED_SUCCESSFULLY = "admin_task_saved_successfully"
+    ADMIN_TASK_ID_REQUEST = "admin_task_id_request"
+    ADMIN_CONFIRM_TASK_DELETE = "admin_confirm_task_delete"
+    ADMIN_TASK_DELETED_SUCCESSFULLY = "admin_task_deleted_successfully"
 
 
 class KeyboardKey(Enum):
@@ -63,17 +77,24 @@ class KeyboardKey(Enum):
     BUY_PREMIUM_MENU = "buy_premium_menu"
     ADMIN_PANEL = "admin_panel"
     YES_NO = "yes_no"
-    ADMIN_MAILING_ADD_BUTTON_OR_PREVIEW = "admin_mailing_add_button_or_preview"
-    ADMIN_MAILING_INLINE_BUTTON_PREVIEW = "admin_mailing_inline_button_preview"
+    ADMIN_ADD_BUTTON_OR_PREVIEW = "admin_mailing_add_button_or_preview"
+    ADMIN_ADD_MORE_BUTTONS_OR_CONTINUE = "admin_add_more_buttons"
+    ADMIN_INLINE_BUTTON_PREVIEW = "admin_inline_button_preview"
     ADMIN_MAILING_START = "admin_mailing_start"
     ADMIN_MAILING_MENU = "admin_mailing_menu"
     ADMIN_MAILING_QUEUE_FILL_RETRY = "admin_mailing_queue_fill_retry"
     SLOTS_MENU = "slots_menu"
     SLOTS_CONTINUE_PLAY = "slots_continue_play"
     BACK_TO_MENU = "back_to_menu"
+    TASK_MENU = "task_menu"
+    TASK_TYPE_MENU = "task_type_menu"
+    RETRY = "retry"
+    CONTINUE_OR_RETRY = "continue_or_retry"
+    SAVE = "save"
+    DELETE_TASK_MENU = "delete_task_menu"
 
 
-class M:
+class M(BaseModel):
     id_: str = None
     text: str
     url: str = None
@@ -81,10 +102,6 @@ class M:
     callback_class: Any = None
     with_callback_param_required: bool = False
     with_text_param_required: bool = False
-
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
 
     def text(self, text: str) -> "M":
         self.text = text
@@ -181,7 +198,6 @@ class CreateVoucher(CallbackData, prefix="create-voucher"):
 
 class TaskMenu(CallbackData, prefix="task-menu"):
     pass
-    # id: int
 
 
 class ChangeRefPay(CallbackData, prefix="change-ref-pay"):
@@ -240,6 +256,34 @@ class BackToMenu(CallbackData, prefix="back-to-menu"):
     remove_source: bool
 
 
+class CreateTask(CallbackData, prefix="create-task"):
+    pass
+
+
+class DeleteTaskMenu(CallbackData, prefix="delete-task-menu"):
+    pass
+
+
+class StartCreatingTask(CallbackData, prefix="start-creating-task"):
+    task_type: int
+
+
+class Continue(CallbackData, prefix="continue"):
+    pass
+
+
+class Retry(CallbackData, prefix="retry"):
+    pass
+
+
+class Save(CallbackData, prefix="save"):
+    pass
+
+
+class DeleteTask(CallbackData, prefix="delete-task"):
+    task_id: int
+
+
 message_data = {
     MessageKey.START: """<b>Geckoshi Аирдроп первый в мире инвестиционной мем монеты 🦎 Ниже выберите подходящий вам язык 🌐 и начните зарабатывать $GMEME прямо сейчас!\n\n____\n\n\nGeckoshi Airdrop the world's first investment meme coin 🦎 Below, select the lang that suits you 🌐 and start earning $GMEME right now!</b>""",
 
@@ -266,10 +310,10 @@ message_data = {
         MessageKey.ADMIN_CHANGE_REF_PAY_SUCCESSFULLY: "Вознаграждение за реферала измененно на: {pay_for_ref}",
         MessageKey.ADMIN_ENTER_MAILING_MESSAGE: "Введите текст рассылки или отправьте изображение:",
         MessageKey.ADMIN_MAILING_HAS_INLINE_BUTTON: "Добавить плавающую кнопку-ссылку ?",
-        MessageKey.ADMIN_MAILING_ENTER_INLINE_BUTTON_TEXT: "Введите текст для плавающей кнопки-ссылки:",
-        MessageKey.ADMIN_MAILING_ENTER_INLINE_BUTTON_URL: "Введите url для плавающей кнопки-ссылки:",
-        MessageKey.ADMIN_MAILING_ADD_INLINE_BUTTON: "Плавающая кнопка-ссылка успешно добавлена!",
-        MessageKey.ADMIN_MAILING_INLINE_BUTTON_PREVIEW: "Кнопка будет выглядеть так:",
+        MessageKey.ADMIN_ENTER_INLINE_BUTTON_TEXT: "Введите текст для плавающей кнопки-ссылки:",
+        MessageKey.ADMIN_ENTER_INLINE_BUTTON_URL: "Введите url для плавающей кнопки-ссылки:",
+        MessageKey.ADMIN_ADD_INLINE_BUTTON: "Плавающая кнопка-ссылка успешно добавлена!",
+        MessageKey.ADMIN_INLINE_BUTTON_PREVIEW: "Кнопка будет выглядеть так:",
         MessageKey.ADMIN_MAILING_MESSAGE_LOOKS_LIKE: "^^^ - так будет выглядеть сообщение для рассылки.",
         MessageKey.ADMIN_MAILING_STATS: "Статистика рассылки №{mailing_id}:\n Юзеров захвачено: {user_captured}\n Статус: {status}\n Успешно: {successfully}\n В очереди: {in_queue}\n Неуспешно: {failed}\n Отменено: {canceled}\n Всего обработано: {messages_processed} ({messages_processed_percents})\n Время обработки: {processing_time}",
         MessageKey.REQUEST_PROCESSING: "Запрос обрабатываеться...",
@@ -280,8 +324,22 @@ message_data = {
         MessageKey.SLOTS_NOT_ENOUGH_TO_PLAY: "У тебя недостаточно баланса чтоб играть. Попробуй другую сумму.",
         MessageKey.SLOTS_WIN: "Поздравляем ты выйграл: {amount} $GMEME\nТвоя выгрышная комбинация: {combination}",
         MessageKey.SLOTS_LOSS: "К сложелению в этот раз тебе не повезло - ты проиграл ставку ({amount} $GMEME).\nТвоя комбинация: {combination}\nПопробуй ещё раз, тебе обязательно повезёт!",
+        MessageKey.ADMIN_TASK_MENU: "Выберете ваше дейвствие",
+        MessageKey.ADMIN_TASK_TYPE_SELECT: "Выберете тип задания",
+        MessageKey.ADMIN_TASK_TITLE_REQUEST: "Введите название задания:",
+        MessageKey.ADMIN_TASK_TEXT_REQUEST: "Введите тект задания:",
+        MessageKey.ADMIN_TASK_CHAT_SUBSCRIPTIONS_REQUIRE_REQUEST: "Введите chat_id - каналов, груп, через запятую.",
+        MessageKey.ADMIN_TASK_EXPIRE_TIME_REQUEST: "Введите время жизни задачи.\nexample: 10h",
+        MessageKey.ADMIN_TASK_GMEME_DONE_REWARD_REQUEST: "Введите сумму вознаграждения в $GMEME.",
+        MessageKey.ADMIN_TASK_BMEME_DONE_REWARD_REQUEST: "Введите сумму вознаграждения в $BMEME.",
+        MessageKey.TIME_BASED_TASK: "<b>{title}</b>\n\nid: {task_id}\nОписание: {text}\nОплата: {done_reward} $GMEME\nОсталось времени: {expires_in}",
+        MessageKey.ADMIN_TASK_SAVED_SUCCESSFULLY: "Задача с id: {task_id} была сохранена успешно",
+        MessageKey.ADMIN_TASK_ID_REQUEST: "Введите айди задачи:",
+        MessageKey.ADMIN_CONFIRM_TASK_DELETE: "^^^- удалть эту задачу ?",
+        MessageKey.ADMIN_TASK_DELETED_SUCCESSFULLY: "Задача удалена успешно!",
     },
 }
+
 keyboard_data = {
     KeyboardKey.SLOTS_MENU: [
         [
@@ -304,6 +362,17 @@ keyboard_data = {
         ],
         [
             M(text="{amount} $GMEME", callback_class=SlotsPlay, with_callback_param_required=True, with_text_param_required=True),
+        ],
+    ],
+    KeyboardKey.TASK_TYPE_MENU: [
+        [
+            M(text="time based", callback_class=StartCreatingTask, with_callback_param_required=True),
+        ],
+        [
+            M(text="done based", callback_class=StartCreatingTask, with_callback_param_required=True),
+        ],
+        [
+            M(text="pool based", callback_class=StartCreatingTask, with_callback_param_required=True),
         ],
     ],
     Lang.RU: {
@@ -403,7 +472,7 @@ keyboard_data = {
                 M(text="Нет", callback_class=No)
             ]
         ],
-        KeyboardKey.ADMIN_MAILING_ADD_BUTTON_OR_PREVIEW: [
+        KeyboardKey.ADMIN_ADD_BUTTON_OR_PREVIEW: [
             [
                 M(text="Добавить ещё кнопку", callback_class=AddMoreInlineButton),
             ],
@@ -411,7 +480,15 @@ keyboard_data = {
                 M(text="Просмотреть сообщение", callback_class=MailingMessagePreview),
             ],
         ],
-        KeyboardKey.ADMIN_MAILING_INLINE_BUTTON_PREVIEW: [
+        KeyboardKey.ADMIN_ADD_MORE_BUTTONS_OR_CONTINUE: [
+            [
+                M(text="Добавить ещё кнопку", callback_class=AddMoreInlineButton),
+            ],
+            [
+                M(text="Продолжить", callback_class=Continue),
+            ],
+        ],
+        KeyboardKey.ADMIN_INLINE_BUTTON_PREVIEW: [
             [
                 M(text="Добавить", callback_class=ApproveInlineButton),
             ],
@@ -443,6 +520,28 @@ keyboard_data = {
         KeyboardKey.BACK_TO_MENU: [
             [
                 M(text="❌ Вернуться в меню", callback_class=BackToMenu, with_callback_param_required=True),
+            ],
+        ],
+        KeyboardKey.TASK_MENU: [
+            [
+                M(text="Создание", callback_class=CreateTask),
+                M(text="Удаление", callback_class=DeleteTaskMenu),
+            ],
+        ],
+        KeyboardKey.CONTINUE_OR_RETRY: [
+            [
+                M(text="Продолжить", callback_class=Continue),
+                M(text="Повторить", callback_class=Retry),
+            ],
+        ],
+        KeyboardKey.SAVE: [
+            [
+                M(text="Сохранить", callback_class=Save),
+            ],
+        ],
+        KeyboardKey.DELETE_TASK_MENU: [
+            [
+                M(text="Удалить", callback_class=DeleteTask, with_callback_param_required=True),
             ],
         ],
     },

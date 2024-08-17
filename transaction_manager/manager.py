@@ -1,10 +1,12 @@
+from typing import Tuple
+
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from database import TransactionOperation, get_session, Transaction, get_user_by_tg, User, TransactionStatus, TransactionType, TransactionInitiatorType
+from database import TransactionOperation, get_session, Transaction, get_user_by_tg, User, TransactionStatus, TransactionType, TransactionInitiatorType, CurrencyType
 
 
-def __process_operation(balance: int, operation: TransactionOperation, amount: int) -> int:
+def __calculate_operation(balance: int, operation: TransactionOperation, amount: int) -> int:
     if operation == TransactionOperation.OVERRIDE:
         return amount
     elif operation == TransactionOperation.INCREMENT:
@@ -12,8 +14,22 @@ def __process_operation(balance: int, operation: TransactionOperation, amount: i
     elif operation == TransactionOperation.DECREMENT:
         nb = balance - amount
         if nb < 0:
-            raise Exception(f"balance can't be negative number")
+            raise Exception("balance can't be negative number")
         return nb
+
+
+def __process_operation(balance: int, *args) -> Tuple[int, int]:
+    return balance, __calculate_operation(balance, *args)
+
+
+def __currency_based_operation(user: User, operation: TransactionOperation,
+                               currency_type: CurrencyType, amount: int) -> Tuple[int, int]:
+    if currency_type == CurrencyType.GMEME:
+        return __process_operation(user.balance, operation, amount)
+    elif currency_type == CurrencyType.BMEME:
+        return __process_operation(user.bmeme_balance, operation, amount)
+    else:
+        raise Exception(f"Unhandled currency type: {currency_type}")
 
 
 def make_transaction(destination: int | None, source_user_id: int | None, created_by: int, operation: TransactionOperation, amount: int,
@@ -26,7 +42,7 @@ def make_transaction(destination: int | None, source_user_id: int | None, create
     if destination is not None:
         destination_user: User = get_user_by_tg(session, destination)
         destination_balance_before = destination_user.balance
-        new_destination_user_balance = __process_operation(destination_user.balance, operation, amount)
+        new_destination_user_balance = __calculate_operation(destination_user.balance, operation, amount)
     source_user: User = get_user_by_tg(session, source_user_id)
     transaction = Transaction(
         operation=operation,
@@ -52,18 +68,19 @@ def make_transaction_from_system(target: int,
                                  created_by: int | None = None,
                                  description: str = None,
                                  trace: dict = None,
-                                 session: Session = None):
+                                 session: Session = None,
+                                 currency_type: CurrencyType = CurrencyType.BMEME):
     if session is None:
         session = get_session()
         session.begin()
     user: User = get_user_by_tg(session, target)
-    new_balance = __process_operation(user.balance, operation, amount)
+    old, new = __currency_based_operation(user, operation, currency_type, amount)
     transaction = Transaction(
         operation=operation,
         type=transaction_type,
         amount=amount,
-        destination_balance_before=user.balance,
-        destination_balance_after=new_balance,
+        destination_balance_before=old,
+        destination_balance_after=new,
         source_balance_before=0,
         source_balance_after=0,
         status=TransactionStatus.COMPLETED,
@@ -74,7 +91,6 @@ def make_transaction_from_system(target: int,
         trace=trace
     )
     session.add(transaction)
-    user.balance = new_balance
     session.commit()
 
 

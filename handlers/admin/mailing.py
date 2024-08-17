@@ -8,13 +8,14 @@ from aiogram.types import CallbackQuery, Message, InputMediaPhoto, InlineKeyboar
 import mailing_processor
 from database import get_session, get_mailing, Mailing, MailingStatus, repository, MailingMessageStatus
 from filters.base_filters import UserExistsFilter
-from keyboard_markup.inline_user_kb import with_exit_button, get_yes_no_kbm, with_step_back_button, get_builder, get_mailing_inline_button_preview_kbm, get_mailing_add_button_or_preview_kbm, get_mailing_start_kbm, get_mailing_menu_kbm, \
+from keyboard_markup.inline_user_kb import with_exit_button, get_yes_no_kbm, with_step_back_button, get_builder, get_inline_button_preview_kbm, get_add_button_or_preview_kbm, get_mailing_start_kbm, get_mailing_menu_kbm, \
     get_mailing_queue_fill_retry_kbm
 from keyboard_markup.json_markup import serialize_inline_keyboard_markup, deserialize_inline_keyboard_markup
 from lang.lang_based_provider import get_message, format_string
 from lang_based_variable import Lang, MailingCallback, MessageKey, Yes, No, StepBack, ApproveInlineButton, AddMoreInlineButton, MailingMessagePreview, StartMailing, StopMailing, QueueFillMailingRetry, UpdateMailingStatistic
 from mailing_processor import MM, fill_queue_by_mailing_id
 from states.states import MailingStates
+from utils.aiogram import extract_message
 
 router = Router(name="admin_mailing_router")
 
@@ -63,7 +64,7 @@ async def has_inline_buttons(m: Message | CallbackQuery, lang: Lang, state: FSMC
 async def request_inline_button_text(query: CallbackQuery, lang: Lang, state: FSMContext) -> None:
     await query.message.delete()
     await state.set_state(MailingStates.enter_inline_button_text)
-    await query.message.answer(text=get_message(MessageKey.ADMIN_MAILING_ENTER_INLINE_BUTTON_TEXT, lang),
+    await query.message.answer(text=get_message(MessageKey.ADMIN_ENTER_INLINE_BUTTON_TEXT, lang),
                                reply_markup=with_step_back_button(lang))
 
 
@@ -76,17 +77,10 @@ async def process_inline_button_text(message: Message, lang: Lang, state: FSMCon
     await request_inline_button_url(message, lang, state)
 
 
-def extract_message(mc: Message | CallbackQuery) -> Message:
-    if isinstance(mc, Message):
-        return mc
-    else:
-        return mc.message
-
-
 @router.callback_query(MailingStates.preview_inline_button, StepBack.filter(), UserExistsFilter())
 async def request_inline_button_url(m: Message | CallbackQuery, lang: Lang, state: FSMContext):
     await state.set_state(MailingStates.enter_inline_button_url)
-    await extract_message(m).answer(text=get_message(MessageKey.ADMIN_MAILING_ENTER_INLINE_BUTTON_URL, lang),
+    await extract_message(m).answer(text=get_message(MessageKey.ADMIN_ENTER_INLINE_BUTTON_URL, lang),
                                     reply_markup=with_step_back_button(lang))
 
 
@@ -100,8 +94,8 @@ async def process_inline_button_url(message: Message, lang: Lang, state: FSMCont
     await state.update_data(inline_button_url=message.text)
     builder.button(text=data.get('inline_button_text'), url=message.text)
     await state.set_state(MailingStates.preview_inline_button)
-    await message.answer(text=get_message(MessageKey.ADMIN_MAILING_INLINE_BUTTON_PREVIEW, lang),
-                         reply_markup=with_step_back_button(lang, get_mailing_inline_button_preview_kbm(lang, builder.as_markup())))
+    await message.answer(text=get_message(MessageKey.ADMIN_INLINE_BUTTON_PREVIEW, lang),
+                         reply_markup=with_step_back_button(lang, get_inline_button_preview_kbm(lang, builder.as_markup())))
 
 
 @router.callback_query(MailingStates.preview_inline_button, ApproveInlineButton.filter(), UserExistsFilter())
@@ -111,8 +105,8 @@ async def process_add_inline_button(query: CallbackQuery, lang: Lang, state: FSM
     builder = get_builder(deserialize_inline_keyboard_markup(data.get('markup', None)).inline_keyboard)
     builder.row(InlineKeyboardButton(text=data.get('inline_button_text'), url=data.get('inline_button_url')))
     await state.update_data(markup=serialize_inline_keyboard_markup(builder.as_markup()))
-    await query.message.answer(text=get_message(MessageKey.ADMIN_MAILING_ADD_INLINE_BUTTON, lang),
-                               reply_markup=with_exit_button(lang, get_mailing_add_button_or_preview_kbm(lang)))
+    await query.message.answer(text=get_message(MessageKey.ADMIN_ADD_INLINE_BUTTON, lang),
+                               reply_markup=with_exit_button(lang, get_add_button_or_preview_kbm(lang)))
 
 
 @router.callback_query(MailingStates.has_inline_button, No.filter(), UserExistsFilter())
@@ -148,7 +142,7 @@ async def start_mailing(query: CallbackQuery, lang: Lang, state: FSMContext) -> 
         await queue_fill_failed(query, lang, state, md.mailing_id)
     else:
         await state.clear()
-        text, markup = await get_mailing_statistic(md.mailing_id, lang)
+        text, markup, _ = await get_mailing_statistic(md.mailing_id, lang)
         await query.message.answer(text=text, reply_markup=markup)
 
 

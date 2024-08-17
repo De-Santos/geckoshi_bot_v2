@@ -48,3 +48,14 @@ class MailingMessageStatus(Enum):
 class BetType(Enum):
     WIN = 0
     LOSS = 1
+
+
+class TaskType(Enum):
+    TIME_BASED = 0
+    DONE_BASED = 1
+    POOL_BASED = 2
+
+
+class CurrencyType(Enum):
+    GMEME = 0
+    BMEME = 1

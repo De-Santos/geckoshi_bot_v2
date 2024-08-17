@@ -24,3 +24,25 @@ class MailingStates(StatesGroup):
 class SlotsStates(StatesGroup):
     enter_amount = State()
     play = State()
+
+
+class TaskStates(StatesGroup):
+    menu = State()
+
+    enter_task_id = State()
+    confirm_delete = State()
+
+    enter_type = State()
+    enter_title = State()
+    enter_text = State()
+    enter_inline_button_text = State()
+    enter_inline_button_url = State()
+    preview_inline_button = State()
+    enter_chat_ids = State()
+    check_chat_ids = State()
+
+    enter_done_reward = State()
+
+    enter_expire_time = State()
+
+    preview = State()
