@@ -73,7 +73,7 @@ def make_transaction_from_system(target: int,
                                  description: str = None,
                                  trace: dict = None,
                                  session: Session = None,
-                                 currency_type: CurrencyType = CurrencyType.BMEME):
+                                 currency_type: CurrencyType = CurrencyType.GMEME):
     if session is None:
         session = get_session()
         session.begin()
