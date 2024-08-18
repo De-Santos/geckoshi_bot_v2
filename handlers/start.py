@@ -35,6 +35,8 @@ async def command_start_handler(message: Message, state: FSMContext, bot: Bot) -
         await message.answer(get_message(msgK.START), reply_markup=get_lang_kbm())
         await cache.drop_cache(is_user_exists_by_tg, cache_id=message.from_user.id)
     else:
+        await message.answer(text="Hi!",
+                             reply_markup=get_reply_keyboard_kbm(Lang.EN, False))
         await message.delete()
 
 
