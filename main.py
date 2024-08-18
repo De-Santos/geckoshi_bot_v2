@@ -11,7 +11,6 @@ from variables import bot, dp, redis
 async def main() -> None:
     await bot.delete_webhook(drop_pending_updates=True)
     dp.include_router(handlers.base_router)
-    # await redis.flushall()
     message_elevator_thread_launcher(ReconnectingMessageConsumer(asyncio.get_event_loop()))
     await dp.start_polling(bot)
 
