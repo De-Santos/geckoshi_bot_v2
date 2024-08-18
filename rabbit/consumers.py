@@ -256,7 +256,6 @@ class MessageConsumer(object):
             self.nack_message(basic_deliver.delivery_tag)
 
     async def __send_message(self, msg: MessageDto, basic_deliver) -> None:
-        await asyncio.sleep(5)
         logger.info("Start message sending: %s", msg)
         s = get_session()
         mm = get_mailing_message(s, msg.mailing_message_id)
