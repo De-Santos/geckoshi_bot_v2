@@ -4,6 +4,7 @@ from typing import Any
 
 class TraceType(Enum):
     SLOTS_BET = 1
+    TASK_DONE = 2
 
 
 def generate_trace(trace_t: TraceType, connector: str | int) -> dict[int, Any]:

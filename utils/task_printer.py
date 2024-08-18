@@ -16,6 +16,6 @@ def print_task(lang: Lang, task: Task) -> (str, InlineKeyboardMarkup):
                               title=task.title,
                               text=task.text,
                               done_reward=task.done_reward,
-                              expires_in=humanfriendly.format_timespan(task.expires_at.astimezone(datetime.UTC) - now())),
+                              expires_in=humanfriendly.format_timespan(task.expires_at.replace(tzinfo=datetime.UTC) - now())),
 
                 deserialize_inline_keyboard_markup(task.markup))

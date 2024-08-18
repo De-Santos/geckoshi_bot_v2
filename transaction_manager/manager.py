@@ -25,9 +25,13 @@ def __process_operation(balance: int, *args) -> Tuple[int, int]:
 def __currency_based_operation(user: User, operation: TransactionOperation,
                                currency_type: CurrencyType, amount: int) -> Tuple[int, int]:
     if currency_type == CurrencyType.GMEME:
-        return __process_operation(user.balance, operation, amount)
+        old, new = __process_operation(user.balance, operation, amount)
+        user.balance = new
+        return old, new
     elif currency_type == CurrencyType.BMEME:
-        return __process_operation(user.bmeme_balance, operation, amount)
+        old, new = __process_operation(user.bmeme_balance, operation, amount)
+        user.bmeme_balance = new
+        return old, new
     else:
         raise Exception(f"Unhandled currency type: {currency_type}")
 
@@ -79,6 +83,7 @@ def make_transaction_from_system(target: int,
         operation=operation,
         type=transaction_type,
         amount=amount,
+        currency_type=currency_type,
         destination_balance_before=old,
         destination_balance_after=new,
         source_balance_before=0,

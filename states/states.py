@@ -26,7 +26,7 @@ class SlotsStates(StatesGroup):
     play = State()
 
 
-class TaskStates(StatesGroup):
+class AdminTaskStates(StatesGroup):
     menu = State()
 
     enter_task_id = State()
@@ -46,3 +46,8 @@ class TaskStates(StatesGroup):
     enter_expire_time = State()
 
     preview = State()
+
+
+class TaskStates(StatesGroup):
+    menu = State()
+    select = State()

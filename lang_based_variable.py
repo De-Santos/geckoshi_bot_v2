@@ -63,6 +63,11 @@ class MessageKey(Enum):
     ADMIN_TASK_ID_REQUEST = "admin_task_id_request"
     ADMIN_CONFIRM_TASK_DELETE = "admin_confirm_task_delete"
     ADMIN_TASK_DELETED_SUCCESSFULLY = "admin_task_deleted_successfully"
+    CHOOSE_TASK_TYPE = "choose_task_type"
+    TASK_ENDED = "task_ended"
+    TASK_DONE_SUCCESSFULLY = "task_done_successfully"
+    TASK_DONE_UNSUCCESSFULLY = "task_done_unsuccessfully"
+    TASK_ALREADY_HAS_DONE = "task_already_has_done"
 
 
 class KeyboardKey(Enum):
@@ -87,11 +92,13 @@ class KeyboardKey(Enum):
     SLOTS_CONTINUE_PLAY = "slots_continue_play"
     BACK_TO_MENU = "back_to_menu"
     TASK_MENU = "task_menu"
+    ADMIN_TASK_TYPE_MENU = "admin_task_type_menu"
     TASK_TYPE_MENU = "task_type_menu"
     RETRY = "retry"
     CONTINUE_OR_RETRY = "continue_or_retry"
     SAVE = "save"
     DELETE_TASK_MENU = "delete_task_menu"
+    SELECT_TASK_NAV_MENU = "select_task_nav_menu"
 
 
 class M(BaseModel):
@@ -284,6 +291,16 @@ class DeleteTask(CallbackData, prefix="delete-task"):
     task_id: int
 
 
+class TaskSelect(CallbackData, prefix="task-select"):
+    task_type: int
+    offset: int
+    disabled: bool = False
+
+
+class TaskDone(CallbackData, prefix="task-done"):
+    task_id: int
+
+
 message_data = {
     MessageKey.START: """<b>Geckoshi Аирдроп первый в мире инвестиционной мем монеты 🦎 Ниже выберите подходящий вам язык 🌐 и начните зарабатывать $GMEME прямо сейчас!\n\n____\n\n\nGeckoshi Airdrop the world's first investment meme coin 🦎 Below, select the lang that suits you 🌐 and start earning $GMEME right now!</b>""",
 
@@ -337,9 +354,13 @@ message_data = {
         MessageKey.ADMIN_TASK_ID_REQUEST: "Введите айди задачи:",
         MessageKey.ADMIN_CONFIRM_TASK_DELETE: "^^^- удалть эту задачу ?",
         MessageKey.ADMIN_TASK_DELETED_SUCCESSFULLY: "Задача удалена успешно!",
+        MessageKey.CHOOSE_TASK_TYPE: "🔥 В нашем боте вы можете заработать на наших заданиях!",
+        MessageKey.TASK_ENDED: "😞 Задания кончились! Попробуйте позднее.",
+        MessageKey.TASK_DONE_SUCCESSFULLY: "✅ Вы успешно выполнили задание {task_id}",
+        MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ Вы не выполнили условия задания!",
+        MessageKey.TASK_ALREADY_HAS_DONE: "❌ Вы уже выполнили это задание!",
     },
 }
-
 keyboard_data = {
     KeyboardKey.SLOTS_MENU: [
         [
@@ -364,16 +385,27 @@ keyboard_data = {
             M(text="{amount} $GMEME", callback_class=SlotsPlay, with_callback_param_required=True, with_text_param_required=True),
         ],
     ],
+    KeyboardKey.ADMIN_TASK_TYPE_MENU: [
+        [
+            M(text="🕑 time based", callback_class=StartCreatingTask, with_callback_param_required=True),
+        ],
+        [
+            M(text="☑️ done based", callback_class=StartCreatingTask, with_callback_param_required=True),
+        ],
+        [
+            M(text="💰 pool based", callback_class=StartCreatingTask, with_callback_param_required=True),
+        ],
+    ],
     KeyboardKey.TASK_TYPE_MENU: [
         [
-            M(text="time based", callback_class=StartCreatingTask, with_callback_param_required=True),
+            M(text="🕑 time based", callback_class=TaskSelect, with_callback_param_required=True),
         ],
-        [
-            M(text="done based", callback_class=StartCreatingTask, with_callback_param_required=True),
-        ],
-        [
-            M(text="pool based", callback_class=StartCreatingTask, with_callback_param_required=True),
-        ],
+        # [
+        #     M(text="☑️ done based", callback_class=TaskSelect, with_callback_param_required=True),
+        # ],
+        # [
+        #     M(text="💰 pool based", callback_class=TaskSelect, with_callback_param_required=True),
+        # ],
     ],
     Lang.RU: {
         KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB: [
@@ -542,6 +574,15 @@ keyboard_data = {
         KeyboardKey.DELETE_TASK_MENU: [
             [
                 M(text="Удалить", callback_class=DeleteTask, with_callback_param_required=True),
+            ],
+        ],
+        KeyboardKey.SELECT_TASK_NAV_MENU: [
+            [
+                M(text="✅ Проверить", callback_class=TaskDone, with_callback_param_required=True),
+            ],
+            [
+                M(text="⬅️ Предыдущее", callback_class=TaskSelect, with_callback_param_required=True),
+                M(text="Следующее ➡️", callback_class=TaskSelect, with_callback_param_required=True),
             ],
         ],
     },

@@ -160,9 +160,9 @@ def get_task_menu_kbm(lang: Lang) -> InlineKeyboardMarkup:
     return build_markup(lang, KeyboardKey.TASK_MENU)
 
 
-def get_task_type_menu_kbm() -> InlineKeyboardMarkup:
+def get_admin_task_type_menu_kbm() -> InlineKeyboardMarkup:
     params = [{'task_type': i} for i in TaskType]
-    return build_markup(None, KeyboardKey.TASK_TYPE_MENU, callback_data_param=params)
+    return build_markup(None, KeyboardKey.ADMIN_TASK_TYPE_MENU, callback_data_param=params)
 
 
 def get_add_more_buttons_or_continue_kbm(lang: Lang) -> InlineKeyboardMarkup:
@@ -179,3 +179,25 @@ def get_save_kbm(lang: Lang, source_markup: InlineKeyboardMarkup = None) -> Inli
 
 def get_delete_task_menu_kbm(lang: Lang, task_id: int) -> InlineKeyboardMarkup:
     return build_markup(lang, KeyboardKey.DELETE_TASK_MENU, callback_data_param=[{'task_id': task_id}])
+
+
+def get_task_type_menu_kbm(lang: Lang) -> InlineKeyboardMarkup:
+    params = [
+        {
+            'task_type': TaskType.TIME_BASED.value,
+            'offset': 0
+        },
+        {
+            'task_type': TaskType.DONE_BASED.value,
+            'offset': 0
+        },
+        {
+            'task_type': TaskType.POOL_BASED.value,
+            'offset': 0
+        },
+    ]
+    return with_back_to_menu_button(lang, build_markup(None, KeyboardKey.TASK_TYPE_MENU, callback_data_param=params))
+
+
+def get_select_task_nav_menu_kbm(lang: Lang, params: list[dict], source_markup: InlineKeyboardMarkup = None) -> InlineKeyboardMarkup:
+    return build_markup(lang, KeyboardKey.SELECT_TASK_NAV_MENU, callback_data_param=params, source_markup=source_markup)
