@@ -5,7 +5,7 @@ import handlers
 from database import init_db
 from message_processor.executor import message_elevator_thread_launcher
 from rabbit import ReconnectingMessageConsumer
-from variables import bot, dp, redis
+from variables import bot, dp, stdout_handler, stderr_handler
 
 
 async def main() -> None:
@@ -18,10 +18,8 @@ async def main() -> None:
 if __name__ == '__main__':
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - Thread: %(threadName)s - %(message)s',
-        handlers=[
-            logging.StreamHandler()
-        ]
+        format='%(asctime)s - %(levelname)s - %(name)s - Thread: %(threadName)s - %(message)s',
+        handlers=[stdout_handler, stderr_handler]
     )
     init_db()
     asyncio.run(main())
