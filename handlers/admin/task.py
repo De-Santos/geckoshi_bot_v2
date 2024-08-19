@@ -12,10 +12,10 @@ from database import TaskType, Task, CurrencyType, now, get_session, get_active_
 from filters.base_filters import UserExistsFilter
 from keyboard_markup.inline_user_kb import get_task_menu_kbm, get_admin_task_type_menu_kbm, with_step_back_button, with_exit_button, get_builder, get_inline_button_preview_kbm, get_add_more_buttons_or_continue_kbm, get_continue_or_retry_kbm, \
     get_save_kbm, \
-    get_delete_task_menu_kbm
+    get_delete_task_menu_kbm, with_skip_button
 from keyboard_markup.json_markup import deserialize_inline_keyboard_markup, serialize_inline_keyboard_markup
 from lang.lang_based_provider import get_message, format_string
-from lang_based_variable import Lang, TaskMenu, MessageKey, CreateTask, StartCreatingTask, StepBack, AddMoreInlineButton, ApproveInlineButton, Continue, Retry, Save, DeleteTaskMenu, DeleteTask
+from lang_based_variable import Lang, TaskMenu, MessageKey, CreateTask, StartCreatingTask, StepBack, AddMoreInlineButton, ApproveInlineButton, Continue, Retry, Save, DeleteTaskMenu, DeleteTask, Skip
 from states.states import AdminTaskStates
 from utils.aiogram import extract_message
 from utils.task_printer import print_task
@@ -129,7 +129,7 @@ async def process_add_inline_button(query: CallbackQuery, lang: Lang, state: FSM
 async def request_required_chat_subscriptions(query: CallbackQuery, lang: Lang, state: FSMContext) -> None:
     await state.set_state(AdminTaskStates.enter_chat_ids)
     await query.message.answer(text=get_message(MessageKey.ADMIN_TASK_CHAT_SUBSCRIPTIONS_REQUIRE_REQUEST, lang),
-                               reply_markup=with_exit_button(lang))
+                               reply_markup=with_exit_button(lang, with_skip_button(lang)))
 
 
 async def parse_chat_ids(chat_ids_str: str, message: Message) -> List[Union[str, int]]:
@@ -185,6 +185,7 @@ async def process_chat_ids(message: Message, bot: Bot, lang: Lang, state: FSMCon
                          reply_markup=with_exit_button(lang, get_continue_or_retry_kbm(lang)))
 
 
+@router.callback_query(AdminTaskStates.enter_chat_ids, Skip.filter(), UserExistsFilter())
 @router.callback_query(AdminTaskStates.enter_expire_time, StepBack.filter(), UserExistsFilter())
 @router.callback_query(AdminTaskStates.check_chat_ids, Continue.filter(), UserExistsFilter())
 async def request_extra_data(query: CallbackQuery, lang: Lang, state: FSMContext) -> None:

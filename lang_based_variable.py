@@ -99,6 +99,7 @@ class KeyboardKey(Enum):
     SAVE = "save"
     DELETE_TASK_MENU = "delete_task_menu"
     SELECT_TASK_NAV_MENU = "select_task_nav_menu"
+    SKIP = "skip"
 
 
 class M(BaseModel):
@@ -301,6 +302,10 @@ class TaskDone(CallbackData, prefix="task-done"):
     task_id: int
 
 
+class Skip(CallbackData, prefix="skip"):
+    pass
+
+
 message_data = {
     MessageKey.START: """<b>Geckoshi Аирдроп первый в мире инвестиционной мем монеты 🦎 Ниже выберите подходящий вам язык 🌐 и начните зарабатывать $GMEME прямо сейчас!\n\n____\n\n\nGeckoshi Airdrop the world's first investment meme coin 🦎 Below, select the lang that suits you 🌐 and start earning $GMEME right now!</b>""",
 
@@ -356,7 +361,7 @@ message_data = {
         MessageKey.ADMIN_TASK_DELETED_SUCCESSFULLY: "Задача удалена успешно!",
         MessageKey.CHOOSE_TASK_TYPE: "🔥 В нашем боте вы можете заработать на наших заданиях!",
         MessageKey.TASK_ENDED: "😞 Задания кончились! Попробуйте позднее.",
-        MessageKey.TASK_DONE_SUCCESSFULLY: "✅ Вы успешно выполнили задание {task_id}",
+        MessageKey.TASK_DONE_SUCCESSFULLY: "✅ Вы успешно выполнили задание №{task_id}",
         MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ Вы не выполнили условия задания!",
         MessageKey.TASK_ALREADY_HAS_DONE: "❌ Вы уже выполнили это задание!",
     },
@@ -412,7 +417,7 @@ message_data = {
         MessageKey.ADMIN_TASK_DELETED_SUCCESSFULLY: "Task deleted successfully!",
         MessageKey.CHOOSE_TASK_TYPE: "🔥 In our bot, you can earn by completing our tasks!",
         MessageKey.TASK_ENDED: "😞 No tasks left! Please try again later.",
-        MessageKey.TASK_DONE_SUCCESSFULLY: "✅ You have successfully completed task {task_id}",
+        MessageKey.TASK_DONE_SUCCESSFULLY: "✅ You have successfully completed task №{task_id}",
         MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ You did not meet the task requirements!",
         MessageKey.TASK_ALREADY_HAS_DONE: "❌ You have already completed this task!",
     },
@@ -468,7 +473,7 @@ message_data = {
         MessageKey.ADMIN_TASK_DELETED_SUCCESSFULLY: "Aufgabe erfolgreich gelöscht!",
         MessageKey.CHOOSE_TASK_TYPE: "🔥 In unserem Bot können Sie durch das Erledigen von Aufgaben verdienen!",
         MessageKey.TASK_ENDED: "😞 Keine Aufgaben mehr! Versuchen Sie es später erneut.",
-        MessageKey.TASK_DONE_SUCCESSFULLY: "✅ Sie haben die Aufgabe {task_id} erfolgreich abgeschlossen",
+        MessageKey.TASK_DONE_SUCCESSFULLY: "✅ Sie haben die Aufgabe №{task_id} erfolgreich abgeschlossen",
         MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ Sie haben die Anforderungen der Aufgabe nicht erfüllt!",
         MessageKey.TASK_ALREADY_HAS_DONE: "❌ Sie haben diese Aufgabe bereits abgeschlossen!",
     },
@@ -525,12 +530,11 @@ message_data = {
         MessageKey.ADMIN_TASK_DELETED_SUCCESSFULLY: "Görev başarıyla silindi!",
         MessageKey.CHOOSE_TASK_TYPE: "🔥 Botumuzda görev yaparak para kazanabilirsiniz!",
         MessageKey.TASK_ENDED: "😞 Görevler bitti! Daha sonra tekrar deneyin.",
-        MessageKey.TASK_DONE_SUCCESSFULLY: "✅ Görevi başarıyla tamamladınız {task_id}",
+        MessageKey.TASK_DONE_SUCCESSFULLY: "✅ Görevi başarıyla tamamladınız №{task_id}",
         MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ Görevin gerekliliklerini yerine getirmediniz!",
         MessageKey.TASK_ALREADY_HAS_DONE: "❌ Bu görevi zaten tamamladınız!",
     },
 }
-
 
 keyboard_data = {
     KeyboardKey.SLOTS_MENU: [
@@ -756,6 +760,11 @@ keyboard_data = {
                 M(text="Следующее ➡️", callback_class=TaskSelect, with_callback_param_required=True),
             ],
         ],
+        KeyboardKey.SKIP: [
+            [
+                M(text="Пропустить ⤵️", callback_class=Skip),
+            ],
+        ],
     },
     Lang.EN: {
         KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB: [
@@ -933,6 +942,11 @@ keyboard_data = {
             [
                 M(text="⬅️ Previous", callback_class=TaskSelect, with_callback_param_required=True),
                 M(text="Next ➡️", callback_class=TaskSelect, with_callback_param_required=True),
+            ],
+        ],
+        KeyboardKey.SKIP: [
+            [
+                M(text="Skip ⤵️", callback_class=Skip),
             ],
         ],
     },
@@ -1114,6 +1128,11 @@ keyboard_data = {
                 M(text="Sonraki ➡️", callback_class=TaskSelect, with_callback_param_required=True),
             ],
         ],
+        KeyboardKey.SKIP: [
+            [
+                M(text="Geç ⤵️", callback_class=Skip),
+            ],
+        ],
     },
     Lang.DE: {
         KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB: [
@@ -1291,6 +1310,11 @@ keyboard_data = {
             [
                 M(text="⬅️ Vorherige", callback_class=TaskSelect, with_callback_param_required=True),
                 M(text="Nächste ➡️", callback_class=TaskSelect, with_callback_param_required=True),
+            ],
+        ],
+        KeyboardKey.SKIP: [
+            [
+                M(text="Überspringen ⤵️", callback_class=Skip),
             ],
         ],
     },

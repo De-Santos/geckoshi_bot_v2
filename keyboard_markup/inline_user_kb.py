@@ -99,6 +99,10 @@ def with_exit_button(lang: Lang, markup: InlineKeyboardMarkup | None = None) -> 
     return build_markup(lang, KeyboardKey.EXIT, source_markup=markup)
 
 
+def with_skip_button(lang: Lang, markup: InlineKeyboardMarkup | None = None) -> InlineKeyboardMarkup:
+    return build_markup(lang, KeyboardKey.SKIP, source_markup=markup)
+
+
 def with_step_back_button(lang: Lang, markup: InlineKeyboardMarkup | None = None) -> InlineKeyboardMarkup:
     return build_markup(lang, KeyboardKey.STEP_BACK, source_markup=markup)
 
