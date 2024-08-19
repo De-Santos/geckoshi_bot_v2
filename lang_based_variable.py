@@ -531,6 +531,7 @@ message_data = {
     },
 }
 
+
 keyboard_data = {
     KeyboardKey.SLOTS_MENU: [
         [
@@ -580,11 +581,11 @@ keyboard_data = {
     Lang.RU: {
         KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB: [
             [
-                M(id_="1️⃣ Подписка №1", text="text 1", url="https://t.me/geckoshi_coin"),
-                M(id_="2️⃣ Подписка №2", text="text 1", url="https://t.me/geckoshichat"),
+                M(id_="@geckoshi_coin", text="1️⃣ Подписка №1", url="https://t.me/geckoshi_coin"),
+                M(id_="@geckoshichat", text="2️⃣ Подписка №2", url="https://t.me/geckoshichat"),
             ],
             [
-                M(id_="3️⃣ Подписка №3", text="text 1", url="https://twitter.com/geckoshi_coin"),
+                M(text="3️⃣ Подписка №3", url="https://twitter.com/geckoshi_coin"),
             ],
             [
                 M(text="✅ Подписался", callback_class=CheckStartMembershipCallback)
@@ -759,11 +760,11 @@ keyboard_data = {
     Lang.EN: {
         KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB: [
             [
-                M(id_="1️⃣ Subscription #1", text="text 1", url="https://t.me/geckoshi_coin"),
-                M(id_="2️⃣ Subscription #2", text="text 1", url="https://t.me/geckoshichat"),
+                M(id_="@geckoshi_coin", text="1️⃣ Subscription #1", url="https://t.me/geckoshi_coin"),
+                M(id_="@geckoshichat", text="2️⃣ Subscription #2", url="https://t.me/geckoshichat"),
             ],
             [
-                M(id_="3️⃣ Subscription #3", text="text 1", url="https://twitter.com/geckoshi_coin"),
+                M(text="3️⃣ Subscription #3", url="https://twitter.com/geckoshi_coin"),
             ],
             [
                 M(text="✅ Subscribed", callback_class=CheckStartMembershipCallback)
@@ -938,11 +939,11 @@ keyboard_data = {
     Lang.TR: {
         KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB: [
             [
-                M(id_="1️⃣ Abonelik #1", text="text 1", url="https://t.me/geckoshi_coin"),
-                M(id_="2️⃣ Abonelik #2", text="text 1", url="https://t.me/geckoshichat"),
+                M(id_="@geckoshi_coin", text="1️⃣ Abonelik #1", url="https://t.me/geckoshi_coin"),
+                M(id_="@geckoshichat", text="2️⃣ Abonelik #2", url="https://t.me/geckoshichat"),
             ],
             [
-                M(id_="3️⃣ Abonelik #3", text="text 1", url="https://twitter.com/geckoshi_coin"),
+                M(text="3️⃣ Abonelik #3", url="https://twitter.com/geckoshi_coin"),
             ],
             [
                 M(text="✅ Abone Oldum", callback_class=CheckStartMembershipCallback)
@@ -1117,11 +1118,11 @@ keyboard_data = {
     Lang.DE: {
         KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB: [
             [
-                M(id_="1️⃣ Abonnement #1", text="text 1", url="https://t.me/geckoshi_coin"),
-                M(id_="2️⃣ Abonnement #2", text="text 1", url="https://t.me/geckoshichat"),
+                M(id_="@geckoshi_coin", text="1️⃣ Abonnement #1", url="https://t.me/geckoshi_coin"),
+                M(id_="@geckoshichat", text="2️⃣ Abonnement #2", url="https://t.me/geckoshichat"),
             ],
             [
-                M(id_="3️⃣ Abonnement #3", text="text 1", url="https://twitter.com/geckoshi_coin"),
+                M(text="3️⃣ Abonnement #3", url="https://twitter.com/geckoshi_coin"),
             ],
             [
                 M(text="✅ Abonniert", callback_class=CheckStartMembershipCallback)
