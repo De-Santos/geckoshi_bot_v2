@@ -1,9 +1,9 @@
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 from typing import Any, Sequence, Union
 
-from sqlalchemy import and_, or_, func
+from sqlalchemy import and_, or_, func, union
 from sqlalchemy import select, desc, Row, update, ScalarResult
 from sqlalchemy.orm import Session, aliased
 from sqlalchemy.sql.functions import coalesce
@@ -19,6 +19,21 @@ logger = logging.getLogger(__name__)
 def get_user_by_tg(s: Session, tg_user_id: int) -> User:
     stmt = select(User).where(User.telegram_id.__eq__(tg_user_id))
     return s.scalar(stmt)
+
+
+@cache.cacheable(ttl="10m", save_as_blob=True, function_name_as_id=True)
+async def get_users_statistic(s: Session):
+    start_of_day = datetime.combine(date.today(), datetime.min.time())
+    end_of_day = datetime.combine(date.today(), datetime.max.time())
+
+    today_join_stmt = (select(func.count(User.telegram_id))
+                       .where(User.created_at.between(start_of_day, end_of_day)))
+    total_user_count = (select(func.count(User.telegram_id)))
+
+    union_stmt = union(today_join_stmt, total_user_count)
+    join_count, total_count = s.execute(union_stmt).scalars()
+
+    return join_count, total_count
 
 
 def get_user_balance(s: Session, tg_user_id: int) -> int:

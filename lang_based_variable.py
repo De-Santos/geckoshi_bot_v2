@@ -68,6 +68,7 @@ class MessageKey(Enum):
     TASK_DONE_SUCCESSFULLY = "task_done_successfully"
     TASK_DONE_UNSUCCESSFULLY = "task_done_unsuccessfully"
     TASK_ALREADY_HAS_DONE = "task_already_has_done"
+    PUBLIC_STATISTIC = "public_statistic"
 
 
 class KeyboardKey(Enum):
@@ -364,6 +365,7 @@ message_data = {
         MessageKey.TASK_DONE_SUCCESSFULLY: "✅ Вы успешно выполнили задание №{task_id}",
         MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ Вы не выполнили условия задания!",
         MessageKey.TASK_ALREADY_HAS_DONE: "❌ Вы уже выполнили это задание!",
+        MessageKey.PUBLIC_STATISTIC: "📊 <b>Статистика проекта:</b>\n\n👥 Всего пользователей: {total_users}\n👤 Новых за сегодня: {today_joined}",
     },
     Lang.EN: {
         MessageKey.LANG_CHANGE: "Language successfully changed to English!",
@@ -420,6 +422,7 @@ message_data = {
         MessageKey.TASK_DONE_SUCCESSFULLY: "✅ You have successfully completed task №{task_id}",
         MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ You did not meet the task requirements!",
         MessageKey.TASK_ALREADY_HAS_DONE: "❌ You have already completed this task!",
+        MessageKey.PUBLIC_STATISTIC: "📊 <b>Project Statistics:</b>\n\n👥 Total users: {total_users}\n👤 New today: {today_joined}",
     },
     Lang.DE: {
         MessageKey.LANG_CHANGE: "Die Sprache wurde erfolgreich auf Deutsch geändert!",
@@ -476,6 +479,7 @@ message_data = {
         MessageKey.TASK_DONE_SUCCESSFULLY: "✅ Sie haben die Aufgabe №{task_id} erfolgreich abgeschlossen",
         MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ Sie haben die Anforderungen der Aufgabe nicht erfüllt!",
         MessageKey.TASK_ALREADY_HAS_DONE: "❌ Sie haben diese Aufgabe bereits abgeschlossen!",
+        MessageKey.PUBLIC_STATISTIC: "📊 <b>Projektstatistik:</b>\n\n👥 Gesamtanzahl der Benutzer: {total_users}\n👤 Neu heute: {today_joined}",
     },
 
     Lang.TR: {
@@ -533,6 +537,8 @@ message_data = {
         MessageKey.TASK_DONE_SUCCESSFULLY: "✅ Görevi başarıyla tamamladınız №{task_id}",
         MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ Görevin gerekliliklerini yerine getirmediniz!",
         MessageKey.TASK_ALREADY_HAS_DONE: "❌ Bu görevi zaten tamamladınız!",
+        MessageKey.PUBLIC_STATISTIC: "📊 <b>Proje İstatistikleri:</b>\n\n👥 Toplam kullanıcı: {total_users}\n👤 Bugün eklenenler: {today_joined}",
+
     },
 }
 

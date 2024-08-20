@@ -21,7 +21,7 @@ async def get_cached_lang(user_tg_id: int) -> Lang | None:
         session = get_session()
         lang: Lang = get_user_language(session, user_tg_id)
         if lang is None:
-            logging.exception(f"Language for user_tg_id is not available - {user_tg_id}")
+            logging.warning(f"Language for user_tg_id is not available - {user_tg_id}")
             return None
         await cache_lang(user_tg_id, lang)
         return lang

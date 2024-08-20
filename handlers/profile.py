@@ -35,5 +35,5 @@ async def process_profile_callback(query: CallbackQuery, lang: Lang, bot: Bot) -
 
 
 @router.callback_query(ProfileWithdraw.filter(), UserExistsFilter())
-async def process_profile_callback(query: CallbackQuery, lang: Lang) -> None:
+async def process_withdraw_callback(query: CallbackQuery, lang: Lang) -> None:
     await query.answer(text=get_message(MessageKey.FUNCTION_NOT_IMPLEMENTED, lang))
