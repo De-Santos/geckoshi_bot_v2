@@ -631,6 +631,9 @@ keyboard_data = {
             [
                 M(text="📊 Статистика", callback_class=MenuToStatistic),
             ],
+            [
+                M(text="📈 Buy/Sell BMEME", url="https://dedust.io/swap/TON/EQBMLARhzX35GDwjHeWwUMuZ5Oz65z1Tk0XodZBI8qxNllRu?amount=1000000000"),
+            ],
         ],
         KeyboardKey.REF_LINK_SHARE: [
             [
@@ -814,6 +817,9 @@ keyboard_data = {
             ],
             [
                 M(text="📊 Statistics", callback_class=MenuToStatistic),
+            ],
+            [
+                M(text="📈 Buy/Sell BMEME", url="https://dedust.io/swap/TON/EQBMLARhzX35GDwjHeWwUMuZ5Oz65z1Tk0XodZBI8qxNllRu?amount=1000000000"),
             ],
         ],
         KeyboardKey.REF_LINK_SHARE: [
@@ -999,6 +1005,9 @@ keyboard_data = {
             [
                 M(text="📊 İstatistikler", callback_class=MenuToStatistic),
             ],
+            [
+                M(text="📈 Buy/Sell BMEME", url="https://dedust.io/swap/TON/EQBMLARhzX35GDwjHeWwUMuZ5Oz65z1Tk0XodZBI8qxNllRu?amount=1000000000"),
+            ],
         ],
         KeyboardKey.REF_LINK_SHARE: [
             [
@@ -1182,6 +1191,9 @@ keyboard_data = {
             ],
             [
                 M(text="📊 Statistiken", callback_class=MenuToStatistic),
+            ],
+            [
+                M(text="📈 Buy/Sell BMEME", url="https://dedust.io/swap/TON/EQBMLARhzX35GDwjHeWwUMuZ5Oz65z1Tk0XodZBI8qxNllRu?amount=1000000000"),
             ],
         ],
         KeyboardKey.REF_LINK_SHARE: [
