@@ -4,6 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
 import cache
+import settings
 from chat_processor.member import check_membership
 from database import get_session, User, save_user, is_user_exists_by_tg, update_user_language, update_user_is_bot_start_completed_by_tg_id, is_good_user_by_tg, Setting, SettingsKey
 from filters.base_filters import UserExistsFilter, IsGoodUserFilter
@@ -27,7 +28,9 @@ async def command_start_handler(message: Message, state: FSMContext, bot: Bot) -
         ref_arg = TgArg.get_arg(ArgType.REFERRAL, message.text)
         if ref_arg is not None and await is_good_user_by_tg(session, ref_arg.get(), cache_id=ref_arg.get()):
             user = User(telegram_id=message.from_user.id, referred_by_id=ref_arg.get())
-            await bot.send_message(chat_id=ref_arg.get(), text=format_string(get_message(MessageKey.REF_INVITED_STEP_ONE, await get_cached_lang(ref_arg.get())), user_link=message.from_user.id))
+            await bot.send_message(chat_id=ref_arg.get(), text=format_string(get_message(MessageKey.REF_INVITED_STEP_ONE, await get_cached_lang(ref_arg.get())),
+                                                                             user_link=message.from_user.id,
+                                                                             amount=await settings.get_setting(SettingsKey.PAY_FOR_REFERRAL)))
         else:
             user = User(telegram_id=message.from_user.id)
         save_user(session, user)
