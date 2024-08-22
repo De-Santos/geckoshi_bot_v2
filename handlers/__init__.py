@@ -2,6 +2,7 @@ from aiogram import Router
 
 from filters.base_filters import ChatTypeFilter
 from handlers.admin import admin_router
+from handlers.bonus import router as bonus_router
 from handlers.cheque import router as cheque_router
 from handlers.exit import router as exit_router
 from handlers.nft import router as nft_router
@@ -42,3 +43,4 @@ base_router.include_router(nft_router)
 base_router.include_router(admin_router)
 base_router.include_router(task_router)
 base_router.include_router(statistic_router)
+base_router.include_router(bonus_router)

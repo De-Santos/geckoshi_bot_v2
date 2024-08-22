@@ -354,7 +354,8 @@ def get_active_task_by_id(session: Session, id_: int) -> Union[Task, None]:
                 and_(
                     Task.type == TaskType.POOL_BASED,
                     or_(Task.coin_pool.is_(None), Task.done_limit > done_subquery.c.done_count)
-                )
+                ),
+                Task.type == TaskType.BONUS
             )
         )
     ).one_or_none()
@@ -373,12 +374,12 @@ def delete_task_by_id(s: Session, task_id: int, deleted_by_id: int) -> None:
     s.close()
 
 
-def get_active_tasks_offset(session: Session,
-                            user_id: int,
-                            offset: int = 0,
-                            task_type: TaskType = None,
-                            limit: int = 1
-                            ):
+def get_active_tasks_page(session: Session,
+                          user_id: int,
+                          page: int = 1,
+                          task_type: TaskType = None,
+                          limit: int = 1
+                          ):
     # Aliasing TaskDoneHistory to join it twice for different purposes
     user_done_history = aliased(TaskDoneHistory)
 
@@ -426,7 +427,8 @@ def get_active_tasks_offset(session: Session,
                     and_(
                         Task.type == TaskType.POOL_BASED,
                         or_(Task.coin_pool.is_(None), Task.coin_pool > coalesce(done_subquery.c.done_count, 0))
-                    )
+                    ),
+                    Task.type == TaskType.BONUS
                 ),
                 or_(
                     # Tasks not done by user
@@ -443,21 +445,85 @@ def get_active_tasks_offset(session: Session,
     # Get the total count of matching tasks
     total_tasks = query.count()
 
-    # Apply limit and offset
-    query = query.limit(limit).offset(offset)
+    # Calculate offset based on the current page number
+    offset = (page - 1) * limit
 
-    # Fetch the tasks based on limit and offset
+    query = query.limit(limit).offset(offset)
     tasks = query.all()
 
     # Calculate pagination details
-    current_page = (offset // limit) + 1 if limit > 0 else 1
     total_pages = (total_tasks + limit - 1) // limit if limit > 0 else 1
+    current_page = min(max(page, 1), total_pages)  # Ensure current_page is within the valid range
+
     return Pagination(
         items=tasks,
         total_items=total_tasks,
         current_page=current_page,
         total_pages=total_pages
     )
+
+
+def get_active_task(session: Session, user_id: int, task_id: int):
+    # Aliasing TaskDoneHistory to join it twice for different purposes
+    user_done_history = aliased(TaskDoneHistory)
+
+    # Subquery to count the number of times each DONE_BASED task has been completed
+    done_subquery = (
+        session.query(
+            TaskDoneHistory.task_id,
+            func.count(TaskDoneHistory.id).label('done_count')
+        )
+        .group_by(TaskDoneHistory.task_id)
+        .subquery()
+    )
+
+    # Subquery to check if the user has completed each task
+    user_done_subquery = (
+        session.query(
+            user_done_history.task_id.label('task_id'),
+            func.count(user_done_history.id).label('user_done_count')
+        )
+        .filter(user_done_history.user_id.__eq__(user_id))
+        .group_by(user_done_history.task_id)
+        .subquery()
+    )
+
+    # Build the main query for active tasks
+    query = (
+        session.query(Task)
+        .outerjoin(done_subquery, Task.id == done_subquery.c.task_id)
+        .outerjoin(user_done_subquery, Task.id == user_done_subquery.c.task_id)
+        .filter(
+            and_(
+                Task.deleted_at.is_(None),
+                Task.id.__eq__(task_id),
+                or_(
+                    # Time-based tasks: Not expired or no expiration time set
+                    and_(
+                        Task.type == TaskType.TIME_BASED,
+                        or_(Task.expires_at.is_(None), Task.expires_at > now())
+                    ),
+                    # Subscription-based tasks: done_limit is greater than the count of completed tasks
+                    and_(
+                        Task.type == TaskType.DONE_BASED,
+                        or_(Task.done_limit.is_(None), Task.done_limit > coalesce(done_subquery.c.done_count, 0))
+                    ),
+                    # Pool-based tasks: coin_pool is greater than the sum of distributed rewards
+                    and_(
+                        Task.type == TaskType.POOL_BASED,
+                        or_(Task.coin_pool.is_(None), Task.coin_pool > coalesce(done_subquery.c.done_count, 0))
+                    ),
+                    Task.type == TaskType.BONUS
+                ),
+                or_(
+                    # Tasks not done by user
+                    user_done_subquery.c.user_done_count.is_(None),
+                    user_done_subquery.c.user_done_count == 0
+                )
+            )
+        ).order_by(Task.created_at.desc())  # Order by created_at from new to old
+    )
+    return query.one_or_none()
 
 
 def check_task_is_done(s: Session, task_id: int, user_id: int) -> bool:

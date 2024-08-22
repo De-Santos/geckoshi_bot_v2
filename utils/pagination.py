@@ -22,3 +22,6 @@ class Pagination(Generic[T]):
 
     def get_one(self) -> Union[T, None]:
         return self.items[0] if self.items else None
+
+    def is_empty(self):
+        return len(self.items) == 0

@@ -189,19 +189,35 @@ def get_task_type_menu_kbm(lang: Lang) -> InlineKeyboardMarkup:
     params = [
         {
             'task_type': TaskType.TIME_BASED.value,
-            'offset': 0
+            'page': 1
         },
         {
             'task_type': TaskType.DONE_BASED.value,
-            'offset': 0
+            'page': 1
         },
         {
             'task_type': TaskType.POOL_BASED.value,
-            'offset': 0
+            'page': 1
         },
     ]
     return with_back_to_menu_button(lang, build_markup(None, KeyboardKey.TASK_TYPE_MENU, callback_data_param=params))
 
 
-def get_select_task_nav_menu_kbm(lang: Lang, params: list[dict], source_markup: InlineKeyboardMarkup = None) -> InlineKeyboardMarkup:
+def get_select_task_nav_menu_kbm(lang: Lang, done_params: list[dict], params: list[dict], source_markup: InlineKeyboardMarkup = None) -> InlineKeyboardMarkup:
+    return with_task_navigation_menu(lang, params, with_task_submit_button(lang, done_params, source_markup))
+
+
+def with_task_submit_button(lang: Lang, params: list[dict], source_markup: InlineKeyboardMarkup = None) -> InlineKeyboardMarkup:
+    return build_markup(lang, KeyboardKey.SELECT_TASK_SUBMIT_BUTTON, callback_data_param=params, source_markup=source_markup)
+
+
+def with_task_navigation_menu(lang: Lang, params: list[dict], source_markup: InlineKeyboardMarkup = None) -> InlineKeyboardMarkup:
     return build_markup(lang, KeyboardKey.SELECT_TASK_NAV_MENU, callback_data_param=params, source_markup=source_markup)
+
+
+def with_pagination_menu(lang: Lang, params: list[dict], text_params: list[dict], source_markup: InlineKeyboardMarkup = None) -> InlineKeyboardMarkup:
+    return build_markup(lang, KeyboardKey.PAGINATION_MENU, callback_data_param=params, text_params=text_params, source_markup=source_markup)
+
+
+def with_bonus_task_button(params: list[dict], text_params: list[dict], source_markup: InlineKeyboardMarkup = None) -> InlineKeyboardMarkup:
+    return build_markup(None, KeyboardKey.BONUS_TASK_BUTTON, callback_data_param=params, text_params=text_params, source_markup=source_markup)

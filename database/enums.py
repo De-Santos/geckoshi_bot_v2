@@ -54,6 +54,7 @@ class TaskType(Enum):
     TIME_BASED = 0
     DONE_BASED = 1
     POOL_BASED = 2
+    BONUS = 3
 
 
 class CurrencyType(Enum):

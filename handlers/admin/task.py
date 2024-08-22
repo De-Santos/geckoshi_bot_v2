@@ -192,6 +192,8 @@ async def request_extra_data(query: CallbackQuery, lang: Lang, state: FSMContext
     task_type = (await state.get_data())['task_type']
     if task_type == TaskType.TIME_BASED.value:
         await request_expire_time(query, lang, state)
+    if task_type == TaskType.BONUS.value:
+        await request_done_reward(query.message, lang, state)
 
 
 async def request_expire_time(m: CallbackQuery | Message, lang: Lang, state: FSMContext) -> None:
@@ -237,7 +239,7 @@ async def create_task_from_state_data(state: FSMContext, created_by_id: int = No
     text = data.get('text')
     markup = data.get('markup', {})
     require_subscriptions = data.get('chat_ids', [])
-    expires_at = now() + timedelta(seconds=data.get('expires_at'))
+    expires_at = now() + timedelta(seconds=data.get('expires_at')) if data.get('expires_at') is not None else None
     done_limit = data.get('done_limit')
     coin_pool = data.get('coin_pool')
     done_reward = data.get('done_reward')

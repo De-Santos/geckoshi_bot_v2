@@ -59,12 +59,15 @@ class MessageKey(Enum):
     ADMIN_TASK_GMEME_DONE_REWARD_REQUEST = "admin_task_gmeme_done_reward_request"
     ADMIN_TASK_BMEME_DONE_REWARD_REQUEST = "admin_task_bmeme_done_reward_request"
     TIME_BASED_TASK = "time_based_task"
+    BONUS_TASK = "bonus_task"
     ADMIN_TASK_SAVED_SUCCESSFULLY = "admin_task_saved_successfully"
     ADMIN_TASK_ID_REQUEST = "admin_task_id_request"
     ADMIN_CONFIRM_TASK_DELETE = "admin_confirm_task_delete"
     ADMIN_TASK_DELETED_SUCCESSFULLY = "admin_task_deleted_successfully"
     CHOOSE_TASK_TYPE = "choose_task_type"
+    CHOOSE_BONUS = "choose_bonus"
     TASK_ENDED = "task_ended"
+    BONUS_TASK_ENDED = "bonus_task_ended"
     TASK_DONE_SUCCESSFULLY = "task_done_successfully"
     TASK_DONE_UNSUCCESSFULLY = "task_done_unsuccessfully"
     TASK_ALREADY_HAS_DONE = "task_already_has_done"
@@ -99,7 +102,10 @@ class KeyboardKey(Enum):
     CONTINUE_OR_RETRY = "continue_or_retry"
     SAVE = "save"
     DELETE_TASK_MENU = "delete_task_menu"
+    SELECT_TASK_SUBMIT_BUTTON = "select_task_submit_button"
     SELECT_TASK_NAV_MENU = "select_task_nav_menu"
+    PAGINATION_MENU = "pagination_menu"
+    BONUS_TASK_BUTTON = "bonus_task_button"
     SKIP = "skip"
 
 
@@ -136,7 +142,7 @@ class MenuToChequeCallback(CallbackData, prefix="menu-to-cheque"):
     pass
 
 
-class MenuToP2PCallback(CallbackData, prefix="menu-to-bonus"):
+class MenuToP2PCallback(CallbackData, prefix="menu-to-p2p"):
     pass
 
 
@@ -295,7 +301,16 @@ class DeleteTask(CallbackData, prefix="delete-task"):
 
 class TaskSelect(CallbackData, prefix="task-select"):
     task_type: int
-    offset: int
+    page: int
+    disabled: bool = False
+
+
+class BonusTaskSelect(CallbackData, prefix="bonus-task-select"):
+    task_id: int
+
+
+class PaginationMove(CallbackData, prefix="pagination-move"):
+    page: int
     disabled: bool = False
 
 
@@ -304,6 +319,10 @@ class TaskDone(CallbackData, prefix="task-done"):
 
 
 class Skip(CallbackData, prefix="skip"):
+    pass
+
+
+class Void(CallbackData, prefix="_"):
     pass
 
 
@@ -356,12 +375,15 @@ message_data = {
         MessageKey.ADMIN_TASK_GMEME_DONE_REWARD_REQUEST: "Введите сумму вознаграждения в $GMEME.",
         MessageKey.ADMIN_TASK_BMEME_DONE_REWARD_REQUEST: "Введите сумму вознаграждения в $BMEME.",
         MessageKey.TIME_BASED_TASK: "<b>{title}</b>\n\nid: {task_id}\nОписание: {text}\nОплата: {done_reward} $GMEME\nОсталось времени: {expires_in}",
+        MessageKey.BONUS_TASK: "<b>{title}</b>\n\nОписание:\n{text}\nОплата: {done_reward} $GMEME",
         MessageKey.ADMIN_TASK_SAVED_SUCCESSFULLY: "Задача с id: {task_id} была сохранена успешно",
         MessageKey.ADMIN_TASK_ID_REQUEST: "Введите айди задачи:",
         MessageKey.ADMIN_CONFIRM_TASK_DELETE: "^^^- удалть эту задачу ?",
         MessageKey.ADMIN_TASK_DELETED_SUCCESSFULLY: "Задача удалена успешно!",
         MessageKey.CHOOSE_TASK_TYPE: "🔥 В нашем боте вы можете заработать на наших заданиях!",
+        MessageKey.CHOOSE_BONUS: "🎁 Выберете бонусное задание которое хотите выполнить:",
         MessageKey.TASK_ENDED: "😞 Задания кончились! Попробуйте позднее.",
+        MessageKey.BONUS_TASK_ENDED: "😞 К сожаленю, сейчас нет бонусных заданий для вас. Попробуйте позднее.",
         MessageKey.TASK_DONE_SUCCESSFULLY: "✅ Вы успешно выполнили задание №{task_id}",
         MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ Вы не выполнили условия задания!",
         MessageKey.TASK_ALREADY_HAS_DONE: "❌ Вы уже выполнили это задание!",
@@ -413,16 +435,80 @@ message_data = {
         MessageKey.ADMIN_TASK_GMEME_DONE_REWARD_REQUEST: "Enter the reward amount in $GMEME.",
         MessageKey.ADMIN_TASK_BMEME_DONE_REWARD_REQUEST: "Enter the reward amount in $BMEME.",
         MessageKey.TIME_BASED_TASK: "<b>{title}</b>\n\nid: {task_id}\nDescription: {text}\nReward: {done_reward} $GMEME\nTime left: {expires_in}",
+        MessageKey.BONUS_TASK: "<b>{title}</b>\n\nDescription:\n{text}\nPayment: {done_reward} $GMEME",
         MessageKey.ADMIN_TASK_SAVED_SUCCESSFULLY: "Task with id: {task_id} was saved successfully",
         MessageKey.ADMIN_TASK_ID_REQUEST: "Enter the task id:",
         MessageKey.ADMIN_CONFIRM_TASK_DELETE: "^^^- delete this task?",
         MessageKey.ADMIN_TASK_DELETED_SUCCESSFULLY: "Task deleted successfully!",
         MessageKey.CHOOSE_TASK_TYPE: "🔥 In our bot, you can earn by completing our tasks!",
+        MessageKey.CHOOSE_BONUS: "🎁 Choose the bonus task you want to complete:",
         MessageKey.TASK_ENDED: "😞 No tasks left! Please try again later.",
+        MessageKey.BONUS_TASK_ENDED: "😞 Unfortunately, there are no bonus tasks available for you at the moment. Please try again later.",
         MessageKey.TASK_DONE_SUCCESSFULLY: "✅ You have successfully completed task №{task_id}",
         MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ You did not meet the task requirements!",
         MessageKey.TASK_ALREADY_HAS_DONE: "❌ You have already completed this task!",
         MessageKey.PUBLIC_STATISTIC: "📊 <b>Project Statistics:</b>\n\n👥 Total users: {total_users}\n👤 New today: {today_joined}",
+    },
+    Lang.TR: {
+        MessageKey.LANG_CHANGE: "Dil başarıyla Türkçe olarak değiştirildi!",
+        MessageKey.START_REQUIRE_SUBSCRIPTION: "<b>🦎 Devam etmek için kanallarımıza abone olmanız gerekiyor:</b>",
+        MessageKey.START_REQUIRE_SUBSCRIPTION_SUCCESSFUL: "✅ Başarıyla abone oldunuz!",
+        MessageKey.START_REQUIRE_SUBSCRIPTION_FAILED: "⛔️ Kanallarımıza abone olun ve tekrar deneyin!",
+        MessageKey.MENU_MESSAGE: "<b>🦎 Bu botta şunları yapabilirsiniz:</b>",
+        MessageKey.REF_INVITED_STEP_ONE: "👥 <a href=\"tg://user?id={user_link}\">Bir arkadaşınızı</a> davet ettiniz! Arkadaşınız kanallara abone olduğunda {amount} $GMEME kazanacaksınız!",
+        MessageKey.REF_INVITED_STEP_TWO: "👥 <a href=\"tg://user?id={user_link}\">Arkadaşınızın</a> botta kaydı için {amount} $GMEME kazandınız",
+        MessageKey.REF_INVITE: """👥 Arkadaşlarını davet et ve kişi başına {ref_invite_pay} $GMEME kazan\n\n🔗 Bağlantınız: <code>https://t.me/Geckoshi_bot?start={link}</code>\n\n🗣 Toplamda: {ref_invite_count} kişi davet ettiniz""",
+        MessageKey.USER_PROFILE: """📝 Ad: <a href=\"tg://user?id={user_link}\">{user_name}</a>\n🆔 Kimlik Numaranız: <code>{user_tg_id}</code>\n🔥 Premium hesap: {is_premium_account}\n💎 Bakiye: {balance} $GMEME\n👥 Toplam referans: {ref_count}\n🦎 ÇEKİLDİ: {withdrew} $GMEME\n<b>📣 Ödemeler hakkında önceden bilgi vereceğiz!\n🔥 Haberleri takip edin!\n⛔️ EN DÜŞÜK ÇEKİM MİKTARI, AIRDROP GÜNÜ {min_withdraw_in_airdrop} OLACAKTIR!</b>""",
+        MessageKey.LANG_MENU: "Tercih ettiğiniz dili seçin:",
+        MessageKey.FUNCTION_NOT_IMPLEMENTED: "Ne yazık ki bu özellik şu anda mevcut değil",
+        MessageKey.PREMIUM_ALREADY_BOUGHT: "❗ Zaten Premium'a sahipsiniz!",
+        MessageKey.PREMIUM_BUY_MENU: "🦎 Premium fiyatı: {premium_gmeme_price} $GMEME",
+        MessageKey.NOT_ENOUGH_TO_BUY_PREMIUM: "❗ Premium satın almak için yeterli {not_enough} $GMEME'niz yok",
+        MessageKey.PREMIUM_HAS_BOUGHT: "🥳 'Premium' satın aldınız",
+        MessageKey.SOON: "Yakında 🔜",
+        MessageKey.ADMIN_PANEL: "Yönetim Paneli:\n\n🕰Bot Çalışma Süresi: {uptime}\n👥Bottaki kullanıcı sayısı: {user_count}",
+        MessageKey.ADMIN_NOW: "Yönetici hakları verildi",
+        MessageKey.ADMIN_CHANGE_REF_PAY: "Referans ödülü için yeni miktarı girin.\nMevcut değer: {pay_for_ref}",
+        MessageKey.ADMIN_CHANGE_REF_PAY_SUCCESSFULLY: "Referans ödülü miktarı şu şekilde değiştirildi: {pay_for_ref}",
+        MessageKey.ADMIN_ENTER_MAILING_MESSAGE: "Gönderim için metin girin veya bir resim gönderin:",
+        MessageKey.ADMIN_MAILING_HAS_INLINE_BUTTON: "Bir bağlantı içeren satır içi buton eklemek ister misiniz?",
+        MessageKey.ADMIN_ENTER_INLINE_BUTTON_TEXT: "Satır içi buton için metin girin:",
+        MessageKey.ADMIN_ENTER_INLINE_BUTTON_URL: "Satır içi buton için URL'yi girin:",
+        MessageKey.ADMIN_ADD_INLINE_BUTTON: "Satır içi buton başarıyla eklendi!",
+        MessageKey.ADMIN_INLINE_BUTTON_PREVIEW: "Buton şu şekilde görünecektir:",
+        MessageKey.ADMIN_MAILING_MESSAGE_LOOKS_LIKE: "^^^ - gönderim mesajı böyle görünecek.",
+        MessageKey.ADMIN_MAILING_STATS: "Gönderim İstatistikleri No.{mailing_id}:\n Yakalanan kullanıcılar: {user_captured}\n Durum: {status}\n Başarılı: {successfully}\n Kuyrukta: {in_queue}\n Başarısız: {failed}\n İptal Edildi: {canceled}\n Toplam işlenen: {messages_processed} ({messages_processed_percents})\n İşlem süresi: {processing_time}",
+        MessageKey.REQUEST_PROCESSING: "İstek işleniyor...",
+        MessageKey.ADMIN_MAILING_CANCEL_FAILED: "Gönderim iptal edilemedi.",
+        MessageKey.ADMIN_MAILING_CANCEL_SUCCESSFUL: "Gönderim No.{mailing_id} başarıyla iptal edildi!",
+        MessageKey.ADMIN_MAILING_FAILED_TO_SEND_MESSAGES_IN_QUEUE: "Kuyruğa mesaj eklerken bir hata oluştu.",
+        MessageKey.SLOTS_GAME_MENU: """Slot bölümüne hoş geldiniz.\nBurada çok para kazanabilirsiniz, işte kazanan kombinasyonlar:\n1. 🦎🦎🦎 - x10\n2.  🏜️🏜️🏜️ - x5\n3. 🏖️🏖️🏖️ - x3\n4. 🏕️🏕️🏕️ - x2\n5. ✈️✈️✈️ - x1.8\n6. 🚀🚀🚀 - x1.7\n7. 🪲🪲🪲 - x1.5\n8. 🐞🐞🐞 - x1.2\n9. 🐝🐝🐝 - x1.05\nİyi şanslar! İhtiyacınız olacak.\nNe kadar $GMEME ile oynuyoruz?""",
+        MessageKey.SLOTS_NOT_ENOUGH_TO_PLAY: "💲Oynamak için yeterli bakiyeniz yok. Miktarı değiştirmeyi deneyin.",
+        MessageKey.SLOTS_WIN: "🎉Tebrikler, kazandınız: {amount} $GMEME\n🎰Kazanan kombinasyonunuz: {combination}",
+        MessageKey.SLOTS_LOSS: "🃏Maalesef bu sefer bahsinizi kaybettiniz ({amount} $GMEME).\n🎰Kombinasyonunuz: {combination}\nTekrar deneyin, şans size gülecektir!",
+        MessageKey.ADMIN_TASK_MENU: "📋Eyleminizi seçin",
+        MessageKey.ADMIN_TASK_TYPE_SELECT: "Görev türünü seçin",
+        MessageKey.ADMIN_TASK_TITLE_REQUEST: "Görevin başlığını girin:",
+        MessageKey.ADMIN_TASK_TEXT_REQUEST: "Görevin metnini girin:",
+        MessageKey.ADMIN_TASK_CHAT_SUBSCRIPTIONS_REQUIRE_REQUEST: "Virgülle ayrılmış kanal, grup chat_id'lerini girin.",
+        MessageKey.ADMIN_TASK_EXPIRE_TIME_REQUEST: "Görevin süresini girin.\nörnek: 10h",
+        MessageKey.ADMIN_TASK_GMEME_DONE_REWARD_REQUEST: "$GMEME olarak ödül miktarını girin.",
+        MessageKey.ADMIN_TASK_BMEME_DONE_REWARD_REQUEST: "$BMEME olarak ödül miktarını girin.",
+        MessageKey.TIME_BASED_TASK: "<b>{title}</b>\n\nid: {task_id}\nAçıklama: {text}\nÖdül: {done_reward} $GMEME\nKalan zaman: {expires_in}",
+        MessageKey.BONUS_TASK: "<b>{title}</b>\n\nAçıklama:\n{text}\nÖdeme: {done_reward} $GMEME",
+        MessageKey.ADMIN_TASK_SAVED_SUCCESSFULLY: "Görev id'si ile: {task_id} başarıyla kaydedildi",
+        MessageKey.ADMIN_TASK_ID_REQUEST: "Görev kimliğini girin:",
+        MessageKey.ADMIN_CONFIRM_TASK_DELETE: "^^^- bu görevi silmek istiyor musunuz?",
+        MessageKey.ADMIN_TASK_DELETED_SUCCESSFULLY: "Görev başarıyla silindi!",
+        MessageKey.CHOOSE_TASK_TYPE: "🔥 Botumuzda görev yaparak para kazanabilirsiniz!",
+        MessageKey.CHOOSE_BONUS: "🎁 Tamamlamak istediğiniz bonus görevi seçin:",
+        MessageKey.TASK_ENDED: "😞 Maalesef, şu anda sizin için uygun bonus görev yok. Lütfen daha sonra tekrar deneyin.",
+        MessageKey.BONUS_TASK_ENDED: "😞 К сожаленю, сейчас нет бонусных заданий для вас. Попробуйте позднее.",
+        MessageKey.TASK_DONE_SUCCESSFULLY: "✅ Görevi başarıyla tamamladınız №{task_id}",
+        MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ Görevin gerekliliklerini yerine getirmediniz!",
+        MessageKey.TASK_ALREADY_HAS_DONE: "❌ Bu görevi zaten tamamladınız!",
+        MessageKey.PUBLIC_STATISTIC: "📊 <b>Proje İstatistikleri:</b>\n\n👥 Toplam kullanıcı: {total_users}\n👤 Bugün eklenenler: {today_joined}",
+
     },
     Lang.DE: {
         MessageKey.LANG_CHANGE: "Die Sprache wurde erfolgreich auf Deutsch geändert!",
@@ -470,75 +556,19 @@ message_data = {
         MessageKey.ADMIN_TASK_GMEME_DONE_REWARD_REQUEST: "Geben Sie die Belohnungssumme in $GMEME ein.",
         MessageKey.ADMIN_TASK_BMEME_DONE_REWARD_REQUEST: "Geben Sie die Belohnungssumme in $BMEME ein.",
         MessageKey.TIME_BASED_TASK: "<b>{title}</b>\n\nid: {task_id}\nBeschreibung: {text}\nBelohnung: {done_reward} $GMEME\nVerbleibende Zeit: {expires_in}",
+        MessageKey.BONUS_TASK: "<b>{title}</b>\n\nBeschreibung:\n{text}\nBezahlung: {done_reward} $GMEME",
         MessageKey.ADMIN_TASK_SAVED_SUCCESSFULLY: "Aufgabe mit der id: {task_id} wurde erfolgreich gespeichert",
         MessageKey.ADMIN_TASK_ID_REQUEST: "Geben Sie die Aufgaben-ID ein:",
         MessageKey.ADMIN_CONFIRM_TASK_DELETE: "^^^- diese Aufgabe löschen?",
         MessageKey.ADMIN_TASK_DELETED_SUCCESSFULLY: "Aufgabe erfolgreich gelöscht!",
         MessageKey.CHOOSE_TASK_TYPE: "🔥 In unserem Bot können Sie durch das Erledigen von Aufgaben verdienen!",
+        MessageKey.CHOOSE_BONUS: "🎁 Wählen Sie die Bonusaufgabe, die Sie erledigen möchten:",
         MessageKey.TASK_ENDED: "😞 Keine Aufgaben mehr! Versuchen Sie es später erneut.",
+        MessageKey.BONUS_TASK_ENDED: "😞 Leider gibt es momentan keine Bonustasks für Sie. Bitte versuchen Sie es später erneut.",
         MessageKey.TASK_DONE_SUCCESSFULLY: "✅ Sie haben die Aufgabe №{task_id} erfolgreich abgeschlossen",
         MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ Sie haben die Anforderungen der Aufgabe nicht erfüllt!",
         MessageKey.TASK_ALREADY_HAS_DONE: "❌ Sie haben diese Aufgabe bereits abgeschlossen!",
         MessageKey.PUBLIC_STATISTIC: "📊 <b>Projektstatistik:</b>\n\n👥 Gesamtanzahl der Benutzer: {total_users}\n👤 Neu heute: {today_joined}",
-    },
-
-    Lang.TR: {
-        MessageKey.LANG_CHANGE: "Dil başarıyla Türkçe olarak değiştirildi!",
-        MessageKey.START_REQUIRE_SUBSCRIPTION: "<b>🦎 Devam etmek için kanallarımıza abone olmanız gerekiyor:</b>",
-        MessageKey.START_REQUIRE_SUBSCRIPTION_SUCCESSFUL: "✅ Başarıyla abone oldunuz!",
-        MessageKey.START_REQUIRE_SUBSCRIPTION_FAILED: "⛔️ Kanallarımıza abone olun ve tekrar deneyin!",
-        MessageKey.MENU_MESSAGE: "<b>🦎 Bu botta şunları yapabilirsiniz:</b>",
-        MessageKey.REF_INVITED_STEP_ONE: "👥 <a href=\"tg://user?id={user_link}\">Bir arkadaşınızı</a> davet ettiniz! Arkadaşınız kanallara abone olduğunda {amount} $GMEME kazanacaksınız!",
-        MessageKey.REF_INVITED_STEP_TWO: "👥 <a href=\"tg://user?id={user_link}\">Arkadaşınızın</a> botta kaydı için {amount} $GMEME kazandınız",
-        MessageKey.REF_INVITE: """👥 Arkadaşlarını davet et ve kişi başına {ref_invite_pay} $GMEME kazan\n\n🔗 Bağlantınız: <code>https://t.me/Geckoshi_bot?start={link}</code>\n\n🗣 Toplamda: {ref_invite_count} kişi davet ettiniz""",
-        MessageKey.USER_PROFILE: """📝 Ad: <a href=\"tg://user?id={user_link}\">{user_name}</a>\n🆔 Kimlik Numaranız: <code>{user_tg_id}</code>\n🔥 Premium hesap: {is_premium_account}\n💎 Bakiye: {balance} $GMEME\n👥 Toplam referans: {ref_count}\n🦎 ÇEKİLDİ: {withdrew} $GMEME\n<b>📣 Ödemeler hakkında önceden bilgi vereceğiz!\n🔥 Haberleri takip edin!\n⛔️ EN DÜŞÜK ÇEKİM MİKTARI, AIRDROP GÜNÜ {min_withdraw_in_airdrop} OLACAKTIR!</b>""",
-        MessageKey.LANG_MENU: "Tercih ettiğiniz dili seçin:",
-        MessageKey.FUNCTION_NOT_IMPLEMENTED: "Ne yazık ki bu özellik şu anda mevcut değil",
-        MessageKey.PREMIUM_ALREADY_BOUGHT: "❗ Zaten Premium'a sahipsiniz!",
-        MessageKey.PREMIUM_BUY_MENU: "🦎 Premium fiyatı: {premium_gmeme_price} $GMEME",
-        MessageKey.NOT_ENOUGH_TO_BUY_PREMIUM: "❗ Premium satın almak için yeterli {not_enough} $GMEME'niz yok",
-        MessageKey.PREMIUM_HAS_BOUGHT: "🥳 'Premium' satın aldınız",
-        MessageKey.SOON: "Yakında 🔜",
-        MessageKey.ADMIN_PANEL: "Yönetim Paneli:\n\n🕰Bot Çalışma Süresi: {uptime}\n👥Bottaki kullanıcı sayısı: {user_count}",
-        MessageKey.ADMIN_NOW: "Yönetici hakları verildi",
-        MessageKey.ADMIN_CHANGE_REF_PAY: "Referans ödülü için yeni miktarı girin.\nMevcut değer: {pay_for_ref}",
-        MessageKey.ADMIN_CHANGE_REF_PAY_SUCCESSFULLY: "Referans ödülü miktarı şu şekilde değiştirildi: {pay_for_ref}",
-        MessageKey.ADMIN_ENTER_MAILING_MESSAGE: "Gönderim için metin girin veya bir resim gönderin:",
-        MessageKey.ADMIN_MAILING_HAS_INLINE_BUTTON: "Bir bağlantı içeren satır içi buton eklemek ister misiniz?",
-        MessageKey.ADMIN_ENTER_INLINE_BUTTON_TEXT: "Satır içi buton için metin girin:",
-        MessageKey.ADMIN_ENTER_INLINE_BUTTON_URL: "Satır içi buton için URL'yi girin:",
-        MessageKey.ADMIN_ADD_INLINE_BUTTON: "Satır içi buton başarıyla eklendi!",
-        MessageKey.ADMIN_INLINE_BUTTON_PREVIEW: "Buton şu şekilde görünecektir:",
-        MessageKey.ADMIN_MAILING_MESSAGE_LOOKS_LIKE: "^^^ - gönderim mesajı böyle görünecek.",
-        MessageKey.ADMIN_MAILING_STATS: "Gönderim İstatistikleri No.{mailing_id}:\n Yakalanan kullanıcılar: {user_captured}\n Durum: {status}\n Başarılı: {successfully}\n Kuyrukta: {in_queue}\n Başarısız: {failed}\n İptal Edildi: {canceled}\n Toplam işlenen: {messages_processed} ({messages_processed_percents})\n İşlem süresi: {processing_time}",
-        MessageKey.REQUEST_PROCESSING: "İstek işleniyor...",
-        MessageKey.ADMIN_MAILING_CANCEL_FAILED: "Gönderim iptal edilemedi.",
-        MessageKey.ADMIN_MAILING_CANCEL_SUCCESSFUL: "Gönderim No.{mailing_id} başarıyla iptal edildi!",
-        MessageKey.ADMIN_MAILING_FAILED_TO_SEND_MESSAGES_IN_QUEUE: "Kuyruğa mesaj eklerken bir hata oluştu.",
-        MessageKey.SLOTS_GAME_MENU: """Slot bölümüne hoş geldiniz.\nBurada çok para kazanabilirsiniz, işte kazanan kombinasyonlar:\n1. 🦎🦎🦎 - x10\n2.  🏜️🏜️🏜️ - x5\n3. 🏖️🏖️🏖️ - x3\n4. 🏕️🏕️🏕️ - x2\n5. ✈️✈️✈️ - x1.8\n6. 🚀🚀🚀 - x1.7\n7. 🪲🪲🪲 - x1.5\n8. 🐞🐞🐞 - x1.2\n9. 🐝🐝🐝 - x1.05\nİyi şanslar! İhtiyacınız olacak.\nNe kadar $GMEME ile oynuyoruz?""",
-        MessageKey.SLOTS_NOT_ENOUGH_TO_PLAY: "💲Oynamak için yeterli bakiyeniz yok. Miktarı değiştirmeyi deneyin.",
-        MessageKey.SLOTS_WIN: "🎉Tebrikler, kazandınız: {amount} $GMEME\n🎰Kazanan kombinasyonunuz: {combination}",
-        MessageKey.SLOTS_LOSS: "🃏Maalesef bu sefer bahsinizi kaybettiniz ({amount} $GMEME).\n🎰Kombinasyonunuz: {combination}\nTekrar deneyin, şans size gülecektir!",
-        MessageKey.ADMIN_TASK_MENU: "📋Eyleminizi seçin",
-        MessageKey.ADMIN_TASK_TYPE_SELECT: "Görev türünü seçin",
-        MessageKey.ADMIN_TASK_TITLE_REQUEST: "Görevin başlığını girin:",
-        MessageKey.ADMIN_TASK_TEXT_REQUEST: "Görevin metnini girin:",
-        MessageKey.ADMIN_TASK_CHAT_SUBSCRIPTIONS_REQUIRE_REQUEST: "Virgülle ayrılmış kanal, grup chat_id'lerini girin.",
-        MessageKey.ADMIN_TASK_EXPIRE_TIME_REQUEST: "Görevin süresini girin.\nörnek: 10h",
-        MessageKey.ADMIN_TASK_GMEME_DONE_REWARD_REQUEST: "$GMEME olarak ödül miktarını girin.",
-        MessageKey.ADMIN_TASK_BMEME_DONE_REWARD_REQUEST: "$BMEME olarak ödül miktarını girin.",
-        MessageKey.TIME_BASED_TASK: "<b>{title}</b>\n\nid: {task_id}\nAçıklama: {text}\nÖdül: {done_reward} $GMEME\nKalan zaman: {expires_in}",
-        MessageKey.ADMIN_TASK_SAVED_SUCCESSFULLY: "Görev id'si ile: {task_id} başarıyla kaydedildi",
-        MessageKey.ADMIN_TASK_ID_REQUEST: "Görev kimliğini girin:",
-        MessageKey.ADMIN_CONFIRM_TASK_DELETE: "^^^- bu görevi silmek istiyor musunuz?",
-        MessageKey.ADMIN_TASK_DELETED_SUCCESSFULLY: "Görev başarıyla silindi!",
-        MessageKey.CHOOSE_TASK_TYPE: "🔥 Botumuzda görev yaparak para kazanabilirsiniz!",
-        MessageKey.TASK_ENDED: "😞 Görevler bitti! Daha sonra tekrar deneyin.",
-        MessageKey.TASK_DONE_SUCCESSFULLY: "✅ Görevi başarıyla tamamladınız №{task_id}",
-        MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ Görevin gerekliliklerini yerine getirmediniz!",
-        MessageKey.TASK_ALREADY_HAS_DONE: "❌ Bu görevi zaten tamamladınız!",
-        MessageKey.PUBLIC_STATISTIC: "📊 <b>Proje İstatistikleri:</b>\n\n👥 Toplam kullanıcı: {total_users}\n👤 Bugün eklenenler: {today_joined}",
-
     },
 }
 
@@ -576,6 +606,9 @@ keyboard_data = {
         [
             M(text="💰 pool based", callback_class=StartCreatingTask, with_callback_param_required=True),
         ],
+        [
+            M(text="🎁 bonus", callback_class=StartCreatingTask, with_callback_param_required=True),
+        ],
     ],
     KeyboardKey.TASK_TYPE_MENU: [
         [
@@ -587,6 +620,11 @@ keyboard_data = {
         # [
         #     M(text="💰 pool based", callback_class=TaskSelect, with_callback_param_required=True),
         # ],
+    ],
+    KeyboardKey.BONUS_TASK_BUTTON: [
+        [
+            M(text="{title}", callback_class=BonusTaskSelect, with_callback_param_required=True, with_text_param_required=True),
+        ],
     ],
     Lang.RU: {
         KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB: [
@@ -760,13 +798,22 @@ keyboard_data = {
                 M(text="Удалить", callback_class=DeleteTask, with_callback_param_required=True),
             ],
         ],
-        KeyboardKey.SELECT_TASK_NAV_MENU: [
+        KeyboardKey.SELECT_TASK_SUBMIT_BUTTON: [
             [
                 M(text="✅ Проверить", callback_class=TaskDone, with_callback_param_required=True),
             ],
+        ],
+        KeyboardKey.SELECT_TASK_NAV_MENU: [
             [
                 M(text="⬅️ Предыдущее", callback_class=TaskSelect, with_callback_param_required=True),
                 M(text="Следующее ➡️", callback_class=TaskSelect, with_callback_param_required=True),
+            ],
+        ],
+        KeyboardKey.PAGINATION_MENU: [
+            [
+                M(text="⬅️", callback_class=PaginationMove, with_callback_param_required=True),
+                M(text="{cur_page}/{total_pages}", callback_class=Void, with_text_param_required=True),
+                M(text="➡️", callback_class=PaginationMove, with_callback_param_required=True),
             ],
         ],
         KeyboardKey.SKIP: [

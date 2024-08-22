@@ -51,3 +51,5 @@ class AdminTaskStates(StatesGroup):
 class TaskStates(StatesGroup):
     menu = State()
     select = State()
+
+    bonus_select = State()
