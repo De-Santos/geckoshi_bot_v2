@@ -3,7 +3,6 @@ import datetime
 import functools
 import logging
 import os
-import time
 from abc import abstractmethod, ABC
 from asyncio import AbstractEventLoop
 
@@ -28,7 +27,7 @@ class MessageConsumer(object):
     from rabbit import Queue
     QUEUE = Queue.MESSAGE.value
 
-    def __init__(self, url, loop):
+    def __init__(self, url, loop, prefetch_count):
 
         self.should_reconnect = False
         self.was_consuming = False
@@ -42,7 +41,7 @@ class MessageConsumer(object):
         self._outer_async_loop: AbstractEventLoop = loop
         # In production, experiment with higher prefetch values
         # for higher consumer throughput
-        self._prefetch_count = 1
+        self._prefetch_count = prefetch_count
 
     def connect(self) -> AsyncioConnection:
         """This method connects to RabbitMQ, returning the connection handle.
@@ -257,6 +256,7 @@ class MessageConsumer(object):
 
     async def __send_message(self, msg: MessageDto, basic_deliver) -> None:
         logger.info("Start message sending: %s", msg)
+        await asyncio.sleep(5)
         s = get_session()
         mm = get_mailing_message(s, msg.mailing_message_id)
         try:
@@ -323,7 +323,7 @@ class MessageConsumer(object):
 
     def run(self):
         self._connection = self.connect()
-        self._connection.ioloop.run_forever()
+        # self._connection.ioloop.run_forever()
 
     def stop(self):
         """Cleanly shutdown the connection to RabbitMQ by stopping the consumer
@@ -347,40 +347,17 @@ class MessageConsumer(object):
             logger.info('Stopped')
 
 
-class ReconnectingMessageConsumer(IReconnectingConsumer):
-    """This is an example consumer that will reconnect if the nested
-    ExampleConsumer indicates that a reconnect is necessary.
-
-    """
+class MessageConsumerRunner:
 
     def __init__(self, loop):
         self._reconnect_delay = 0
         self._amqp_url = os.getenv("RABBIT_URL")
+        self._prefetch_count = int(os.getenv("RABBIT_PREFETCH_COUNT"))
         self._loop = loop
-        self._consumer = MessageConsumer(self._amqp_url, self._loop)
+        self._consumer = MessageConsumer(self._amqp_url, self._loop, self._prefetch_count)
 
     def run(self):
-        while True:
-            try:
-                self._consumer.run()
-            except KeyboardInterrupt:
-                self._consumer.stop()
-                break
-            self._maybe_reconnect()
-
-    def _maybe_reconnect(self):
-        if self._consumer.should_reconnect:
+        try:
+            self._consumer.run()
+        except KeyboardInterrupt:
             self._consumer.stop()
-            reconnect_delay = self._get_reconnect_delay()
-            logger.info('Reconnecting after %d seconds', reconnect_delay)
-            time.sleep(reconnect_delay)
-            self._consumer = MessageConsumer(self._amqp_url, self._loop)
-
-    def _get_reconnect_delay(self):
-        if self._consumer.was_consuming:
-            self._reconnect_delay = 0
-        else:
-            self._reconnect_delay += 1
-        if self._reconnect_delay > 30:
-            self._reconnect_delay = 30
-        return self._reconnect_delay

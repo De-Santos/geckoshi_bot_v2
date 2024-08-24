@@ -73,7 +73,7 @@ def get_ids(kbk: KeyboardKey, lang: Lang) -> list[str]:
 
 @router.callback_query(CheckStartMembershipCallback.filter(), StartStates.subscription, UserExistsFilter())
 async def check_subscription(query: CallbackQuery, callback_data: CheckStartMembershipCallback, state: FSMContext,
-                             lang: Lang, is_admin: bool, bot: Bot) -> None:
+                             lang: Lang, bot: Bot) -> None:
     r = [await check_membership(query.from_user.id, link) for link in get_ids(callback_data.kbk, callback_data.lang)]
     if False in r:
         await query.message.answer(text=get_message(MessageKey.START_REQUIRE_SUBSCRIPTION_FAILED, lang))
@@ -83,7 +83,7 @@ async def check_subscription(query: CallbackQuery, callback_data: CheckStartMemb
         update_user_is_bot_start_completed_by_tg_id(get_session(), query.from_user.id, True)
         await query.message.delete()
         await query.message.answer(text=get_message(MessageKey.START_REQUIRE_SUBSCRIPTION_SUCCESSFUL, lang),
-                                   reply_markup=get_reply_keyboard_kbm(lang, is_admin))
+                                   reply_markup=get_reply_keyboard_kbm(lang, False))
         await process_paying_for_referral(query.from_user.id, bot)
 
 
