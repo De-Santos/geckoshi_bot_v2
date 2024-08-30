@@ -5,7 +5,7 @@ from aiogram.types import CallbackQuery
 from chat_processor.member import check_memberships
 from database import get_active_tasks_page, get_session, TaskType, Task, get_active_task_by_id, check_task_is_done, TaskDoneHistory, TransactionOperation
 from filters.base_filters import UserExistsFilter
-from keyboard_markup.inline_user_kb import get_task_type_menu_kbm, with_step_back_button, with_back_to_menu_button, get_select_task_nav_menu_kbm
+from keyboard_markup.inline_user_kb import with_step_back_button, with_back_to_menu_button, get_select_task_nav_menu_kbm
 from lang.lang_based_provider import Lang, get_message, MessageKey, format_string
 from lang_based_variable import MenuToTasksCallback, TaskSelect, StepBack, TaskDone
 from states.states import TaskStates
@@ -18,10 +18,13 @@ router = Router(name="task_router")
 @router.callback_query(TaskStates.select, StepBack.filter(), UserExistsFilter())
 @router.callback_query(MenuToTasksCallback.filter(), UserExistsFilter())
 async def task_menu(query: CallbackQuery, lang: Lang, state: FSMContext) -> None:
-    await query.message.delete()
-    await state.set_state(TaskStates.menu)
-    await query.message.answer(text=get_message(MessageKey.CHOOSE_TASK_TYPE, lang),
-                               reply_markup=get_task_type_menu_kbm(lang))
+    # Temporary
+    # await query.message.delete()
+    # await state.set_state(TaskStates.menu)
+    # await query.message.answer(text=get_message(MessageKey.CHOOSE_TASK_TYPE, lang),
+    #                            reply_markup=get_task_type_menu_kbm(lang))
+    #
+    await select_task(query, TaskSelect(task_type=TaskType.TIME_BASED.value, page=1), lang, state)
 
 
 @router.callback_query(TaskStates.select, TaskSelect.filter(F.disabled.__eq__(False)), UserExistsFilter())

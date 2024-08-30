@@ -994,10 +994,12 @@ keyboard_data = {
                 M(text="Delete", callback_class=DeleteTask, with_callback_param_required=True),
             ],
         ],
-        KeyboardKey.SELECT_TASK_NAV_MENU: [
+        KeyboardKey.SELECT_TASK_SUBMIT_BUTTON: [
             [
-                M(text="✅ Check", callback_class=TaskDone, with_callback_param_required=True),
+                M(text="✅ Проверить", callback_class=TaskDone, with_callback_param_required=True),
             ],
+        ],
+        KeyboardKey.SELECT_TASK_NAV_MENU: [
             [
                 M(text="⬅️ Previous", callback_class=TaskSelect, with_callback_param_required=True),
                 M(text="Next ➡️", callback_class=TaskSelect, with_callback_param_required=True),
@@ -1181,10 +1183,12 @@ keyboard_data = {
                 M(text="Sil", callback_class=DeleteTask, with_callback_param_required=True),
             ],
         ],
-        KeyboardKey.SELECT_TASK_NAV_MENU: [
+        KeyboardKey.SELECT_TASK_SUBMIT_BUTTON: [
             [
                 M(text="✅ Kontrol Et", callback_class=TaskDone, with_callback_param_required=True),
             ],
+        ],
+        KeyboardKey.SELECT_TASK_NAV_MENU: [
             [
                 M(text="⬅️ Önceki", callback_class=TaskSelect, with_callback_param_required=True),
                 M(text="Sonraki ➡️", callback_class=TaskSelect, with_callback_param_required=True),
@@ -1368,10 +1372,12 @@ keyboard_data = {
                 M(text="Löschen", callback_class=DeleteTask, with_callback_param_required=True),
             ],
         ],
-        KeyboardKey.SELECT_TASK_NAV_MENU: [
+        KeyboardKey.SELECT_TASK_SUBMIT_BUTTON: [
             [
                 M(text="✅ Überprüfen", callback_class=TaskDone, with_callback_param_required=True),
             ],
+        ],
+        KeyboardKey.SELECT_TASK_NAV_MENU: [
             [
                 M(text="⬅️ Vorherige", callback_class=TaskSelect, with_callback_param_required=True),
                 M(text="Nächste ➡️", callback_class=TaskSelect, with_callback_param_required=True),
