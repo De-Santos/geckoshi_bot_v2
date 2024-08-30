@@ -6,7 +6,7 @@ from aiogram.types import Message, CallbackQuery
 import cache
 import settings
 from chat_processor.member import check_membership
-from database import get_session, User, save_user, is_user_exists_by_tg, update_user_language, update_user_is_bot_start_completed_by_tg_id, is_good_user_by_tg, Setting, SettingsKey
+from database import get_session, User, save_user, is_user_exists_by_tg, update_user_language, update_user_is_bot_start_completed_by_tg_id, is_good_user_by_tg, Setting, SettingsKey, is_admin
 from filters.base_filters import UserExistsFilter, IsGoodUserFilter
 from handlers.referral import process_paying_for_referral
 from keyboard_markup.custom_user_kb import get_reply_keyboard_kbm
@@ -38,8 +38,8 @@ async def command_start_handler(message: Message, state: FSMContext, bot: Bot) -
         await message.answer(get_message(msgK.START), reply_markup=get_lang_kbm())
         await cache.drop_cache(is_user_exists_by_tg, cache_id=message.from_user.id)
     else:
-        await message.answer(text="Hi!",
-                             reply_markup=get_reply_keyboard_kbm(Lang.EN, False))
+        await message.answer(text=get_message(msgK.START),
+                             reply_markup=get_reply_keyboard_kbm(Lang.EN, await is_admin(session, message.from_user.id)))
         await message.delete()
 
 
