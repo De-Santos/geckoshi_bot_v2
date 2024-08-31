@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import cache
 import settings
 from chat_processor.member import check_membership
-from database import User, save_user, is_user_exists_by_tg, update_user_language, update_user_is_bot_start_completed_by_tg_id, is_good_user_by_tg, Setting, SettingsKey, with_session, is_admin
+from database import User, save_user, is_user_exists_by_tg, update_user_language, update_user_is_bot_start_completed_by_tg_id, is_good_user_by_tg, SettingsKey, with_session, is_admin
 from filters.base_filters import UserExistsFilter, IsGoodUserFilter
 from handlers.referral import process_paying_for_referral
 from keyboard_markup.custom_user_kb import get_reply_keyboard_kbm
@@ -142,13 +142,3 @@ async def menu(message: types.Message, lang: Lang, state: FSMContext) -> None:
     await state.clear()
     await message.answer(text=get_message(MessageKey.MENU_MESSAGE, lang),
                          reply_markup=get_user_menu_kbm(lang))
-
-
-@router.message(F.text == "/aaa", IsGoodUserFilter())
-@with_session
-async def test(message, s: AsyncSession = None) -> None:
-    # TEMP TODO: DELETE ME
-    s.add(Setting(id=SettingsKey.PAY_FOR_REFERRAL, int_val=1500))
-    s.add(Setting(id=SettingsKey.MIN_WITHDRAW_IN_AIRDROP, int_val=0))
-    s.add(Setting(id=SettingsKey.PREMIUM_GMEME_PRICE, int_val=30000))
-    await s.commit()
