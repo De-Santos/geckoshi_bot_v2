@@ -45,7 +45,7 @@ async def bonus_task_menu(query: CallbackQuery, callback_data: PaginationMove, l
         {'cur_page': pagination.current_page, 'total_pages': pagination.total_pages},
     ]
     await query.message.edit_text(text=get_message(MessageKey.CHOOSE_BONUS, lang),
-                                  reply_markup=with_back_to_menu_button(lang, with_pagination_menu(lang, params, text_params, markup), remove_source=True))
+                                  reply_markup=with_back_to_menu_button(lang, with_pagination_menu(params, text_params, markup), remove_source=True))
 
 
 @router.callback_query(TaskStates.bonus_select, BonusTaskSelect.filter(), UserExistsFilter())

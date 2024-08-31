@@ -365,7 +365,7 @@ message_data = {
         MessageKey.SLOTS_GAME_MENU: """Добро пожаловать в раздел слотов.\nЗдесь ты можешь выграть много денег, вот выйгрышные комбинации:\n1. 🦎🦎🦎 - x10\n2.  🏜️🏜️🏜️ - x5\n3. 🏖️🏖️🏖️ - x3\n4. 🏕️🏕️🏕️ - x2\n5. ✈️✈️✈️ - x1.8\n6. 🚀🚀🚀 - x1.7\n7. 🪲🪲🪲 - x1.5\n8. 🐞🐞🐞 - x1.2\n9. 🐝🐝🐝 - x1.05\nУдачи! - она тебе пригодиться.\nНа сколько $GMEME играем ?""",
         MessageKey.SLOTS_NOT_ENOUGH_TO_PLAY: "💲У тебя недостаточно баланса чтобы играть. Попробуй изменить сумму.",
         MessageKey.SLOTS_WIN: "🎉Поздравляем ты выиграл: {amount} $GMEME\n🎰Твоя выигрышная комбинация: {combination}",
-        MessageKey.SLOTS_LOSS: "🃏К сожелению в этот раз тебе не повезло - ты проиграл ставку ({amount} $GMEME).\n🎰Твоя комбинация: {combination}\nПопробуй ещё раз, тебе обязательно повезёт!",
+        MessageKey.SLOTS_LOSS: "🃏К сожалению в этот раз тебе не повезло - ты проиграл ставку ({amount} $GMEME).\n🎰Твоя комбинация: {combination}\nПопробуй ещё раз, тебе обязательно повезёт!",
         MessageKey.ADMIN_TASK_MENU: "📋Выберите ваше дейвствие",
         MessageKey.ADMIN_TASK_TYPE_SELECT: "Выберете тип задания",
         MessageKey.ADMIN_TASK_TITLE_REQUEST: "Введите название задания:",
@@ -626,6 +626,13 @@ keyboard_data = {
             M(text="{title}", callback_class=BonusTaskSelect, with_callback_param_required=True, with_text_param_required=True),
         ],
     ],
+    KeyboardKey.PAGINATION_MENU: [
+        [
+            M(text="⬅️", callback_class=PaginationMove, with_callback_param_required=True),
+            M(text="{cur_page}/{total_pages}", callback_class=Void, with_text_param_required=True),
+            M(text="➡️", callback_class=PaginationMove, with_callback_param_required=True),
+        ],
+    ],
     Lang.RU: {
         KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB: [
             [
@@ -809,13 +816,6 @@ keyboard_data = {
                 M(text="Следующее ➡️", callback_class=TaskSelect, with_callback_param_required=True),
             ],
         ],
-        KeyboardKey.PAGINATION_MENU: [
-            [
-                M(text="⬅️", callback_class=PaginationMove, with_callback_param_required=True),
-                M(text="{cur_page}/{total_pages}", callback_class=Void, with_text_param_required=True),
-                M(text="➡️", callback_class=PaginationMove, with_callback_param_required=True),
-            ],
-        ],
         KeyboardKey.SKIP: [
             [
                 M(text="Пропустить ⤵️", callback_class=Skip),
@@ -994,10 +994,12 @@ keyboard_data = {
                 M(text="Delete", callback_class=DeleteTask, with_callback_param_required=True),
             ],
         ],
-        KeyboardKey.SELECT_TASK_NAV_MENU: [
+        KeyboardKey.SELECT_TASK_SUBMIT_BUTTON: [
             [
-                M(text="✅ Check", callback_class=TaskDone, with_callback_param_required=True),
+                M(text="✅ Проверить", callback_class=TaskDone, with_callback_param_required=True),
             ],
+        ],
+        KeyboardKey.SELECT_TASK_NAV_MENU: [
             [
                 M(text="⬅️ Previous", callback_class=TaskSelect, with_callback_param_required=True),
                 M(text="Next ➡️", callback_class=TaskSelect, with_callback_param_required=True),
@@ -1181,10 +1183,12 @@ keyboard_data = {
                 M(text="Sil", callback_class=DeleteTask, with_callback_param_required=True),
             ],
         ],
-        KeyboardKey.SELECT_TASK_NAV_MENU: [
+        KeyboardKey.SELECT_TASK_SUBMIT_BUTTON: [
             [
                 M(text="✅ Kontrol Et", callback_class=TaskDone, with_callback_param_required=True),
             ],
+        ],
+        KeyboardKey.SELECT_TASK_NAV_MENU: [
             [
                 M(text="⬅️ Önceki", callback_class=TaskSelect, with_callback_param_required=True),
                 M(text="Sonraki ➡️", callback_class=TaskSelect, with_callback_param_required=True),
@@ -1368,10 +1372,12 @@ keyboard_data = {
                 M(text="Löschen", callback_class=DeleteTask, with_callback_param_required=True),
             ],
         ],
-        KeyboardKey.SELECT_TASK_NAV_MENU: [
+        KeyboardKey.SELECT_TASK_SUBMIT_BUTTON: [
             [
                 M(text="✅ Überprüfen", callback_class=TaskDone, with_callback_param_required=True),
             ],
+        ],
+        KeyboardKey.SELECT_TASK_NAV_MENU: [
             [
                 M(text="⬅️ Vorherige", callback_class=TaskSelect, with_callback_param_required=True),
                 M(text="Nächste ➡️", callback_class=TaskSelect, with_callback_param_required=True),
