@@ -69,7 +69,7 @@ async def select_bonus(query: CallbackQuery, callback_data: BonusTaskSelect, lan
 @router.callback_query(TaskStates.bonus_select, TaskDone.filter(), UserExistsFilter())
 @with_session(transaction=True)
 async def process_bonus_task_done(query: CallbackQuery, callback_data: TaskDone, lang: Lang, state: FSMContext, s: AsyncSession) -> None:
-    task: Task = await get_active_task(user_id=query.from_user.id, task_id=callback_data.task_id, s=s)
+    task: Task = await get_active_task(user_id=query.from_user.id, task_id=callback_data.task_id, session=s)
     if task is None:
         await bonus_task_menu_entrypoint(query, lang, state)
         return
