@@ -4,7 +4,7 @@ from aiogram import Router, Bot
 from aiogram.types import CallbackQuery, FSInputFile
 
 import transaction_manager
-from database import get_session, get_user_by_tg, SettingsKey, TransactionOperation, update_user_premium
+from database import get_user_by_tg, SettingsKey, TransactionOperation, update_user_premium
 from filters.base_filters import UserExistsFilter
 from keyboard_markup.inline_user_kb import get_buy_premium_menu_kbm
 from lang.lang_based_provider import get_message, format_string
@@ -34,15 +34,15 @@ async def buy_premium_callback_handler(query: CallbackQuery, is_premium: bool, l
     if is_premium:
         await query.answer(get_message(MessageKey.PREMIUM_ALREADY_BOUGHT, lang), show_alert=True)
         return
-    user = get_user_by_tg(get_session(), query.from_user.id)
+    user = await get_user_by_tg(query.from_user.id)
     gmeme_price = await get_setting(SettingsKey.PREMIUM_GMEME_PRICE)
     if user.balance - gmeme_price < 0:
         await query.answer(format_string(get_message(MessageKey.NOT_ENOUGH_TO_BUY_PREMIUM, lang), not_enough=gmeme_price - user.balance), show_alert=True)
     else:
-        transaction_manager.make_transaction_from_system(target=user.telegram_id,
-                                                         created_by=user.telegram_id,
-                                                         operation=TransactionOperation.DECREMENT,
-                                                         amount=gmeme_price,
-                                                         description="Buy premium")
-        update_user_premium(get_session(), user.telegram_id, True)
+        await transaction_manager.make_transaction_from_system(target=user.telegram_id,
+                                                               created_by=user.telegram_id,
+                                                               operation=TransactionOperation.DECREMENT,
+                                                               amount=gmeme_price,
+                                                               description="Buy premium")
+        await update_user_premium(user.telegram_id, True)
         await query.message.answer(get_message(MessageKey.PREMIUM_HAS_BOUGHT, lang))

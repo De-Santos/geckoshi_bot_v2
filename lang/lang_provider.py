@@ -1,6 +1,6 @@
 import logging
 
-from database import get_session, get_user_language
+from database import get_user_language
 from lang.lang_based_provider import Lang
 from variables import redis
 
@@ -18,8 +18,7 @@ async def get_cached_lang(user_tg_id: int) -> Lang | None:
     if lang_value:
         return Lang(lang_value.decode('utf-8'))
     else:
-        session = get_session()
-        lang: Lang = get_user_language(session, user_tg_id)
+        lang: Lang = await get_user_language(user_tg_id)
         if lang is None:
             logging.warning(f"Language for user_tg_id is not available - {user_tg_id}")
             return None

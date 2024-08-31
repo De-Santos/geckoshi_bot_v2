@@ -5,7 +5,7 @@ from aiogram.types import CallbackQuery, FSInputFile
 
 from filters.base_filters import UserExistsFilter
 from lang.lang_based_provider import get_message
-from lang_based_variable import MenuToChequeCallback, Lang, MessageKey, MenuToP2PCallback
+from lang_based_variable import Lang, MessageKey, MenuToP2PCallback
 
 router = Router(name="p2p_router")
 

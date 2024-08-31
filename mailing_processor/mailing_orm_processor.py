@@ -1,13 +1,13 @@
 import logging
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import Mailing, get_session, MailingStatus, MailingMessage, MailingMessageStatus
 from mailing_processor.classes import MM
 
 
-def generate_mailing(s: Session, mm: MM) -> Mailing:
-    s.begin()
+async def generate_mailing(s: AsyncSession, mm: MM) -> Mailing:
+    await s.begin()
     mailing = Mailing(
         files=mm.files,
         text=mm.text,
@@ -16,14 +16,14 @@ def generate_mailing(s: Session, mm: MM) -> Mailing:
         created_by_id=mm.initiator_id
     )
     s.add(mailing)
-    s.commit()
+    await s.commit()
     s.expunge_all()
     return mailing
 
 
-def generate_mailing_messages(mailing: Mailing, user_ids: list[int]) -> list["MailingMessage"]:
+async def generate_mailing_messages(mailing: Mailing, user_ids: list[int]) -> list["MailingMessage"]:
     s = get_session()
-    s.begin()
+    await s.begin()
     messages: list["MailingMessage"] = []
     for user_id in user_ids:
         messages.append(MailingMessage(
@@ -34,12 +34,12 @@ def generate_mailing_messages(mailing: Mailing, user_ids: list[int]) -> list["Ma
         ))
     try:
         s.add_all(messages)
-        s.commit()
+        await s.commit()
     except Exception as e:
-        s.rollback()
+        await s.rollback()
         logging.error(f"Error occurred: {e}")
     finally:
         s.expunge_all()
-        s.close()
+        await s.close()
 
     return messages

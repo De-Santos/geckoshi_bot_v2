@@ -3,7 +3,7 @@ from typing import Callable, Dict, Any, Awaitable
 from aiogram import BaseMiddleware
 from aiogram.types import Message
 
-from database import is_user_admin_by_tg_id, get_session, has_premium
+from database import is_user_admin_by_tg_id, has_premium
 from lang.lang_provider import get_cached_lang
 
 
@@ -27,8 +27,7 @@ class IsAdminProviderMiddleware(BaseMiddleware):
             event: Message,
             data: Dict[str, Any]
     ) -> Any:
-        session = get_session()
-        data['is_admin'] = await is_user_admin_by_tg_id(session, event.from_user.id, cache_id=event.from_user.id)
+        data['is_admin'] = await is_user_admin_by_tg_id(event.from_user.id, cache_id=event.from_user.id)
         return await handler(event, data)
 
 
@@ -39,7 +38,5 @@ class IsPremiumUserMiddleware(BaseMiddleware):
             event: Message,
             data: Dict[str, Any]
     ) -> Any:
-        session = get_session()
-        data['is_premium'] = await has_premium(session, event.from_user.id, cache_id=event.from_user.id)
+        data['is_premium'] = await has_premium(event.from_user.id, cache_id=event.from_user.id)
         return await handler(event, data)
-

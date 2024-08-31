@@ -11,8 +11,11 @@ from database.enums import TransactionOperation, TransactionStatus, SettingsKey,
 from lang.lang_based_provider import Lang
 
 
-def now() -> datetime.datetime:
-    return datetime.datetime.now(datetime.UTC)
+def now(native: bool = False) -> datetime.datetime:
+    dt = datetime.datetime.now(datetime.UTC)
+    if native:
+        return dt.replace(tzinfo=None)
+    return dt
 
 
 class User(Base):
@@ -27,8 +30,8 @@ class User(Base):
     is_admin: Mapped[bool] = mapped_column(default=False, nullable=False)
     is_premium: Mapped[bool] = mapped_column(default=False, nullable=False)
     is_bot_start_completed: Mapped[bool] = mapped_column(default=False)
-    created_at = mapped_column("created_at", DateTime, default=now, index=True)
-    deleted_at = Column(DateTime, default=None)
+    created_at = mapped_column("created_at", DateTime(timezone=True), default=now, index=True)
+    deleted_at = Column(DateTime(timezone=True), default=None)
 
 
 class Transaction(Base):
@@ -52,8 +55,8 @@ class Transaction(Base):
     source: Mapped[User] = relationship("User", foreign_keys=[source_id])
     created_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=True)
     created_by: Mapped[User] = relationship("User", foreign_keys=[created_by_id])
-    created_at = mapped_column("created_at", DateTime, default=now)
-    abortedAt = Column(DateTime)
+    created_at = mapped_column("created_at", DateTime(timezone=True), default=now)
+    abortedAt = Column(DateTime(timezone=True))
     trace: Mapped[dict] = mapped_column(JSONB, server_default=func.jsonb('{}'))
 
 
@@ -75,8 +78,8 @@ class Mailing(Base):
     status: Mapped[MailingStatus] = mapped_column(SQLEnum(MailingStatus))
     created_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
     created_by: Mapped[User] = relationship("User", foreign_keys=[created_by_id])
-    created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime, default=now)
-    finished_at: Mapped[datetime.datetime] = mapped_column("finished_at", DateTime, nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime(timezone=True), default=now)
+    finished_at: Mapped[datetime.datetime] = mapped_column("finished_at", DateTime(timezone=True), nullable=True)
 
 
 class MailingMessage(Base):
@@ -88,9 +91,9 @@ class MailingMessage(Base):
     destination_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
     destination: Mapped[User] = relationship("User", foreign_keys=[destination_id])
     mailing_id: Mapped[int] = mapped_column(ForeignKey('mailings.id'), type_=BigInteger, nullable=False)
-    mailing: Mapped[Mailing] = relationship("Mailing", foreign_keys=[mailing_id])
-    created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime, default=now)
-    sent_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
+    mailing: Mapped[Mailing] = relationship("Mailing", foreign_keys=[mailing_id], lazy='joined')
+    created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime(timezone=True), default=now)
+    sent_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     failed_message: Mapped[str] = mapped_column(type_=Text, nullable=True)
 
 
@@ -103,7 +106,7 @@ class SlotsBetHistory(Base):
     type: Mapped[BetType] = mapped_column(SQLEnum(BetType))
     player_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
     player: Mapped[User] = relationship("User", foreign_keys=[player_id])
-    created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime, default=now)
+    created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime(timezone=True), default=now)
     trace_uuid: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), default=uuid.uuid4)
 
 
@@ -127,12 +130,12 @@ class Task(Base):
     created_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
     created_by: Mapped[User] = relationship("User", foreign_keys=[created_by_id])
 
-    created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime, default=now)
-    expires_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime(timezone=True), default=now)
+    expires_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
     deleted_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=True)
     deleted_by: Mapped[User] = relationship("User", foreign_keys=[deleted_by_id])
-    deleted_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
+    deleted_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
     trace_uuid: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), default=uuid.uuid4)
 

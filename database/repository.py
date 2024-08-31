@@ -5,24 +5,28 @@ from typing import Any, Sequence, Union
 
 from sqlalchemy import and_, or_, func, union
 from sqlalchemy import select, desc, Row, update, ScalarResult
-from sqlalchemy.orm import Session, aliased
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import coalesce
 
 import cache
 from database import User, Setting, SettingsKey, MailingMessageStatus, MailingMessage, Mailing, now, MailingStatus, Task, TaskType, TaskDoneHistory
+from database.decorators import with_session
 from lang.lang_based_provider import Lang
 from utils.pagination import Pagination
 
 logger = logging.getLogger(__name__)
 
 
-def get_user_by_tg(s: Session, tg_user_id: int) -> User:
+@with_session
+async def get_user_by_tg(tg_user_id: int, s: AsyncSession = None) -> User:
     stmt = select(User).where(User.telegram_id.__eq__(tg_user_id))
-    return s.scalar(stmt)
+    return await s.scalar(stmt)
 
 
 @cache.cacheable(ttl="10m", save_as_blob=True, function_name_as_id=True)
-async def get_users_statistic(s: Session):
+@with_session
+async def get_users_statistic(s: AsyncSession = None):
     start_of_day = datetime.combine(date.today(), datetime.min.time())
     end_of_day = datetime.combine(date.today(), datetime.max.time())
 
@@ -31,31 +35,35 @@ async def get_users_statistic(s: Session):
     total_user_count = (select(func.count(User.telegram_id)))
 
     union_stmt = union(today_join_stmt, total_user_count)
-    join_count, total_count = s.execute(union_stmt).scalars()
+    join_count, total_count = (await s.execute(union_stmt)).scalars()
 
     return join_count, total_count
 
 
-def get_user_balance(s: Session, tg_user_id: int) -> int:
+@with_session
+async def get_user_balance(tg_user_id: int, s: AsyncSession = None) -> int:
     stmt = select(User.balance).where(User.telegram_id.__eq__(tg_user_id))
-    return s.scalar(stmt)
+    return await s.scalar(stmt)
 
 
 @cache.cacheable(ttl="10m")
-async def is_user_exists_by_tg(s: Session, tg_user_id: int) -> bool:
+@with_session
+async def is_user_exists_by_tg(tg_user_id: int, s: AsyncSession = None) -> bool:
     stmt = select(User).where(User.telegram_id.__eq__(tg_user_id)).exists().select()
-    return s.scalar(stmt)
+    return await s.scalar(stmt)
 
 
 @cache.cacheable(ttl="10m")
-async def has_premium(s: Session, tg_user_id: int) -> bool:
+@with_session
+async def has_premium(tg_user_id: int, s: AsyncSession = None) -> bool:
     stmt = select(User.is_premium).where(User.telegram_id.__eq__(tg_user_id))
-    result = s.execute(stmt)
+    result = await s.execute(stmt)
     return result.scalar()
 
 
 @cache.cacheable(ttl="1m")
-async def is_good_user_by_tg(s: Session, tg_user_id: int) -> bool:
+@with_session
+async def is_good_user_by_tg(tg_user_id: int, s: AsyncSession = None) -> bool:
     ext = select(User) \
         .where(User.telegram_id.__eq__(tg_user_id)) \
         .where(User.blocked.__eq__(False)) \
@@ -63,87 +71,100 @@ async def is_good_user_by_tg(s: Session, tg_user_id: int) -> bool:
         .where(User.is_bot_start_completed.__eq__(True)) \
         .exists() \
         .select()
-    result = s.execute(ext)
+    result = await s.execute(ext)
     return result.scalar()
 
 
 @cache.cacheable(ttl="1h")
-async def is_admin(s: Session, tg_user_id: int) -> bool:
+@with_session
+async def is_admin(tg_user_id: int, s: AsyncSession = None) -> bool:
     ext = (select(User)
            .where(User.telegram_id.__eq__(tg_user_id))
            .where(User.is_admin.__eq__(True))
            .exists()
            .select())
-    result = s.execute(ext)
+    result = await s.execute(ext)
     return result.scalar()
 
 
-def save_user(s: Session, user: User) -> None:
+async def save_user(s: AsyncSession, user: User) -> None:
     s.add(user)
-    s.commit()
+    await s.commit()
 
 
-def update_user_language(s: Session, tg_user_id: int, lang: Lang) -> None:
-    s.begin()
-    user = get_user_by_tg(s, tg_user_id)
+@with_session
+async def update_user_language(tg_user_id: int, lang: Lang, s: AsyncSession = None) -> None:
+    await s.begin()
+    user = await get_user_by_tg(tg_user_id, s=s)
     user.language = lang
-    s.commit()
-
-
-def get_user_language(s: Session, tg_user_id: int) -> Lang:
-    stmt = select(User.language).where(User.telegram_id.__eq__(tg_user_id))
-    result = s.execute(stmt)
-    return result.scalar()
+    await s.commit()
 
 
 @cache.cacheable(associate_none_as=False)
-async def is_user_admin_by_tg_id(s: Session, tg_user_id: int) -> bool:
+@with_session
+async def is_user_admin_by_tg_id(tg_user_id: int, s: AsyncSession = None) -> bool:
     stmt = select(User.is_admin).where(User.telegram_id.__eq__(tg_user_id))
-    result = s.execute(stmt)
+    result = await s.execute(stmt)
     return result.scalar()
 
 
-def update_user_is_bot_start_completed_by_tg_id(s: Session, tg_user_id: int, val: bool) -> None:
-    s.begin()
-    user = get_user_by_tg(s, tg_user_id)
+@with_session
+async def get_user_language(tg_user_id: int, s: AsyncSession = None) -> Lang:
+    stmt = select(User.language).where(User.telegram_id.__eq__(tg_user_id))
+    result = await s.execute(stmt)
+    return result.scalar()
+
+
+@with_session
+async def update_user_is_bot_start_completed_by_tg_id(tg_user_id: int, val: bool, s: AsyncSession = None) -> None:
+    await s.begin()
+    user = await get_user_by_tg(tg_user_id, s=s)
     user.is_bot_start_completed = val
-    s.commit()
+    await s.commit()
 
 
-def get_setting_by_id(s: Session, key: SettingsKey) -> Setting:
+@with_session
+async def get_setting_by_id(key: SettingsKey, s: AsyncSession = None) -> Setting:
     stmt = select(Setting).where(Setting.id.__eq__(key))
-    result = s.execute(stmt)
+    result = await s.execute(stmt)
     return result.scalar()
 
 
-@cache.cacheable(ttl="10s")
-async def get_user_referrals_count(s: Session, tg_user_id: int) -> int:
-    stmt = s.query(func.count(User.telegram_id)).where(User.referred_by_id.__eq__(tg_user_id))
-    return stmt.scalar()
+@cache.cacheable(ttl="20m")
+@with_session
+async def get_user_referrals_count(tg_user_id: int, s: AsyncSession = None) -> int:
+    stmt = select(func.count(User.telegram_id)).where(User.referred_by_id.__eq__(tg_user_id))
+    result = await s.execute(stmt)
+    return result.scalar()
 
 
-def is_premium_user(s: Session, tg_user_id: int) -> bool:
+@with_session
+async def is_premium_user(tg_user_id: int, s: AsyncSession = None) -> bool:
     stmt = select(User.is_premium).where(User.telegram_id.__eq__(tg_user_id))
-    return s.execute(stmt).scalar()
+    result = await s.execute(stmt)
+    return result.scalar()
 
 
-def update_user_premium(s: Session, tg_user_id: int, premium: bool) -> None:
-    s.begin()
-    user = get_user_by_tg(s, tg_user_id)
+@with_session
+async def update_user_premium(tg_user_id: int, premium: bool, s: AsyncSession = None) -> None:
+    await s.begin()
+    user = get_user_by_tg(tg_user_id, s=s)
     user.is_premium = premium
-    s.commit()
+    await s.commit()
 
 
 @cache.cacheable(ttl="6h", function_name_as_id=True)
-async def get_verified_user_count(s: Session) -> int:
+@with_session
+async def get_verified_user_count(s: AsyncSession = None) -> int:
     stmt = (select(func.count())
             .where(User.deleted_at.__eq__(None))
             .where(User.blocked.__eq__(False))
             .where(User.is_bot_start_completed.__eq__(True)))
-    return s.scalar(stmt)
+    return await s.scalar(stmt)
 
 
-def get_top_users_by_referrals(s: Session, limit: int = 10) -> Sequence[Row[tuple[Any, Any]]]:
+@with_session
+async def get_top_users_by_referrals(limit: int = 10, s: AsyncSession = None) -> Sequence[Row[tuple[Any, Any]]]:
     referred_user_alias = User.__table__.alias("referred_user")
 
     stmt = (
@@ -157,11 +178,12 @@ def get_top_users_by_referrals(s: Session, limit: int = 10) -> Sequence[Row[tupl
         .order_by(desc('referral_count'))
         .limit(limit)
     )
-    result = s.execute(stmt).all()
+    result = (await s.execute(stmt)).all()
     return result
 
 
-def get_top_users_by_referrals_with_start_date(s: Session, start_date: datetime, limit: int = 10) -> Sequence[Row[tuple[Any, Any]]]:
+@with_session
+async def get_top_users_by_referrals_with_start_date(start_date: datetime, limit: int = 10, s: AsyncSession = None) -> Sequence[Row[tuple[Any, Any]]]:
     referred_user_alias = User.__table__.alias("referred_user")
 
     stmt = (
@@ -177,81 +199,78 @@ def get_top_users_by_referrals_with_start_date(s: Session, start_date: datetime,
         .order_by(desc('referral_count'))
         .limit(limit)
     )
-    result = s.execute(stmt).all()
+    result = (await s.execute(stmt)).all()
     return result
 
 
-def get_all_user_ids(s: Session) -> Sequence[Row[tuple[Any]]]:
-    stmt = (select(User.telegram_id)
-            .where(User.deleted_at.__eq__(None))
-            .where(User.blocked.__eq__(False))
-            .where(User.is_bot_start_completed.__eq__(True)))
-    result = s.execute(stmt).all()
-    return result
-
-
-def update_mailing_message_status(s: Session, id_: uuid.UUID, status: MailingMessageStatus) -> bool:
+@with_session
+async def update_mailing_message_status(id_: uuid.UUID, status: MailingMessageStatus, s: AsyncSession = None) -> bool:
     try:
-        s.begin()
+        await s.begin()
         stmt = (
             update(MailingMessage)
             .where(MailingMessage.id.__eq__(id_))
             .values(status=status)
         )
-        s.execute(stmt)
-        s.commit()
+        await s.execute(stmt)
+        await s.commit()
         return True
     except Exception as e:
         logger.error(f"Failed to update status for MailingMessage with ID {id_}: {e}")
         return False
     finally:
-        s.close()
+        await s.close()
 
 
-def update_mailing_message_statuses_by_mailing_id(s: Session, mailing_id: int, status: MailingMessageStatus) -> bool:
+@with_session
+async def update_mailing_message_statuses_by_mailing_id(mailing_id: int, status: MailingMessageStatus, s: AsyncSession = None) -> bool:
     try:
-        s.begin()
+        await s.begin()
         stmt = (
             update(MailingMessage)
             .where(MailingMessage.mailing_id.__eq__(mailing_id))
             .values(status=status)
         )
-        s.execute(stmt)
-        s.commit()
+        await s.execute(stmt)
+        await s.commit()
         return True
     except Exception as e:
         logger.error(f"Failed to update statuses for MailingMessage with mailing_id {mailing_id}: {e}")
         return False
     finally:
-        s.close()
+        await s.close()
 
 
-def get_mailing_message(s: Session, id_: uuid.UUID) -> MailingMessage:
+@with_session
+async def get_mailing_message(id_: uuid.UUID, s: AsyncSession = None) -> MailingMessage:
     stmt = (select(MailingMessage)
             .where(MailingMessage.id.__eq__(id_)))
-    result = s.execute(stmt)
+    result = await s.execute(stmt)
     return result.scalar()
 
 
-def get_mailing(s: Session, id_: int) -> Mailing:
+@with_session
+async def get_mailing(id_: int, s: AsyncSession = None) -> Mailing:
     stmt = (
         select(Mailing)
         .where(Mailing.id.__eq__(id_))
     )
-    result = s.execute(stmt)
+    result = await s.execute(stmt)
     return result.scalar()
 
 
-def get_mailing_messages_by_mailing_id(s: Session, mailing_id: int) -> Sequence[MailingMessage]:
+@with_session
+async def get_mailing_messages_by_mailing_id(mailing_id: int, s: AsyncSession = None) -> Sequence[MailingMessage]:
     stmt = (
         select(MailingMessage)
         .where(MailingMessage.mailing_id.__eq__(mailing_id))
     )
-    result = s.execute(stmt)
+    result = await s.execute(stmt)
     return result.scalars().all()
 
 
-def get_mailing_statistic(s: Session, mailing_id: int) -> dict["MailingMessageStatus", int]:
+@with_session
+async def get_mailing_statistic(mailing_id: int, s: AsyncSession = None) -> dict["MailingMessageStatus", int]:
     stmt = (
         select(
             MailingMessage.status,
@@ -260,34 +279,37 @@ def get_mailing_statistic(s: Session, mailing_id: int) -> dict["MailingMessageSt
         .where(MailingMessage.mailing_id.__eq__(mailing_id))
         .group_by(MailingMessage.status)
     )
-    result = s.execute(stmt).all()
+    result = (await s.execute(stmt)).all()
     statistics = {status: count for status, count in result}
     return statistics
 
 
-def finish_mailing(s: Session, mailing_id: int) -> None:
+@with_session
+async def finish_mailing(mailing_id: int, s: AsyncSession = None) -> None:
     try:
         stmt = (
             update(Mailing)
             .where(Mailing.id.__eq__(mailing_id))
             .values(finished_at=now(), status=MailingStatus.COMPLETED)
         )
-        s.execute(stmt)
+        await s.execute(stmt)
     except Exception as e:
         logger.error(f"Failed to finish mailing by id: {mailing_id}: {e}")
 
 
-def get_admin_ids(s: Session) -> ScalarResult[Any]:
+@with_session
+async def get_admin_ids(s: AsyncSession = None) -> ScalarResult[Any]:
     stmt = (select(User.telegram_id)
             .where(User.is_admin.__eq__(True)))
-    result = s.execute(stmt).scalars()
+    result = (await s.execute(stmt)).scalars()
     return result
 
 
-def get_active_tasks(session: Session):
+@with_session(override_name='session')
+async def get_active_tasks(session: AsyncSession = None):
     # Subquery to count the number of times each DONE_BASED task has been completed
     done_subquery = (
-        session.query(
+        select(
             TaskDoneHistory.task_id,
             func.count(TaskDoneHistory.id).label('done_count')
         )
@@ -296,14 +318,14 @@ def get_active_tasks(session: Session):
     )
 
     # Join the Task table with both subqueries
-    active_tasks = session.query(Task).outerjoin(
+    stmt = select(Task).outerjoin(
         done_subquery, Task.id == done_subquery.c.task_id
     ).filter(
         or_(
             # Time-based tasks: Not expired or no expiration time set
             and_(
                 Task.type == TaskType.TIME_BASED,
-                or_(Task.expires_at.is_(None), Task.expires_at > now())
+                or_(Task.expires_at.is_(None), Task.expires_at > now(native=True))
             ),
             # Subscription-based tasks: done_limit is greater than the count of completed tasks
             and_(
@@ -316,15 +338,19 @@ def get_active_tasks(session: Session):
                 or_(Task.coin_pool.is_(None), Task.done_limit > done_subquery.c.done_count)
             )
         )
-    ).all()
+    )
+
+    result = await session.execute(stmt)
+    active_tasks = result.scalars().all()
 
     return active_tasks
 
 
-def get_active_task_by_id(session: Session, id_: int) -> Union[Task, None]:
+@with_session(override_name='session')
+async def get_active_task_by_id(id_: int, session: AsyncSession = None) -> Union[Task, None]:
     # Subquery to count the number of times each DONE_BASED task has been completed
     done_subquery = (
-        session.query(
+        select(
             TaskDoneHistory.task_id,
             func.count(TaskDoneHistory.id).label('done_count')
         )
@@ -333,7 +359,7 @@ def get_active_task_by_id(session: Session, id_: int) -> Union[Task, None]:
     )
 
     # Join the Task table with both subqueries
-    active_task = session.query(Task).outerjoin(
+    stmt = select(Task).outerjoin(
         done_subquery, Task.id == done_subquery.c.task_id
     ).filter(
         and_(
@@ -343,7 +369,7 @@ def get_active_task_by_id(session: Session, id_: int) -> Union[Task, None]:
                 # Time-based tasks: Not expired or no expiration time set
                 and_(
                     Task.type == TaskType.TIME_BASED,
-                    or_(Task.expires_at.is_(None), Task.expires_at > now())
+                    or_(Task.expires_at.is_(None), Task.expires_at > now(native=True))
                 ),
                 # Subscription-based tasks: done_limit is greater than the count of completed tasks
                 and_(
@@ -358,34 +384,39 @@ def get_active_task_by_id(session: Session, id_: int) -> Union[Task, None]:
                 Task.type == TaskType.BONUS
             )
         )
-    ).one_or_none()
+    )
+
+    result = await session.execute(stmt)
+    active_task = result.scalars().one_or_none()
 
     return active_task
 
 
-def delete_task_by_id(s: Session, task_id: int, deleted_by_id: int) -> None:
+@with_session
+async def delete_task_by_id(task_id: int, deleted_by_id: int, s: AsyncSession = None) -> None:
     stmt = (
         update(Task)
         .where(Task.id.__eq__(task_id))
         .values(deleted_at=now(), deleted_by_id=deleted_by_id)
     )
-    s.execute(stmt)
-    s.commit()
-    s.close()
+    await s.execute(stmt)
+    await s.commit()
+    await s.close()
 
 
-def get_active_tasks_page(session: Session,
-                          user_id: int,
-                          page: int = 1,
-                          task_type: TaskType = None,
-                          limit: int = 1
-                          ):
+@with_session(override_name='session')
+async def get_active_tasks_page(user_id: int,
+                                page: int = 1,
+                                task_type: TaskType = None,
+                                limit: int = 1,
+                                session: AsyncSession = None
+                                ):
     # Aliasing TaskDoneHistory to join it twice for different purposes
     user_done_history = aliased(TaskDoneHistory)
 
     # Subquery to count the number of times each DONE_BASED task has been completed
     done_subquery = (
-        session.query(
+        select(
             TaskDoneHistory.task_id,
             func.count(TaskDoneHistory.id).label('done_count')
         )
@@ -395,7 +426,7 @@ def get_active_tasks_page(session: Session,
 
     # Subquery to check if the user has completed each task
     user_done_subquery = (
-        session.query(
+        select(
             user_done_history.task_id.label('task_id'),
             func.count(user_done_history.id).label('user_done_count')
         )
@@ -405,8 +436,8 @@ def get_active_tasks_page(session: Session,
     )
 
     # Build the main query for active tasks
-    query = (
-        session.query(Task)
+    stmt = (
+        select(Task)
         .outerjoin(done_subquery, Task.id == done_subquery.c.task_id)
         .outerjoin(user_done_subquery, Task.id == user_done_subquery.c.task_id)
         .filter(
@@ -416,7 +447,7 @@ def get_active_tasks_page(session: Session,
                     # Time-based tasks: Not expired or no expiration time set
                     and_(
                         Task.type == TaskType.TIME_BASED,
-                        or_(Task.expires_at.is_(None), Task.expires_at > now())
+                        or_(Task.expires_at.is_(None), Task.expires_at > now(native=True))
                     ),
                     # Subscription-based tasks: done_limit is greater than the count of completed tasks
                     and_(
@@ -440,16 +471,18 @@ def get_active_tasks_page(session: Session,
     )
 
     if task_type is not None:
-        query = query.filter(Task.type.__eq__(task_type))
+        stmt = stmt.filter(Task.type.__eq__(task_type))
 
-    # Get the total count of matching tasks
-    total_tasks = query.count()
+    # Get the total count of matching tasks asynchronously
+    count_stmt = stmt.with_only_columns(func.count()).order_by(None)
+    total_tasks = (await session.execute(count_stmt)).scalar()
 
     # Calculate offset based on the current page number
     offset = (page - 1) * limit
 
-    query = query.limit(limit).offset(offset)
-    tasks = query.all()
+    stmt = stmt.limit(limit).offset(offset)
+    result = await session.execute(stmt)
+    tasks = list(result.scalars().all())
 
     # Calculate pagination details
     total_pages = (total_tasks + limit - 1) // limit if limit > 0 else 1
@@ -463,13 +496,14 @@ def get_active_tasks_page(session: Session,
     )
 
 
-def get_active_task(session: Session, user_id: int, task_id: int):
+@with_session(override_name='session')
+async def get_active_task(user_id: int, task_id: int, session: AsyncSession = None):
     # Aliasing TaskDoneHistory to join it twice for different purposes
     user_done_history = aliased(TaskDoneHistory)
 
     # Subquery to count the number of times each DONE_BASED task has been completed
     done_subquery = (
-        session.query(
+        select(
             TaskDoneHistory.task_id,
             func.count(TaskDoneHistory.id).label('done_count')
         )
@@ -479,7 +513,7 @@ def get_active_task(session: Session, user_id: int, task_id: int):
 
     # Subquery to check if the user has completed each task
     user_done_subquery = (
-        session.query(
+        select(
             user_done_history.task_id.label('task_id'),
             func.count(user_done_history.id).label('user_done_count')
         )
@@ -489,8 +523,8 @@ def get_active_task(session: Session, user_id: int, task_id: int):
     )
 
     # Build the main query for active tasks
-    query = (
-        session.query(Task)
+    stmt = (
+        select(Task)
         .outerjoin(done_subquery, Task.id == done_subquery.c.task_id)
         .outerjoin(user_done_subquery, Task.id == user_done_subquery.c.task_id)
         .filter(
@@ -501,7 +535,7 @@ def get_active_task(session: Session, user_id: int, task_id: int):
                     # Time-based tasks: Not expired or no expiration time set
                     and_(
                         Task.type == TaskType.TIME_BASED,
-                        or_(Task.expires_at.is_(None), Task.expires_at > now())
+                        or_(Task.expires_at.is_(None), Task.expires_at > now(native=True))
                     ),
                     # Subscription-based tasks: done_limit is greater than the count of completed tasks
                     and_(
@@ -523,10 +557,15 @@ def get_active_task(session: Session, user_id: int, task_id: int):
             )
         ).order_by(Task.created_at.desc())  # Order by created_at from new to old
     )
-    return query.one_or_none()
+
+    result = await session.execute(stmt)
+    active_task = result.scalars().one_or_none()
+
+    return active_task
 
 
-def check_task_is_done(s: Session, task_id: int, user_id: int) -> bool:
+@with_session
+async def check_task_is_done(task_id: int, user_id: int, s: AsyncSession = None) -> bool:
     stmt = (
         select(TaskDoneHistory)
         .where(and_(TaskDoneHistory.task_id.__eq__(task_id),
@@ -534,4 +573,5 @@ def check_task_is_done(s: Session, task_id: int, user_id: int) -> bool:
         .exists()
         .select()
     )
-    return s.execute(stmt).scalar()
+    result = await s.execute(stmt)
+    return result.scalar()

@@ -16,15 +16,12 @@ from handlers.slots import router as slots_router
 from handlers.start import router as start_router
 from handlers.statistic import router as statistic_router
 from handlers.task import router as task_router
-from middleware.metadata_providers import LangProviderMiddleware, IsAdminProviderMiddleware
+from middleware.metadata_providers import LangProviderMiddleware
 
 base_router = Router(name="base_router")
 
 base_router.message.middleware(LangProviderMiddleware())
 base_router.callback_query.middleware(LangProviderMiddleware())
-
-base_router.message.middleware(IsAdminProviderMiddleware())
-base_router.callback_query.middleware(IsAdminProviderMiddleware())
 
 base_router.message.filter(ChatTypeFilter())
 base_router.callback_query.filter(ChatTypeFilter())

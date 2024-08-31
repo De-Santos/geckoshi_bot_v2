@@ -7,8 +7,9 @@ from aiogram import Router, Bot
 from aiogram.enums import ChatMemberStatus
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, InlineKeyboardButton
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import TaskType, Task, CurrencyType, now, get_session, get_active_task_by_id, delete_task_by_id
+from database import TaskType, Task, CurrencyType, now, get_active_task_by_id, delete_task_by_id, with_session
 from filters.base_filters import UserExistsFilter
 from keyboard_markup.inline_user_kb import get_task_menu_kbm, get_admin_task_type_menu_kbm, with_step_back_button, with_exit_button, get_builder, get_inline_button_preview_kbm, get_add_more_buttons_or_continue_kbm, get_continue_or_retry_kbm, \
     get_save_kbm, \
@@ -275,15 +276,14 @@ async def preview(m: CallbackQuery | Message, lang: Lang, state: FSMContext):
 
 
 @router.callback_query(AdminTaskStates.preview, Save.filter(), UserExistsFilter())
-async def save(query: CallbackQuery, lang: Lang, state: FSMContext) -> None:
-    s = get_session()
+@with_session
+async def save(query: CallbackQuery, lang: Lang, state: FSMContext, s: AsyncSession = None) -> None:
     task = await create_task_from_state_data(state, query.from_user.id)
     s.add(task)
-    s.commit()
+    await s.commit()
     await state.clear()
     await query.message.answer(text=format_string(get_message(MessageKey.ADMIN_TASK_SAVED_SUCCESSFULLY, lang),
                                                   task_id=task.id))
-    s.close()
 
 
 @router.callback_query(AdminTaskStates.menu, DeleteTaskMenu.filter(), UserExistsFilter())
@@ -295,7 +295,7 @@ async def request_task_id(m: CallbackQuery | Message, lang: Lang, state: FSMCont
 
 @router.message(AdminTaskStates.enter_task_id, UserExistsFilter())
 async def process_task_id(message: Message, lang: Lang, state: FSMContext) -> None:
-    task = get_active_task_by_id(get_session(), int(message.text))
+    task = await get_active_task_by_id(int(message.text))
     text, markup = print_task(lang, task)
     await state.set_state(AdminTaskStates.confirm_delete)
     m = await message.answer(text=text,
@@ -307,6 +307,6 @@ async def process_task_id(message: Message, lang: Lang, state: FSMContext) -> No
 
 @router.callback_query(AdminTaskStates.confirm_delete, DeleteTask.filter(), UserExistsFilter())
 async def process_task_deletion(m: CallbackQuery | Message, callback_data: DeleteTask, lang: Lang, state: FSMContext) -> None:
-    delete_task_by_id(get_session(), callback_data.task_id, m.from_user.id)
+    await delete_task_by_id(callback_data.task_id, m.from_user.id)
     await state.clear()
     await extract_message(m).answer(text=get_message(MessageKey.ADMIN_TASK_DELETED_SUCCESSFULLY, lang))

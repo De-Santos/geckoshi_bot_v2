@@ -2,11 +2,12 @@ from aiogram import Router, types, F, Bot
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import cache
 import settings
 from chat_processor.member import check_membership
-from database import get_session, User, save_user, is_user_exists_by_tg, update_user_language, update_user_is_bot_start_completed_by_tg_id, is_good_user_by_tg, Setting, SettingsKey, is_admin
+from database import User, save_user, is_user_exists_by_tg, update_user_language, update_user_is_bot_start_completed_by_tg_id, is_good_user_by_tg, Setting, SettingsKey, with_session, is_admin
 from filters.base_filters import UserExistsFilter, IsGoodUserFilter
 from handlers.referral import process_paying_for_referral
 from keyboard_markup.custom_user_kb import get_reply_keyboard_kbm
@@ -22,32 +23,31 @@ router = Router(name="start_router")
 
 
 @router.message(CommandStart())
-async def command_start_handler(message: Message, state: FSMContext, bot: Bot) -> None:
-    session = get_session()
-    if not await is_user_exists_by_tg(session, message.from_user.id, cache_id=message.from_user.id):
+@with_session(override_name='session')
+async def command_start_handler(message: Message, state: FSMContext, bot: Bot, session: AsyncSession = None) -> None:
+    if not await is_user_exists_by_tg(message.from_user.id, s=session, cache_id=message.from_user.id):
         ref_arg = TgArg.get_arg(ArgType.REFERRAL, message.text)
-        if ref_arg is not None and await is_good_user_by_tg(session, ref_arg.get(), cache_id=ref_arg.get()):
+        if ref_arg is not None and await is_good_user_by_tg(ref_arg.get(), s=session, cache_id=ref_arg.get()):
             user = User(telegram_id=message.from_user.id, referred_by_id=ref_arg.get())
             await bot.send_message(chat_id=ref_arg.get(), text=format_string(get_message(MessageKey.REF_INVITED_STEP_ONE, await get_cached_lang(ref_arg.get())),
                                                                              user_link=message.from_user.id,
                                                                              amount=await settings.get_setting(SettingsKey.PAY_FOR_REFERRAL)))
         else:
             user = User(telegram_id=message.from_user.id)
-        save_user(session, user)
+        await save_user(session, user)
         await state.set_state(StartStates.language)
         await message.answer(get_message(msgK.START), reply_markup=get_lang_kbm())
         await cache.drop_cache(is_user_exists_by_tg, cache_id=message.from_user.id)
     else:
         await message.answer(text=get_message(msgK.START),
-                             reply_markup=get_reply_keyboard_kbm(Lang.EN, await is_admin(session, message.from_user.id)))
+                             reply_markup=get_reply_keyboard_kbm(Lang.EN, await is_admin(message.from_user.id)))
         await message.delete()
 
 
 @router.callback_query(LangSetCallback.filter(), StartStates.language, UserExistsFilter())
 async def change_lang_handler(query: CallbackQuery, callback_data: LangSetCallback,
                               state: FSMContext) -> None:
-    session = get_session()
-    update_user_language(session, query.from_user.id, callback_data.lang)
+    await update_user_language(query.from_user.id, callback_data.lang)
     await query.answer(text=get_message(MessageKey.LANG_CHANGE, callback_data.lang))
     await cache_lang(query.from_user.id, callback_data.lang)
     await state.set_state(StartStates.subscription)
@@ -73,17 +73,17 @@ def get_ids(kbk: KeyboardKey, lang: Lang) -> list[str]:
 
 @router.callback_query(CheckStartMembershipCallback.filter(), StartStates.subscription, UserExistsFilter())
 async def check_subscription(query: CallbackQuery, callback_data: CheckStartMembershipCallback, state: FSMContext,
-                             lang: Lang, is_admin: bool, bot: Bot) -> None:
+                             lang: Lang, bot: Bot) -> None:
     r = [await check_membership(query.from_user.id, link) for link in get_ids(callback_data.kbk, callback_data.lang)]
     if False in r:
         await query.message.answer(text=get_message(MessageKey.START_REQUIRE_SUBSCRIPTION_FAILED, lang))
         await require_subscription(query.message, callback_data.lang)
     else:
         await state.clear()
-        update_user_is_bot_start_completed_by_tg_id(get_session(), query.from_user.id, True)
+        await update_user_is_bot_start_completed_by_tg_id(query.from_user.id, True)
         await query.message.delete()
         await query.message.answer(text=get_message(MessageKey.START_REQUIRE_SUBSCRIPTION_SUCCESSFUL, lang),
-                                   reply_markup=get_reply_keyboard_kbm(lang, is_admin))
+                                   reply_markup=get_reply_keyboard_kbm(lang, False))
         await process_paying_for_referral(query.from_user.id, bot)
 
 
@@ -105,10 +105,10 @@ async def menu(message: types.Message, lang: Lang, state: FSMContext) -> None:
 
 
 @router.message(F.text == "/aaa", IsGoodUserFilter())
-async def test(message) -> None:
-    session = get_session()
+@with_session
+async def test(message, s: AsyncSession = None) -> None:
     # TEMP TODO: DELETE ME
-    session.add(Setting(id=SettingsKey.PAY_FOR_REFERRAL, int_val=1500))
-    session.add(Setting(id=SettingsKey.MIN_WITHDRAW_IN_AIRDROP, int_val=0))
-    session.add(Setting(id=SettingsKey.PREMIUM_GMEME_PRICE, int_val=30000))
-    session.commit()
+    s.add(Setting(id=SettingsKey.PAY_FOR_REFERRAL, int_val=1500))
+    s.add(Setting(id=SettingsKey.MIN_WITHDRAW_IN_AIRDROP, int_val=0))
+    s.add(Setting(id=SettingsKey.PREMIUM_GMEME_PRICE, int_val=30000))
+    await s.commit()

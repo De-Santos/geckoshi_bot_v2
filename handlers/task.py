@@ -1,9 +1,10 @@
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from chat_processor.member import check_memberships
-from database import get_active_tasks_page, get_session, TaskType, Task, get_active_task_by_id, check_task_is_done, TaskDoneHistory, TransactionOperation
+from database import get_active_tasks_page, TaskType, Task, get_active_task_by_id, check_task_is_done, TaskDoneHistory, TransactionOperation, with_session
 from filters.base_filters import UserExistsFilter
 from keyboard_markup.inline_user_kb import with_step_back_button, with_back_to_menu_button, get_select_task_nav_menu_kbm
 from lang.lang_based_provider import Lang, get_message, MessageKey, format_string
@@ -31,7 +32,7 @@ async def task_menu(query: CallbackQuery, lang: Lang, state: FSMContext) -> None
 @router.callback_query(TaskStates.menu, TaskSelect.filter(F.disabled.__eq__(False)), UserExistsFilter())
 async def select_task(query: CallbackQuery, callback_data: TaskSelect, lang: Lang, state: FSMContext) -> None:
     await state.set_state(TaskStates.select)
-    pagination = get_active_tasks_page(get_session(), page=callback_data.page, task_type=TaskType(callback_data.task_type), user_id=query.from_user.id)
+    pagination = await get_active_tasks_page(page=callback_data.page, task_type=TaskType(callback_data.task_type), user_id=query.from_user.id)
     task: Task = pagination.get_one()
     if task is None:
         await query.message.edit_text(text=get_message(MessageKey.TASK_ENDED, lang),
@@ -55,11 +56,10 @@ async def select_task(query: CallbackQuery, callback_data: TaskSelect, lang: Lan
 
 
 @router.callback_query(TaskStates.select, TaskDone.filter(), UserExistsFilter())
-async def process_task_done(query: CallbackQuery, callback_data: TaskDone, lang: Lang, state: FSMContext) -> None:
-    s = get_session()
-    s.begin()
-    task: Task = get_active_task_by_id(s, callback_data.task_id)
-    done = check_task_is_done(s, task.id, query.from_user.id)
+@with_session(transaction=True)
+async def process_task_done(query: CallbackQuery, callback_data: TaskDone, lang: Lang, state: FSMContext, s: AsyncSession = None) -> None:
+    task: Task = await get_active_task_by_id(callback_data.task_id, session=s)
+    done = await check_task_is_done(task.id, query.from_user.id, s=s)
 
     task_type = task.type.value
 
@@ -73,8 +73,8 @@ async def process_task_done(query: CallbackQuery, callback_data: TaskDone, lang:
         return
 
     s.add(TaskDoneHistory(reward=task.done_reward, user_id=query.from_user.id, task_id=task.id))
-    make_transaction_from_system(query.from_user.id, TransactionOperation.INCREMENT, task.done_reward, description="task done",
-                                 trace=generate_trace(TraceType.TASK_DONE, str(task.trace_uuid)), session=s, currency_type=task.coin_type)
+    await make_transaction_from_system(query.from_user.id, TransactionOperation.INCREMENT, task.done_reward, description="task done",
+                                       trace=generate_trace(TraceType.TASK_DONE, str(task.trace_uuid)), session=s, currency_type=task.coin_type)
 
     await query.message.answer(text=format_string(get_message(MessageKey.TASK_DONE_SUCCESSFULLY, lang), task_id=task.id))
     await select_task(query, TaskSelect(task_type=task_type, page=1), lang, state)

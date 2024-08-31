@@ -3,7 +3,7 @@ import logging
 from aiogram import Router, types, Bot
 from aiogram.enums import ChatType
 
-from database import get_session, get_admin_ids
+from database import get_admin_ids
 
 router = Router(name="bot_router")
 
@@ -11,8 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 async def notify_admins(bot: Bot, message: str) -> None:
-    s = get_session()
-    for i in get_admin_ids(s):
+    for i in await get_admin_ids():
         try:
             await bot.send_message(chat_id=i, text=message)
         except Exception as e:

@@ -4,7 +4,7 @@ import humanfriendly
 from aiogram import Router, F
 from aiogram.types import Message
 
-from database import get_verified_user_count, get_session
+from database import get_verified_user_count
 from filters.base_filters import UserExistsFilter
 from keyboard_markup.inline_user_kb import get_admin_menu_kbm
 from lang.lang_based_provider import get_message, format_string
@@ -27,5 +27,5 @@ async def admin_menu_handler(message: Message, lang: Lang) -> None:
     await message.delete()
     await message.answer(text=format_string(get_message(MessageKey.ADMIN_PANEL, lang),
                                             uptime=calculate_uptime(),
-                                            user_count=await get_verified_user_count(get_session())),
+                                            user_count=await get_verified_user_count()),
                          reply_markup=get_admin_menu_kbm(lang))

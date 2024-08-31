@@ -9,5 +9,5 @@ router = Router(name="exit_router")
 
 @router.message(F.text == "/exit", UserExistsFilter())
 @router.callback_query(Exit.filter(), UserExistsFilter())
-async def exit_handler(mq, state: FSMContext) -> None:
+async def exit_handler(_, state: FSMContext) -> None:
     await state.clear()

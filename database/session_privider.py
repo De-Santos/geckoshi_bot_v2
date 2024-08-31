@@ -1,7 +1,7 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db_session
 
 
-def get_session() -> Session:
+def get_session() -> AsyncSession:
     return get_db_session()

@@ -215,8 +215,8 @@ def with_task_navigation_menu(lang: Lang, params: list[dict], source_markup: Inl
     return build_markup(lang, KeyboardKey.SELECT_TASK_NAV_MENU, callback_data_param=params, source_markup=source_markup)
 
 
-def with_pagination_menu(lang: Lang, params: list[dict], text_params: list[dict], source_markup: InlineKeyboardMarkup = None) -> InlineKeyboardMarkup:
-    return build_markup(lang, KeyboardKey.PAGINATION_MENU, callback_data_param=params, text_params=text_params, source_markup=source_markup)
+def with_pagination_menu(params: list[dict], text_params: list[dict], source_markup: InlineKeyboardMarkup = None) -> InlineKeyboardMarkup:
+    return build_markup(None, KeyboardKey.PAGINATION_MENU, callback_data_param=params, text_params=text_params, source_markup=source_markup)
 
 
 def with_bonus_task_button(params: list[dict], text_params: list[dict], source_markup: InlineKeyboardMarkup = None) -> InlineKeyboardMarkup:

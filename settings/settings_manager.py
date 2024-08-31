@@ -1,20 +1,21 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+
 import cache
-from database import get_setting_by_id, SettingsKey, get_session
+from database import get_setting_by_id, SettingsKey, with_session
 
 
 @cache.cacheable()
 async def get_setting(key: SettingsKey) -> str | int:
-    setting = get_setting_by_id(get_session(), key)
+    setting = await get_setting_by_id(key)
     if setting.int_val is not None:
         return setting.int_val
     elif setting.str_val is not None:
         return setting.str_val
 
 
-async def update_setting(key: SettingsKey, value: str | int) -> None:
-    s = get_session()
-    s.begin()
-    setting = get_setting_by_id(s, key)
+@with_session(transaction=True)
+async def update_setting(key: SettingsKey, value: str | int, s: AsyncSession = None) -> None:
+    setting = get_setting_by_id(key, s=s)
     if isinstance(value, int):
         setting.int_val = value
         setting.str_val = None
@@ -26,4 +27,3 @@ async def update_setting(key: SettingsKey, value: str | int) -> None:
         setting.str_val = None
 
     await cache.drop_cache(get_setting, key)
-    s.commit()

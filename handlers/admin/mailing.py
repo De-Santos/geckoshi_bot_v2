@@ -4,9 +4,10 @@ import humanfriendly
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, InputMediaPhoto, InlineKeyboardButton, InlineKeyboardMarkup
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import mailing_processor
-from database import get_session, get_mailing, Mailing, MailingStatus, repository, MailingMessageStatus
+from database import get_mailing, Mailing, MailingStatus, repository, MailingMessageStatus, with_session
 from filters.base_filters import UserExistsFilter
 from keyboard_markup.inline_user_kb import with_exit_button, get_yes_no_kbm, with_step_back_button, get_builder, get_inline_button_preview_kbm, get_add_button_or_preview_kbm, get_mailing_start_kbm, get_mailing_menu_kbm, \
     get_mailing_queue_fill_retry_kbm
@@ -153,22 +154,20 @@ async def queue_fill_failed(query: CallbackQuery, lang: Lang, state: FSMContext,
 
 
 @router.callback_query(StopMailing.filter(), UserExistsFilter())
-async def stop_mailing(query: CallbackQuery, callback_data: StopMailing, lang: Lang) -> None:
-    s = get_session()
-    mailing: Mailing = get_mailing(s, callback_data.mailing_id)
+@with_session
+async def stop_mailing(query: CallbackQuery, callback_data: StopMailing, lang: Lang, s: AsyncSession = None) -> None:
+    mailing: Mailing = await get_mailing(callback_data.mailing_id, s)
     if mailing.status == MailingStatus.COMPLETED or mailing.status == MailingStatus.CANCELED:
         await query.answer(text=get_message(MessageKey.ADMIN_MAILING_CANCEL_FAILED, lang), show_alert=True)
     else:
         mailing.status = MailingStatus.CANCELED
-        s.commit()
+        await s.commit()
         await query.message.answer(text=format_string(get_message(MessageKey.ADMIN_MAILING_CANCEL_SUCCESSFUL, lang), mailing_id=mailing.id))
-    s.close()
 
 
 async def get_mailing_statistic(mailing_id: int, lang: Lang) -> (str, InlineKeyboardMarkup, bool):
-    s = get_session()
-    mailing: Mailing = get_mailing(s, mailing_id)
-    statistic: dict["MailingMessageStatus", int] = repository.get_mailing_statistic(s, mailing_id)
+    mailing: Mailing = await get_mailing(mailing_id)
+    statistic: dict["MailingMessageStatus", int] = await repository.get_mailing_statistic(mailing_id)
     messages_processed = sum([statistic.get(MailingMessageStatus.IN_PROGRESS, 0),
                               statistic.get(MailingMessageStatus.CANCELED, 0),
                               statistic.get(MailingMessageStatus.COMPLETED, 0),

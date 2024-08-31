@@ -3,8 +3,9 @@ from datetime import datetime, timedelta
 from aiogram import Router, Bot
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import get_session, get_top_users_by_referrals, get_top_users_by_referrals_with_start_date, SettingsKey
+from database import get_top_users_by_referrals, get_top_users_by_referrals_with_start_date, SettingsKey, with_session
 from filters.base_filters import UserExistsFilter
 from keyboard_markup.inline_user_kb import with_exit_button
 from lang.lang_based_provider import format_string, get_message
@@ -17,21 +18,21 @@ router = Router(name="admin_referral_router")
 
 
 @router.callback_query(RefTop.filter(), UserExistsFilter())
-async def ref_top_handler(query: CallbackQuery, callback_data: RefTop, bot: Bot) -> None:
+@with_session
+async def ref_top_handler(query: CallbackQuery, callback_data: RefTop, bot: Bot, s: AsyncSession = None) -> None:
     await query.message.delete()
     row = """'<a href=\"tg://user?id={user_id}\">{user_name}</a>' : <code>{user_id}</code> - {ref_count}\n"""
     result = ""
-    s = get_session()
     if callback_data.duration is None:
         header = "Лучшие рефоводы за всё время\n"
         result += header
-        for u in await get_tg_users_by_id(get_top_users_by_referrals(s, 25), bot):
+        for u in await get_tg_users_by_id(await get_top_users_by_referrals(25, s=s), bot):
             result += row.format(user_id=u[0], user_name=u[2].username, ref_count=u[1])
     else:
         start_date = datetime.now() - timedelta(seconds=callback_data.duration)
         header = f"Лучшие рефоводы c {start_date}\n"
         result += header
-        for u in await get_tg_users_by_id(get_top_users_by_referrals_with_start_date(s, start_date, 25), bot):
+        for u in await get_tg_users_by_id(await get_top_users_by_referrals_with_start_date(start_date, 25, s=s), bot):
             result += row.format(user_id=u[0], user_name=u[2].username, ref_count=u[1])
     await query.message.answer(text=result)
 

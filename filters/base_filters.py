@@ -2,7 +2,7 @@ from aiogram.enums import ChatType
 from aiogram.filters import Filter
 from aiogram.types import Message, CallbackQuery
 
-from database import is_user_exists_by_tg, get_session, is_good_user_by_tg, has_premium, is_admin
+from database import is_user_exists_by_tg, is_good_user_by_tg, has_premium, is_admin
 
 
 class UserExistsFilter(Filter):
@@ -14,8 +14,7 @@ class UserExistsFilter(Filter):
         else:
             return False
 
-        session = get_session()
-        return await is_user_exists_by_tg(session, tg_user_id, cache_id=tg_user_id)
+        return await is_user_exists_by_tg(tg_user_id, cache_id=tg_user_id)
 
 
 class IsPremiumUser(Filter):
@@ -27,8 +26,7 @@ class IsPremiumUser(Filter):
         else:
             return False
 
-        session = get_session()
-        return await has_premium(session, tg_user_id, cache_id=tg_user_id)
+        return await has_premium(tg_user_id, cache_id=tg_user_id)
 
 
 class IsGoodUserFilter(Filter):
@@ -40,8 +38,7 @@ class IsGoodUserFilter(Filter):
         else:
             return False
 
-        session = get_session()
-        return await is_good_user_by_tg(session, tg_user_id, cache_id=tg_user_id)
+        return await is_good_user_by_tg(tg_user_id, cache_id=tg_user_id)
 
 
 class ChatTypeFilter(Filter):
@@ -65,5 +62,4 @@ class AdminOnlyFilter(Filter):
         else:
             return False
 
-        session = get_session()
-        return await is_admin(session, tg_user_id, cache_id=tg_user_id)
+        return await is_admin(tg_user_id, cache_id=tg_user_id)
