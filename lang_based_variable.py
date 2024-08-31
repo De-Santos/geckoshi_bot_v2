@@ -626,6 +626,13 @@ keyboard_data = {
             M(text="{title}", callback_class=BonusTaskSelect, with_callback_param_required=True, with_text_param_required=True),
         ],
     ],
+    KeyboardKey.PAGINATION_MENU: [
+        [
+            M(text="⬅️", callback_class=PaginationMove, with_callback_param_required=True),
+            M(text="{cur_page}/{total_pages}", callback_class=Void, with_text_param_required=True),
+            M(text="➡️", callback_class=PaginationMove, with_callback_param_required=True),
+        ],
+    ],
     Lang.RU: {
         KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB: [
             [
@@ -807,13 +814,6 @@ keyboard_data = {
             [
                 M(text="⬅️ Предыдущее", callback_class=TaskSelect, with_callback_param_required=True),
                 M(text="Следующее ➡️", callback_class=TaskSelect, with_callback_param_required=True),
-            ],
-        ],
-        KeyboardKey.PAGINATION_MENU: [
-            [
-                M(text="⬅️", callback_class=PaginationMove, with_callback_param_required=True),
-                M(text="{cur_page}/{total_pages}", callback_class=Void, with_text_param_required=True),
-                M(text="➡️", callback_class=PaginationMove, with_callback_param_required=True),
             ],
         ],
         KeyboardKey.SKIP: [
