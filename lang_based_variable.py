@@ -14,6 +14,9 @@ class Lang(Enum):
 
 class MessageKey(Enum):
     START = "start"
+    SOLVE_CAPTCHA_REQUIRED = "solve_captcha_required"
+    CAPTCHA_SOLVED_SUCCESSFULLY = "captcha_solved_successfully"
+    CAPTCHA_SOLVED_UNSUCCESSFULLY = "captcha_solved_unsuccessfully"
     LANG_CHANGE = "lang_change"
     START_REQUIRE_SUBSCRIPTION = "start_required_subscription"
     START_REQUIRE_SUBSCRIPTION_SUCCESSFUL = "start_required_subscription_successful"
@@ -76,6 +79,8 @@ class MessageKey(Enum):
 
 class KeyboardKey(Enum):
     START_REQUIRE_SUBSCRIPTION_KB = "start_required_subscription"
+    CAPTCHA_SELECT_MENU = "captcha_select_menu"
+    CAPTCHA_REGENERATE_BUTTON = "captcha_regenerate_button"
     MENU = "menu"
     ADMIN_MENU = "admin_menu"
     INLINE_MENU = "inline_menu"
@@ -326,6 +331,14 @@ class Void(CallbackData, prefix="_"):
     pass
 
 
+class CaptchaCodeSelect(CallbackData, prefix="captcha-code-select"):
+    captcha_text: str
+
+
+class CaptchaRegenerate(CallbackData, prefix="captcha-regenerate"):
+    pass
+
+
 message_data = {
     MessageKey.START: """<b>Geckoshi Аирдроп первый в мире инвестиционной мем монеты 🦎 Ниже выберите подходящий вам язык 🌐 и начните зарабатывать $GMEME прямо сейчас!\n\n____\n\n\nGeckoshi Airdrop the world's first investment meme coin 🦎 Below, select the lang that suits you 🌐 and start earning $GMEME right now!</b>""",
 
@@ -388,6 +401,9 @@ message_data = {
         MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ Вы не выполнили условия задания!",
         MessageKey.TASK_ALREADY_HAS_DONE: "❌ Вы уже выполнили это задание!",
         MessageKey.PUBLIC_STATISTIC: "📊 <b>Статистика проекта:</b>\n\n👥 Всего пользователей: {total_users}\n👤 Новых за сегодня: {today_joined}",
+        MessageKey.SOLVE_CAPTCHA_REQUIRED: "Пройдите капчу, чтобы подтвердить, что вы человек.\n\nВыберите кнопку ниже с таким же текстом, как на картинке:",
+        MessageKey.CAPTCHA_SOLVED_SUCCESSFULLY: "✅ Вы успешно прошли капчу!",
+        MessageKey.CAPTCHA_SOLVED_UNSUCCESSFULLY: "Капчка не пройдена ❌\nПопробуйте ещё раз!",
     },
     Lang.EN: {
         MessageKey.LANG_CHANGE: "Language successfully changed to English!",
@@ -448,6 +464,10 @@ message_data = {
         MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ You did not meet the task requirements!",
         MessageKey.TASK_ALREADY_HAS_DONE: "❌ You have already completed this task!",
         MessageKey.PUBLIC_STATISTIC: "📊 <b>Project Statistics:</b>\n\n👥 Total users: {total_users}\n👤 New today: {today_joined}",
+        MessageKey.SOLVE_CAPTCHA_REQUIRED: "Please complete the captcha to verify that you are human.\n\nSelect the button below with the same text as in the image:",
+        MessageKey.CAPTCHA_SOLVED_SUCCESSFULLY: "✅ You have successfully solved the captcha!",
+        MessageKey.CAPTCHA_SOLVED_UNSUCCESSFULLY: "Captcha not solved ❌\nPlease try again!",
+
     },
     Lang.TR: {
         MessageKey.LANG_CHANGE: "Dil başarıyla Türkçe olarak değiştirildi!",
@@ -508,6 +528,9 @@ message_data = {
         MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ Görevin gerekliliklerini yerine getirmediniz!",
         MessageKey.TASK_ALREADY_HAS_DONE: "❌ Bu görevi zaten tamamladınız!",
         MessageKey.PUBLIC_STATISTIC: "📊 <b>Proje İstatistikleri:</b>\n\n👥 Toplam kullanıcı: {total_users}\n👤 Bugün eklenenler: {today_joined}",
+        MessageKey.SOLVE_CAPTCHA_REQUIRED: "İnsan olduğunuzu doğrulamak için lütfen captchayı tamamlayın.\n\nResimdeki ile aynı metne sahip olan düğmeyi aşağıdan seçin:",
+        MessageKey.CAPTCHA_SOLVED_SUCCESSFULLY: "✅ Captcha başarıyla çözüldü!",
+        MessageKey.CAPTCHA_SOLVED_UNSUCCESSFULLY: "Captcha çözülemedi ❌\nLütfen tekrar deneyin!",
 
     },
     Lang.DE: {
@@ -569,9 +592,12 @@ message_data = {
         MessageKey.TASK_DONE_UNSUCCESSFULLY: "❌ Sie haben die Anforderungen der Aufgabe nicht erfüllt!",
         MessageKey.TASK_ALREADY_HAS_DONE: "❌ Sie haben diese Aufgabe bereits abgeschlossen!",
         MessageKey.PUBLIC_STATISTIC: "📊 <b>Projektstatistik:</b>\n\n👥 Gesamtanzahl der Benutzer: {total_users}\n👤 Neu heute: {today_joined}",
+        MessageKey.SOLVE_CAPTCHA_REQUIRED: "Bitte lösen Sie das Captcha, um zu bestätigen, dass Sie ein Mensch sind.\n\nWählen Sie die Schaltfläche unten mit dem gleichen Text wie im Bild aus:",
+        MessageKey.CAPTCHA_SOLVED_SUCCESSFULLY: "✅ Sie haben das Captcha erfolgreich gelöst!",
+        MessageKey.CAPTCHA_SOLVED_UNSUCCESSFULLY: "Captcha nicht gelöst ❌\nBitte versuchen Sie es erneut!",
+
     },
 }
-
 keyboard_data = {
     KeyboardKey.SLOTS_MENU: [
         [
@@ -633,6 +659,17 @@ keyboard_data = {
             M(text="➡️", callback_class=PaginationMove, with_callback_param_required=True),
         ],
     ],
+    KeyboardKey.CAPTCHA_SELECT_MENU: [
+        [
+            M(text="{text}", callback_class=CaptchaCodeSelect, with_callback_param_required=True, with_text_param_required=True),
+        ],
+    ],
+    KeyboardKey.CAPTCHA_REGENERATE_BUTTON: [
+        [
+            M(text="🔄", callback_class=CaptchaRegenerate),
+        ],
+    ],
+
     Lang.RU: {
         KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB: [
             [

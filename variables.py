@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import string
 import sys
 
 from aiogram import Bot
@@ -25,3 +26,9 @@ stdout_handler.addFilter(lambda rec: rec.levelno <= logging.INFO)
 # log higher levels to stderr (red)
 stderr_handler = logging.StreamHandler(stream=sys.stderr)
 stderr_handler.addFilter(lambda rec: rec.levelno > logging.INFO)
+
+# captcha
+captcha_val_set = (string.ascii_uppercase + string.digits)
+captcha_length = int(os.getenv('CAPTCHA_LENGTH'))
+captcha_answer_list_size = int(os.getenv('CAPTCHA_ANSWER_LIST_SIZE', 3))
+captcha_complexity_level = int(os.getenv('CAPTCHA_COMPLEXITY'))

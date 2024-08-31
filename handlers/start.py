@@ -1,7 +1,9 @@
+from uuid import uuid4
+
 from aiogram import Router, types, F, Bot
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, BufferedInputFile, InputMediaPhoto
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import cache
@@ -11,13 +13,16 @@ from database import User, save_user, is_user_exists_by_tg, update_user_language
 from filters.base_filters import UserExistsFilter, IsGoodUserFilter
 from handlers.referral import process_paying_for_referral
 from keyboard_markup.custom_user_kb import get_reply_keyboard_kbm
-from keyboard_markup.inline_user_kb import get_lang_kbm, get_require_subscription_kbm, get_user_menu_kbm
+from keyboard_markup.inline_user_kb import get_lang_kbm, get_require_subscription_kbm, get_user_menu_kbm, get_captcha_select_menu_kbm
 from lang.lang_based_provider import MessageKey as msgK, MessageKey, Lang, get_keyboard, format_string
 from lang.lang_based_provider import get_message
 from lang.lang_provider import cache_lang, get_cached_lang
-from lang_based_variable import LangSetCallback, CheckStartMembershipCallback, KeyboardKey, BackToMenu
+from lang_based_variable import LangSetCallback, CheckStartMembershipCallback, KeyboardKey, BackToMenu, CaptchaCodeSelect, CaptchaRegenerate
 from providers.tg_arg_provider import TgArg, ArgType
 from states.states import StartStates
+from utils import captcha
+from utils.aiogram import extract_message
+from utils.captcha import generate_captcha_answer_list
 
 router = Router(name="start_router")
 
@@ -50,9 +55,44 @@ async def change_lang_handler(query: CallbackQuery, callback_data: LangSetCallba
     await update_user_language(query.from_user.id, callback_data.lang)
     await query.answer(text=get_message(MessageKey.LANG_CHANGE, callback_data.lang))
     await cache_lang(query.from_user.id, callback_data.lang)
-    await state.set_state(StartStates.subscription)
+    await state.set_state(StartStates.captcha)
     await query.message.delete()
-    await require_subscription(query.message, callback_data.lang)
+    await generate_captcha(query.message, callback_data.lang, state)
+
+
+async def generate_captcha(message: Message, lang: Lang, state: FSMContext, edit: bool = False) -> None:
+    text, img = captcha.generate_captcha()
+    img_file = BufferedInputFile(file=img.read(), filename=f"{uuid4()}.png")
+    await state.update_data(captcha_text=text)
+
+    caption = get_message(MessageKey.SOLVE_CAPTCHA_REQUIRED, lang)
+    reply_markup = get_captcha_select_menu_kbm(generate_captcha_answer_list(text))
+
+    if edit:
+        await message.edit_media(media=InputMediaPhoto(media=img_file, caption=caption),
+                                 reply_markup=reply_markup)
+    else:
+        await message.answer_photo(photo=img_file, caption=caption, reply_markup=reply_markup)
+
+
+@router.message(StartStates.captcha, UserExistsFilter())
+@router.callback_query(StartStates.captcha, CaptchaRegenerate.filter(), UserExistsFilter())
+async def regenerate_captcha(qm: CallbackQuery | Message, lang: Lang, state: FSMContext) -> None:
+    await state.set_state(StartStates.captcha)
+    await generate_captcha(extract_message(qm), lang, state, edit=isinstance(qm, CallbackQuery))
+
+
+@router.callback_query(StartStates.captcha, CaptchaCodeSelect.filter(), UserExistsFilter())
+async def check_captcha(query: CallbackQuery, callback_data: CaptchaCodeSelect, lang: Lang, state: FSMContext) -> None:
+    await query.message.delete()
+    data = await state.get_data()
+    if data['captcha_text'] and data['captcha_text'] == callback_data.captcha_text:
+        await query.message.answer(text=get_message(MessageKey.CAPTCHA_SOLVED_SUCCESSFULLY, lang))
+        await state.set_state(StartStates.subscription)
+        await require_subscription(query.message, lang)
+    else:
+        await query.message.answer(text=get_message(MessageKey.CAPTCHA_SOLVED_UNSUCCESSFULLY, lang))
+        await generate_captcha(query.message, lang, state)
 
 
 @router.message(StartStates.subscription, UserExistsFilter())

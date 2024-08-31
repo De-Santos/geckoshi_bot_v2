@@ -8,6 +8,7 @@ class SettingsStates(StatesGroup):
 
 class StartStates(StatesGroup):
     language = State()
+    captcha = State()
     subscription = State()
 
 

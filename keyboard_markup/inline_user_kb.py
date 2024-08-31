@@ -221,3 +221,17 @@ def with_pagination_menu(params: list[dict], text_params: list[dict], source_mar
 
 def with_bonus_task_button(params: list[dict], text_params: list[dict], source_markup: InlineKeyboardMarkup = None) -> InlineKeyboardMarkup:
     return build_markup(None, KeyboardKey.BONUS_TASK_BUTTON, callback_data_param=params, text_params=text_params, source_markup=source_markup)
+
+
+def with_regenerate_captcha_button(source_markup: InlineKeyboardMarkup = None) -> InlineKeyboardMarkup:
+    return build_markup(None, KeyboardKey.CAPTCHA_REGENERATE_BUTTON, source_markup=source_markup)
+
+
+def get_captcha_select_menu_kbm(kaptcha_list: list[str]) -> InlineKeyboardMarkup:
+    m: M = get_keyboard(KeyboardKey.CAPTCHA_SELECT_MENU, None)[0][0]
+    builder = get_builder()
+
+    for kpt in kaptcha_list:
+        builder.row(build_inline_keyboard_button(m, text_param={'text': kpt}, captcha_text=kpt))
+
+    return with_regenerate_captcha_button(builder.as_markup())
