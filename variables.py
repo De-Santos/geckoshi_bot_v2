@@ -13,11 +13,31 @@ from dotenv import load_dotenv
 from redis.asyncio import Redis
 
 load_dotenv()
+
+# build mode
+MODE = os.getenv('MODE')
+
+# bot
 redis = Redis.from_url(url=os.getenv('REDIS_URL'))
 storage = RedisStorage(redis)
 dp = Dispatcher(storage=storage)
 bot: Bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 start_time = datetime.datetime.now()
+
+# web server settings
+WEB_SERVER_HOST = os.getenv('WEB_SERVER_HOST')
+WEB_SERVER_PORT = int(os.getenv('WEB_SERVER_PORT'))
+
+# bot webhook settings
+WEBHOOK_URL = os.getenv('WEBHOOK_URL')
+WEBHOOK_PATH = os.getenv('WEBHOOK_PATH', "/webhook")
+WEBHOOK_SECRET = os.getenv('WEBHOOK_SECRET')
+
+# captcha
+captcha_val_set = (string.ascii_uppercase + string.digits)
+captcha_length = int(os.getenv('CAPTCHA_LENGTH'))
+captcha_answer_list_size = int(os.getenv('CAPTCHA_ANSWER_LIST_SIZE', 3))
+captcha_complexity_level = int(os.getenv('CAPTCHA_COMPLEXITY'))
 
 # log lower levels to stdout
 stdout_handler = logging.StreamHandler(stream=sys.stdout)
@@ -27,8 +47,8 @@ stdout_handler.addFilter(lambda rec: rec.levelno <= logging.INFO)
 stderr_handler = logging.StreamHandler(stream=sys.stderr)
 stderr_handler.addFilter(lambda rec: rec.levelno > logging.INFO)
 
-# captcha
-captcha_val_set = (string.ascii_uppercase + string.digits)
-captcha_length = int(os.getenv('CAPTCHA_LENGTH'))
-captcha_answer_list_size = int(os.getenv('CAPTCHA_ANSWER_LIST_SIZE', 3))
-captcha_complexity_level = int(os.getenv('CAPTCHA_COMPLEXITY'))
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
+    handlers=[stdout_handler, stderr_handler]
+)

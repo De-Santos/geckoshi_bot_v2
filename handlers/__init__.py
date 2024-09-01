@@ -41,3 +41,7 @@ base_router.include_router(admin_router)
 base_router.include_router(task_router)
 base_router.include_router(statistic_router)
 base_router.include_router(bonus_router)
+
+__all__ = [
+    'base_router'
+]

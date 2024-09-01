@@ -297,8 +297,7 @@ class MessageConsumer(object):
         """
         if self._channel:
             logger.info('Sending a Basic.Cancel RPC command to RabbitMQ')
-            cb = functools.partial(
-                self.on_cancelok, userdata=self._consumer_tag)
+            cb = functools.partial(self.on_cancelok, userdata=self._consumer_tag)
             self._channel.basic_cancel(self._consumer_tag, cb)
 
     def on_cancelok(self, _unused_frame, userdata):
@@ -325,25 +324,13 @@ class MessageConsumer(object):
 
     def run(self):
         self._connection = self.connect()
-        # self._connection.ioloop.run_forever()
 
     def stop(self):
-        """Cleanly shutdown the connection to RabbitMQ by stopping the consumer
-        with RabbitMQ. When RabbitMQ confirms the cancellation, on_cancelok
-        will be invoked by pika, which will then closing the channel and
-        connection. The IOLoop is started again because this method is invoked
-        when CTRL-C is pressed raising a KeyboardInterrupt exception. This
-        exception stops the IOLoop which needs to be running for pika to
-        communicate with RabbitMQ. All of the commands issued prior to starting
-        the IOLoop will be buffered but not processed.
-
-        """
         if not self._closing:
             self._closing = True
             logger.info('Stopping')
             if self._consuming:
                 self.stop_consuming()
-                self._connection.ioloop.run_forever()
             else:
                 self._connection.ioloop.stop()
             logger.info('Stopped')
@@ -351,15 +338,14 @@ class MessageConsumer(object):
 
 class MessageConsumerRunner:
 
-    def __init__(self, loop):
-        self._reconnect_delay = 0
+    def __init__(self, loop: AbstractEventLoop):
         self._amqp_url = os.getenv("RABBIT_URL")
         self._prefetch_count = int(os.getenv("RABBIT_PREFETCH_COUNT"))
         self._loop = loop
         self._consumer = MessageConsumer(self._amqp_url, self._loop, self._prefetch_count)
 
     def run(self):
-        try:
-            self._consumer.run()
-        except KeyboardInterrupt:
-            self._consumer.stop()
+        self._consumer.run()
+
+    def stop(self):
+        self._consumer.stop()

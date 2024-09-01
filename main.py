@@ -1,19 +1,7 @@
-import asyncio
 import logging
 
-import handlers
-from database import init_db
-from rabbit import MessageConsumerRunner
-from variables import bot, dp, stdout_handler, stderr_handler
-
-
-async def main() -> None:
-    await init_db()
-    await bot.delete_webhook(drop_pending_updates=True)
-    dp.include_router(handlers.base_router)
-    MessageConsumerRunner(asyncio.get_event_loop()).run()
-    await dp.start_polling(bot)
-
+import bot_starter
+from variables import stdout_handler, stderr_handler, MODE
 
 if __name__ == '__main__':
     logging.basicConfig(
@@ -21,4 +9,4 @@ if __name__ == '__main__':
         format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
         handlers=[stdout_handler, stderr_handler]
     )
-    asyncio.run(main())
+    bot_starter.start(MODE)
