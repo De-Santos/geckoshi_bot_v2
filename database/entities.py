@@ -2,12 +2,14 @@ import datetime
 import uuid
 from typing import Optional
 
-from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Numeric, Text, func
+from pydantic import BaseModel, Field
+from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Numeric, Text, func, PrimaryKeyConstraint
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
 from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType, TransactionInitiatorType, MailingStatus, MailingMessageStatus, BetType, TaskType, CurrencyType
+from database.type_decorators import JSONEncodedDict
 from lang.lang_based_provider import Lang
 
 
@@ -151,3 +153,18 @@ class TaskDoneHistory(Base):
 
     task_id: Mapped[int] = mapped_column(ForeignKey('tasks.id'), type_=BigInteger, nullable=False)
     task: Mapped[Mailing] = relationship("Task", foreign_keys=[task_id])
+
+
+class UserActivityStatistic(Base):
+    __tablename__ = 'user_activity_statistics'
+
+    __table_args__ = (
+        PrimaryKeyConstraint('user_id', 'datetime', name='user_activity_statistics_pk'),
+    )
+
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
+    context: Mapped["UserActivityStatistic.Context"] = mapped_column(type_=JSONEncodedDict, server_default=func.jsonb('{}'))
+    datetime_: Mapped[datetime.datetime] = mapped_column("datetime", DateTime(timezone=True), default=now)
+
+    class Context(BaseModel):
+        callback_query_prefix: Optional[str] = Field(default=None)

@@ -10,7 +10,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import coalesce
 
 import cache
-from database import User, Setting, SettingsKey, MailingMessageStatus, MailingMessage, Mailing, now, MailingStatus, Task, TaskType, TaskDoneHistory
+from database import User, Setting, SettingsKey, MailingMessageStatus, MailingMessage, Mailing, now, MailingStatus, Task, TaskType, TaskDoneHistory, UserActivityStatistic
 from database.decorators import with_session
 from lang.lang_based_provider import Lang
 from utils.pagination import Pagination
@@ -575,3 +575,12 @@ async def check_task_is_done(task_id: int, user_id: int, s: AsyncSession = None)
     )
     result = await s.execute(stmt)
     return result.scalar()
+
+
+@with_session
+async def save_activity_statistic(user_id: int, context: UserActivityStatistic.Context = UserActivityStatistic.Context(), s: AsyncSession = None) -> None:
+    statistic = UserActivityStatistic(
+        user_id=user_id,
+        context=context
+    )
+    s.add(statistic)

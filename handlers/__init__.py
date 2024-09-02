@@ -17,8 +17,11 @@ from handlers.start import router as start_router
 from handlers.statistic import router as statistic_router
 from handlers.task import router as task_router
 from middleware.metadata_providers import LangProviderMiddleware
+from middleware.middleware import ActivityStatisticMiddleware
 
 base_router = Router(name="base_router")
+
+base_router.callback_query.middleware(ActivityStatisticMiddleware())
 
 base_router.message.middleware(LangProviderMiddleware())
 base_router.callback_query.middleware(LangProviderMiddleware())

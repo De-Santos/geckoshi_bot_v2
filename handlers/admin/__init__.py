@@ -6,12 +6,8 @@ from handlers.admin.mailing import router as mailing_router
 from handlers.admin.menu import router as admin_menu_router
 from handlers.admin.referral import router as referral_router
 from handlers.admin.task import router as admin_task_router
-from middleware.metadata_providers import IsAdminProviderMiddleware
 
 admin_router = Router(name="admin_base_router")
-
-admin_router.message.middleware(IsAdminProviderMiddleware())
-admin_router.callback_query.middleware(IsAdminProviderMiddleware())
 
 admin_router.message.filter(AdminOnlyFilter())
 admin_router.callback_query.filter(AdminOnlyFilter())
