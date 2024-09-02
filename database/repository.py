@@ -148,7 +148,7 @@ async def is_premium_user(tg_user_id: int, s: AsyncSession = None) -> bool:
 @with_session
 async def update_user_premium(tg_user_id: int, premium: bool, s: AsyncSession = None) -> None:
     await s.begin()
-    user = get_user_by_tg(tg_user_id, s=s)
+    user = await get_user_by_tg(tg_user_id, s=s)
     user.is_premium = premium
     await s.commit()
 
