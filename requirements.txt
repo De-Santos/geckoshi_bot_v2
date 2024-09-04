@@ -40,3 +40,5 @@ yarl==1.9.4
 dill==0.3.8
 captcha==0.6.0
 pillow==10.4.0
+fastapi==0.112.2
+uvicorn==0.30.6
