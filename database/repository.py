@@ -10,7 +10,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import coalesce
 
 import cache
-from database import User, Setting, SettingsKey, MailingMessageStatus, MailingMessage, Mailing, now, MailingStatus, Task, TaskType, TaskDoneHistory, UserActivityStatistic
+from database import User, Setting, SettingsKey, MailingMessageStatus, MailingMessage, Mailing, now, MailingStatus, Task, TaskType, TaskDoneHistory, UserActivityStatistic, CustomClientToken
 from database.decorators import with_session
 from lang.lang_based_provider import Lang
 from utils.pagination import Pagination
@@ -584,3 +584,16 @@ async def save_activity_statistic(user_id: int, context: UserActivityStatistic.C
         context=context
     )
     s.add(statistic)
+
+
+@cache.cacheable(ttl="10m")
+@with_session
+async def is_client_token_valid(id_: str, s: AsyncSession = None) -> bool:
+    stmt = (select(CustomClientToken)
+            .where(and_(CustomClientToken.deleted_at.is_(None),
+                        CustomClientToken.id.__eq__(id_)))
+            .exists()
+            .select()
+            )
+    result = await s.execute(stmt)
+    return result.scalar()

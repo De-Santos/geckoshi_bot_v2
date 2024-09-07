@@ -1,25 +1,17 @@
-from contextlib import asynccontextmanager
+import logging
 
 from aiogram.types import Update
-from fastapi import FastAPI, Request, HTTPException, status
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Request, HTTPException, status, FastAPI
 from fastapi.responses import JSONResponse
+from starlette.middleware.cors import CORSMiddleware
 
+import api
 import handlers
 from bot_starter.same import crate_consumer, shutdown
-from variables import bot, dp, WEBHOOK_SECRET, WEBHOOK_PATH, WEB_SERVER_HOST, WEB_SERVER_PORT, WEBHOOK_URL
-from .log import logger
+from variables import bot, dp, WEBHOOK_SECRET, WEBHOOK_PATH, WEB_SERVER_HOST, WEB_SERVER_PORT, WEBHOOK_URL, uvicorn_logging_config
 
-
-@asynccontextmanager
-async def lifespan(_: FastAPI):
-    await on_prod_startup()
-    yield
-    await shutdown()
-
-
-app = FastAPI(lifespan=lifespan)
-
+logger = logging.getLogger(__name__)
+app = FastAPI()
 # Middleware (optional, for example, CORS)
 app.add_middleware(
     CORSMiddleware,
@@ -30,6 +22,7 @@ app.add_middleware(
 )
 
 
+@app.on_event('startup')
 async def on_prod_startup():
     logger.info("Running production startup sequence...")
     await crate_consumer()
@@ -39,12 +32,13 @@ async def on_prod_startup():
     logger.info("Webhook set successfully.")
 
 
+@app.on_event('shutdown')
 async def on_prod_shutdown():
     logger.info("Running production shutdown sequence...")
     await shutdown()
 
 
-@app.post(WEBHOOK_PATH)
+@app.post(WEBHOOK_PATH, include_in_schema=False)
 async def webhook_handler(request: Request):
     if request.headers.get("X-Telegram-Bot-Api-Secret-Token") != WEBHOOK_SECRET:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
@@ -58,14 +52,17 @@ async def webhook_handler(request: Request):
 def prod() -> None:
     logger.info("Setting up production mode...")
 
+    logger.info("Including app routers and setting up production mode...")
+    app.include_router(api.base_router)
+
     logger.info("Including routers and setting up production mode...")
     dp.include_router(handlers.base_router)
 
     logger.info(f"Starting web server at {WEB_SERVER_HOST}:{WEB_SERVER_PORT}...")
     import uvicorn
-    log_config = uvicorn.config.LOGGING_CONFIG
-    log_config["formatters"]["access"]["fmt"] = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-    log_config["formatters"]["default"]["fmt"] = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-    log_config["handlers"]["default"]["stream"] = "ext://sys.stdout"
+    # log_config = uvicorn.config.LOGGING_CONFIG
+    # log_config["formatters"]["access"]["fmt"] = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+    # log_config["formatters"]["default"]["fmt"] = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+    # log_config["handlers"]["default"]["stream"] = "ext://sys.stdout"
 
-    uvicorn.run(app, host=WEB_SERVER_HOST, port=WEB_SERVER_PORT, log_config=log_config)
+    uvicorn.run(app, host=WEB_SERVER_HOST, port=WEB_SERVER_PORT, log_config=uvicorn_logging_config)

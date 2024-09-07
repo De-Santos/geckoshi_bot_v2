@@ -168,3 +168,12 @@ class UserActivityStatistic(Base):
 
     class Context(BaseModel):
         callback_query_prefix: Optional[str] = Field(default=None)
+
+
+class CustomClientToken(Base):
+    __tablename__ = 'custom_client_tokens'
+
+    id: Mapped[str] = mapped_column(type_=Text, primary_key=True)
+    name: Mapped[str] = mapped_column(type_=Text, nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime(timezone=True), default=now)
+    deleted_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=True)

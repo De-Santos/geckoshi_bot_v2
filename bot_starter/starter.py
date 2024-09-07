@@ -1,9 +1,9 @@
 import asyncio
 from typing import Literal
 
-from bot_starter.dev import dev
-from bot_starter.prod import prod
+from .dev import dev
 from .log import logger
+from .prod import prod
 
 Mode = Literal['dev', 'prod']
 
