@@ -54,3 +54,7 @@ class TaskStates(StatesGroup):
     select = State()
 
     bonus_select = State()
+
+
+class TaskDoneStatisticStates(StatesGroup):
+    enter_task_id = State()
