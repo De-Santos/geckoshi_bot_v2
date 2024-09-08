@@ -14,10 +14,10 @@ from handlers.self_member import router as bot_router
 from handlers.settings import router as settings_router
 from handlers.slots import router as slots_router
 from handlers.start import router as start_router
-from handlers.statistic import router as statistic_router
 from handlers.task import router as task_router
 from middleware.metadata_providers import LangProviderMiddleware
 from middleware.middleware import ActivityStatisticMiddleware
+from . import statistic
 
 base_router = Router(name="base_router")
 
@@ -42,7 +42,7 @@ base_router.include_router(slots_router)
 base_router.include_router(nft_router)
 base_router.include_router(admin_router)
 base_router.include_router(task_router)
-base_router.include_router(statistic_router)
+base_router.include_router(statistic.public_router)
 base_router.include_router(bonus_router)
 
 __all__ = [

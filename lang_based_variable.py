@@ -75,6 +75,8 @@ class MessageKey(Enum):
     TASK_DONE_UNSUCCESSFULLY = "task_done_unsuccessfully"
     TASK_ALREADY_HAS_DONE = "task_already_has_done"
     PUBLIC_STATISTIC = "public_statistic"
+    USER_ACTIVITY_STATISTIC = "user_activity_statistic"
+    TASK_DONE_STATISTIC = "task_done_statistic"
 
 
 class KeyboardKey(Enum):
@@ -339,6 +341,18 @@ class CaptchaRegenerate(CallbackData, prefix="captcha-regenerate"):
     pass
 
 
+class ActivityStatistic(CallbackData, prefix="activity-statistic"):
+    pass
+
+
+class TaskDoneStatistic(CallbackData, prefix="task-done-statistic"):
+    pass
+
+
+class TaskDoneStatisticMenu(CallbackData, prefix="task-done-statistic-menu"):
+    pass
+
+
 message_data = {
     MessageKey.START: """<b>Geckoshi Аирдроп первый в мире инвестиционной мем монеты 🦎 Ниже выберите подходящий вам язык 🌐 и начните зарабатывать $GMEME прямо сейчас!\n\n____\n\n\nGeckoshi Airdrop the world's first investment meme coin 🦎 Below, select the lang that suits you 🌐 and start earning $GMEME right now!</b>""",
 
@@ -404,6 +418,8 @@ message_data = {
         MessageKey.SOLVE_CAPTCHA_REQUIRED: "Пройдите капчу, чтобы подтвердить, что вы человек.\n\nВыберите кнопку ниже с таким же текстом, как на картинке:",
         MessageKey.CAPTCHA_SOLVED_SUCCESSFULLY: "✅ Вы успешно прошли капчу!",
         MessageKey.CAPTCHA_SOLVED_UNSUCCESSFULLY: "Капчка не пройдена ❌\nПопробуйте ещё раз!",
+        MessageKey.USER_ACTIVITY_STATISTIC: "<b>📊 Статистика активных юзеров\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
+        MessageKey.TASK_DONE_STATISTIC: "<b>📊 Статистика выполнения активных заданий</b>\n<pre>{text_table}</pre>",
     },
     Lang.EN: {
         MessageKey.LANG_CHANGE: "Language successfully changed to English!",
@@ -467,6 +483,8 @@ message_data = {
         MessageKey.SOLVE_CAPTCHA_REQUIRED: "Please complete the captcha to verify that you are human.\n\nSelect the button below with the same text as in the image:",
         MessageKey.CAPTCHA_SOLVED_SUCCESSFULLY: "✅ You have successfully solved the captcha!",
         MessageKey.CAPTCHA_SOLVED_UNSUCCESSFULLY: "Captcha not solved ❌\nPlease try again!",
+        MessageKey.USER_ACTIVITY_STATISTIC: "<b>📊 Active Users Statistics\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
+        MessageKey.TASK_DONE_STATISTIC: "<b>📊 Task Completion Statistics</b>\n<pre>{text_table}</pre>",
 
     },
     Lang.TR: {
@@ -531,6 +549,8 @@ message_data = {
         MessageKey.SOLVE_CAPTCHA_REQUIRED: "İnsan olduğunuzu doğrulamak için lütfen captchayı tamamlayın.\n\nResimdeki ile aynı metne sahip olan düğmeyi aşağıdan seçin:",
         MessageKey.CAPTCHA_SOLVED_SUCCESSFULLY: "✅ Captcha başarıyla çözüldü!",
         MessageKey.CAPTCHA_SOLVED_UNSUCCESSFULLY: "Captcha çözülemedi ❌\nLütfen tekrar deneyin!",
+        MessageKey.USER_ACTIVITY_STATISTIC: "<b>📊 Aktif Kullanıcı İstatistikleri\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
+        MessageKey.TASK_DONE_STATISTIC: "<b>📊 Aktif Görevlerin İstatistikleri</b>\n<pre>{text_table}</pre>",
 
     },
     Lang.DE: {
@@ -595,6 +615,8 @@ message_data = {
         MessageKey.SOLVE_CAPTCHA_REQUIRED: "Bitte lösen Sie das Captcha, um zu bestätigen, dass Sie ein Mensch sind.\n\nWählen Sie die Schaltfläche unten mit dem gleichen Text wie im Bild aus:",
         MessageKey.CAPTCHA_SOLVED_SUCCESSFULLY: "✅ Sie haben das Captcha erfolgreich gelöst!",
         MessageKey.CAPTCHA_SOLVED_UNSUCCESSFULLY: "Captcha nicht gelöst ❌\nBitte versuchen Sie es erneut!",
+        MessageKey.USER_ACTIVITY_STATISTIC: "<b>📊 Statistik der aktiven Benutzer\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
+        MessageKey.TASK_DONE_STATISTIC: "<b>📊 Statistik über abgeschlossene Aufgaben</b>\n<pre>{text_table}</pre>",
 
     },
 }
@@ -762,6 +784,11 @@ keyboard_data = {
             [
                 M(text="🦎 Создать промокод", callback_class=CreateVoucher),
                 M(text="📝 Задание", callback_class=TaskMenu),
+            ],
+            [
+                M(text="Актив", callback_class=ActivityStatistic),
+                M(text="стат. задания", callback_class=TaskDoneStatistic),
+                M(text="по id", callback_class=TaskDoneStatisticMenu),
             ],
         ],
         KeyboardKey.YES_NO: [
@@ -952,6 +979,11 @@ keyboard_data = {
                 M(text="🦎 Create Promo Code", callback_class=CreateVoucher),
                 M(text="📝 Task", callback_class=TaskMenu),
             ],
+            [
+                M(text="Active", callback_class=ActivityStatistic),
+                M(text="Task done", callback_class=TaskDoneStatistic),
+                M(text="by id", callback_class=TaskDoneStatisticMenu),
+            ],
         ],
         KeyboardKey.YES_NO: [
             [
@@ -1141,6 +1173,11 @@ keyboard_data = {
                 M(text="🦎 Promosyon Kodu Oluştur", callback_class=CreateVoucher),
                 M(text="📝 Görev", callback_class=TaskMenu),
             ],
+            [
+                M(text="Aktif", callback_class=ActivityStatistic),
+                M(text="Görev tamamlandı", callback_class=TaskDoneStatistic),
+                M(text="id'ye göre", callback_class=TaskDoneStatisticMenu),
+            ],
         ],
         KeyboardKey.YES_NO: [
             [
@@ -1329,6 +1366,11 @@ keyboard_data = {
             [
                 M(text="🦎 Promo-Code Erstellen", callback_class=CreateVoucher),
                 M(text="📝 Aufgabe", callback_class=TaskMenu),
+            ],
+            [
+                M(text="Aktiv", callback_class=ActivityStatistic),
+                M(text="Aufgabe abgeschlossen", callback_class=TaskDoneStatistic),
+                M(text="nach id", callback_class=TaskDoneStatisticMenu),
             ],
         ],
         KeyboardKey.YES_NO: [

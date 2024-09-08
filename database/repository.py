@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, date
 from typing import Any, Sequence, Union
 
-from sqlalchemy import and_, or_, func, union
+from sqlalchemy import and_, or_, func, union, text
 from sqlalchemy import select, desc, Row, update, ScalarResult
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -38,6 +38,21 @@ async def get_users_statistic(s: AsyncSession = None):
     join_count, total_count = (await s.execute(union_stmt)).scalars()
 
     return join_count, total_count
+
+
+@cache.cacheable(ttl="1h", save_as_blob=True, function_name_as_id=True)
+@with_session
+async def get_activity_statistic(s: AsyncSession = None):
+    stmt = (
+        select(
+            func.date(UserActivityStatistic.datetime_).label('activity_date'),
+            func.count(func.distinct(UserActivityStatistic.user_id))
+        )
+        .group_by(text('activity_date'))
+        .order_by(text('activity_date DESC'))
+    )
+    result = await s.execute(stmt)
+    return reversed(result.all())
 
 
 @with_session
@@ -562,6 +577,40 @@ async def get_active_task(user_id: int, task_id: int, session: AsyncSession = No
     active_task = result.scalars().one_or_none()
 
     return active_task
+
+
+@with_session
+async def get_tasks_statistics(s: AsyncSession = None):
+    stmt = (
+        select(
+            Task.id,
+            func.count(TaskDoneHistory.id).label('done_count')
+        )
+        .join(TaskDoneHistory, TaskDoneHistory.task_id == Task.id)
+        .where(Task.expires_at > func.now())
+        .where(Task.deleted_at.is_(None))
+        .group_by(Task.id)
+        .order_by(Task.id.desc())
+    )
+
+    result = await s.execute(stmt)
+    return result.all()
+
+
+@with_session
+async def get_task_statistic(id_: int, s: AsyncSession = None):
+    stmt = (
+        select(
+            Task.id,
+            func.count(TaskDoneHistory.id).label('done_count')
+        )
+        .join(TaskDoneHistory, TaskDoneHistory.task_id == Task.id)
+        .where(Task.id.__eq__(id_))
+        .group_by(Task.id)
+    )
+
+    result = await s.execute(stmt)
+    return result.all()
 
 
 @with_session

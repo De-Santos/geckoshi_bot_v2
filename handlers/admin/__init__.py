@@ -6,6 +6,7 @@ from handlers.admin.mailing import router as mailing_router
 from handlers.admin.menu import router as admin_menu_router
 from handlers.admin.referral import router as referral_router
 from handlers.admin.task import router as admin_task_router
+from .. import statistic
 
 admin_router = Router(name="admin_base_router")
 
@@ -17,3 +18,5 @@ admin_router.include_router(admin_menu_router)
 admin_router.include_router(referral_router)
 admin_router.include_router(mailing_router)
 admin_router.include_router(admin_task_router)
+admin_router.include_router(statistic.task_done_router)
+admin_router.include_router(statistic.user_activity_router)
