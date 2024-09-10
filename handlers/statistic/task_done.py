@@ -43,7 +43,10 @@ async def handle_task_id(message: Message, lang: Lang) -> None:
         return
     id_ = int(id_)
 
-    task, count = await get_task_statistic(id_)
+    statistic = await get_task_statistic(id_)
+    if statistic is None:
+        return
+    task, count = statistic
     task_duration = calculate_task_duration(task)
     text_table = generate_expanded_text_table([[task.id, count, format_timedelta(task_duration)]])
     await message.answer(text=format_string(get_message(MessageKey.TASK_DONE_STATISTIC, lang),
