@@ -51,7 +51,7 @@ async def select_task(query: CallbackQuery, callback_data: TaskSelect, lang: Lan
         {'task_type': callback_data.task_type, 'page': next_offset, 'disabled': next_offset > pagination.total_pages}
     ]
     await query.message.edit_text(text=text,
-                                  reply_markup=with_step_back_button(lang, get_select_task_nav_menu_kbm(lang, done_params, params, markup)),
+                                  reply_markup=with_back_to_menu_button(lang, get_select_task_nav_menu_kbm(lang, done_params, params, markup), remove_source=True),
                                   disable_web_page_preview=True)
 
 
