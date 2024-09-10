@@ -60,3 +60,8 @@ class TaskType(Enum):
 class CurrencyType(Enum):
     GMEME = 0
     BMEME = 1
+
+
+class CustomClientTokenType(Enum):
+    PROJECT = 0
+    PRIVATE = 1

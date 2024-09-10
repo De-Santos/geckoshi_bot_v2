@@ -10,7 +10,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import coalesce
 
 import cache
-from database import User, Setting, SettingsKey, MailingMessageStatus, MailingMessage, Mailing, now, MailingStatus, Task, TaskType, TaskDoneHistory, UserActivityStatistic, CustomClientToken
+from database import User, Setting, SettingsKey, MailingMessageStatus, MailingMessage, Mailing, now, MailingStatus, Task, TaskType, TaskDoneHistory, UserActivityStatistic, CustomClientToken, UserActivityContext, CustomClientTokenType
 from database.decorators import with_session
 from lang.lang_based_provider import Lang
 from utils.pagination import Pagination
@@ -320,6 +320,11 @@ async def get_admin_ids(s: AsyncSession = None) -> ScalarResult[Any]:
     return result
 
 
+@with_session
+async def save_task(task: Task, s: AsyncSession = None) -> None:
+    s.add(task)
+
+
 @with_session(override_name='session')
 async def get_active_tasks(session: AsyncSession = None):
     # Subquery to count the number of times each DONE_BASED task has been completed
@@ -627,7 +632,7 @@ async def check_task_is_done(task_id: int, user_id: int, s: AsyncSession = None)
 
 
 @with_session
-async def save_activity_statistic(user_id: int, context: UserActivityStatistic.Context = UserActivityStatistic.Context(), s: AsyncSession = None) -> None:
+async def save_activity_statistic(user_id: int, context: UserActivityContext, s: AsyncSession = None) -> None:
     statistic = UserActivityStatistic(
         user_id=user_id,
         context=context
@@ -635,12 +640,20 @@ async def save_activity_statistic(user_id: int, context: UserActivityStatistic.C
     s.add(statistic)
 
 
+@with_session
+async def get_user_activity_statistic(s: AsyncSession = None):
+    stmt = select(UserActivityStatistic).limit(1)
+    result = await s.execute(stmt)
+    return result.scalar()
+
+
 @cache.cacheable(ttl="10m")
 @with_session
-async def is_client_token_valid(id_: str, s: AsyncSession = None) -> bool:
+async def is_client_token_valid(id_: str, type_: CustomClientTokenType, s: AsyncSession = None) -> bool:
     stmt = (select(CustomClientToken)
             .where(and_(CustomClientToken.deleted_at.is_(None),
-                        CustomClientToken.id.__eq__(id_)))
+                        CustomClientToken.id.__eq__(id_),
+                        CustomClientToken.type.__eq__(type_)))
             .exists()
             .select()
             )
