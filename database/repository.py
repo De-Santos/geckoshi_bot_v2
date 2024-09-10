@@ -584,7 +584,7 @@ async def get_tasks_statistics(s: AsyncSession = None):
     stmt = (
         select(
             Task.id,
-            func.count(TaskDoneHistory.id).label('done_count')
+            func.count(TaskDoneHistory.id).label('done_count'),
         )
         .join(TaskDoneHistory, TaskDoneHistory.task_id == Task.id)
         .where(Task.expires_at > func.now())
@@ -601,7 +601,7 @@ async def get_tasks_statistics(s: AsyncSession = None):
 async def get_task_statistic(id_: int, s: AsyncSession = None):
     stmt = (
         select(
-            Task.id,
+            Task,
             func.count(TaskDoneHistory.id).label('done_count')
         )
         .join(TaskDoneHistory, TaskDoneHistory.task_id == Task.id)
@@ -610,7 +610,7 @@ async def get_task_statistic(id_: int, s: AsyncSession = None):
     )
 
     result = await s.execute(stmt)
-    return result.all()
+    return result.one_or_none()
 
 
 @with_session
