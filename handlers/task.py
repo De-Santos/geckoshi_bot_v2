@@ -80,9 +80,6 @@ async def process_task_done(query: CallbackQuery, callback_data: TaskDone, lang:
     subscription_passed = await check_memberships(query.from_user.id, task.require_subscriptions)
     api_validation_passed = await check_api_activation(query.from_user.id, task)
 
-    print(f"subscription_passed: {subscription_passed}")
-    print(f"api_validation_passed: {api_validation_passed}")
-
     if not (subscription_passed and api_validation_passed):
         logger.warning(f"Task {task.id} validation failed for user {query.from_user.id}. Subscriptions passed: {subscription_passed}, API passed: {api_validation_passed}")
         await query.answer(get_message(MessageKey.TASK_DONE_UNSUCCESSFULLY, lang), show_alert=True)
