@@ -1065,7 +1065,7 @@ keyboard_data = {
         ],
         KeyboardKey.SELECT_TASK_SUBMIT_BUTTON: [
             [
-                M(text="✅ Проверить", callback_class=TaskDone, with_callback_param_required=True),
+                M(text="✅ Check", callback_class=TaskDone, with_callback_param_required=True),
             ],
         ],
         KeyboardKey.SELECT_TASK_NAV_MENU: [
