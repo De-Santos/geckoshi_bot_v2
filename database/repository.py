@@ -55,6 +55,39 @@ async def get_activity_statistic(s: AsyncSession = None):
     return reversed(result.all())
 
 
+@cache.cacheable(ttl="10m", save_as_blob=True, function_name_as_id=True)
+@with_session
+async def get_dirty_incoming_statistic(s: AsyncSession = None):
+    stmt = (
+        select(
+            func.date(User.created_at).label('joined_date'),
+            func.count(User.telegram_id)
+        )
+        .group_by(text('joined_date'))
+        .order_by(text('joined_date DESC'))
+        .limit(30)
+    )
+    result = await s.execute(stmt)
+    return reversed(result.all())
+
+
+@cache.cacheable(ttl="10m", save_as_blob=True, function_name_as_id=True)
+@with_session
+async def get_incoming_statistic(s: AsyncSession = None):
+    stmt = (
+        select(
+            func.date(User.created_at).label('joined_date'),
+            func.count(User.telegram_id)
+        )
+        .where(User.is_bot_start_completed.__eq__(True))
+        .group_by(text('joined_date'))
+        .order_by(text('joined_date DESC'))
+        .limit(30)
+    )
+    result = await s.execute(stmt)
+    return reversed(result.all())
+
+
 @with_session
 async def get_user_balance(tg_user_id: int, s: AsyncSession = None) -> int:
     stmt = select(User.balance).where(User.telegram_id.__eq__(tg_user_id))
