@@ -1,7 +1,10 @@
-from typing import List, TypeVar, Generic, Union
+from typing import List, TypeVar, Generic, Union, Callable, Any, Optional
+
+from starlette.responses import JSONResponse
 
 # Define a generic type variable
 T = TypeVar('T')
+R = TypeVar('R')
 
 
 class Pagination(Generic[T]):
@@ -25,3 +28,26 @@ class Pagination(Generic[T]):
 
     def is_empty(self):
         return len(self.items) == 0
+
+    def map_each(self, func: Callable[[T], Any]) -> None:
+        """
+        Applies the given function to each item in the `items` list.
+        The function can modify the items in place or perform some action on them.
+        """
+        self.items = [func(item) for item in self.items]
+
+
+class PaginatedResponse(Generic[R], JSONResponse):
+    def __init__(self, pagination: Pagination[R], map_func: Optional[Callable[[R], Any]] = None, status: str = "OK", *args, **kwargs):
+        if map_func:
+            pagination.map_each(map_func)
+
+        content = {
+            "status": status,
+            "items": pagination.items,
+            "total_items": pagination.total_items,
+            "current_page": pagination.current_page,
+            "total_pages": pagination.total_pages
+        }
+
+        super().__init__(content=content, *args, **kwargs)
