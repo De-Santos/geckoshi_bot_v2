@@ -3,6 +3,7 @@ import os
 from typing import Any
 
 import jwt
+from mako.exceptions import RuntimeException
 
 
 def create_jwt_token(user_id: str) -> str:
@@ -20,7 +21,7 @@ def validate_jwt_token(token: str) -> Any:
         return decoded_payload
 
     except jwt.ExpiredSignatureError:
-        return "Token has expired."
+        raise RuntimeException("Token has expired.")
 
     except jwt.InvalidTokenError:
-        return "Invalid token."
+        raise RuntimeException("Invalid token.")

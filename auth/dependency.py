@@ -1,7 +1,7 @@
 import logging
 
 from fastapi import Header, HTTPException
-from jwt import PyJWTError
+from mako.exceptions import RuntimeException
 
 from .jwt_processor import validate_jwt_token
 
@@ -23,6 +23,6 @@ async def auth_dependency(authorization: str = Header(None)):
         data = validate_jwt_token(token)
         logger.info(f"Token validation successful for token: {token}")
         return data['sub']
-    except PyJWTError as e:
+    except RuntimeException as e:
         logger.error(f"Token validation failed for token: {token}", e)
-        error()
+        raise HTTPException(status_code=401, detail=str(e))
