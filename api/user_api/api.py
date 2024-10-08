@@ -2,9 +2,10 @@ import logging
 from typing import Annotated
 
 from aiogram.types import ChatFullInfo
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
 from starlette.responses import JSONResponse, StreamingResponse
 
+import auth
 from .dto import UserDto
 from .impl import get_user, get_tg_user, get_chat_img
 
@@ -12,13 +13,19 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/user",
-    tags=["user"],
+    tags=["user"]
 )
 
 
 @router.get(
     '/info',
     response_model=UserDto,
+    summary="Get User Information",
+    description=(
+            "Fetch the information of the authenticated user. "
+            "This endpoint requires a valid user authentication token. "
+            "It returns details of the user."
+    ),
     responses={
         200: {
             "status": "OK",
@@ -26,16 +33,21 @@ router = APIRouter(
         },
     }
 )
-async def get_user_info(user_id: Annotated[int, Query(alias='id', description='The user id')]):
+async def get_user_info(user_id=Depends(auth.auth_dependency)):
     result = await get_user(user_id)
 
     return JSONResponse({"status": "OK",
-                         "data": result.model_dump()})
+                         "data": result.model_dump(mode='json')})
 
 
 @router.get(
     '/chat',
-    response_model=ChatFullInfo,
+    summary="Get User Chat Information",
+    description=(
+            "Retrieve the chat information associated with the authenticated user. "
+            "A valid user authentication token is required to access this endpoint. "
+            "It returns details of the telegram user."
+    ),
     responses={
         200: {
             "status": "OK",
@@ -43,15 +55,24 @@ async def get_user_info(user_id: Annotated[int, Query(alias='id', description='T
         },
     }
 )
-async def get_user_chat_info(user_id: Annotated[int, Query(alias='id', description='The user id')]):
+async def get_user_chat_info(user_id=Depends(auth.auth_dependency)):
     result = await get_tg_user(user_id)
     return JSONResponse({"status": "OK",
-                         "data": result.model_dump()})
+                         "data": result.model_dump(mode='json')})
 
 
-@router.get('/chat-photo')
-async def get_user_info(user_id: Annotated[int, Query(alias='id', description='The user id')],
-                        img_type: Annotated[str, Query(alias='type', description="img typs: 'small_file_id', 'big_file_id'")]):
+@router.get(
+    '/chat-photo',
+    summary="Get User Chat Photo",
+    description=(
+            "Fetch the chat photo for the user's chat. This endpoint requires the "
+            "type of the image as a query parameter (e.g., 'small_file_id' or 'big_file_id'). "
+            "A valid user authentication token is required. The response will return the "
+            "requested image in PNG format."
+    )
+)
+async def get_user_info(img_type: Annotated[str, Query(alias='type', description="img typs: 'small_file_id', 'big_file_id'")],
+                        user_id=Depends(auth.auth_dependency)):
     result: ChatFullInfo = await get_tg_user(user_id)
     img_bytes = await get_chat_img(result, img_type)
     return StreamingResponse(img_bytes, media_type="image/png")

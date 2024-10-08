@@ -35,10 +35,10 @@ async def get_chat_img(chat_info: ChatFullInfo, img_filed_name: str) -> BytesIO:
     file = await bot.get_file(file_id)
 
     # Download the photo as bytes
-    photo_bytes = await file.download_as_bytearray()
+    photo_bytes = await bot.download_file(file.file_path)
 
     # Load it as an image using PIL
-    img = Image.open(BytesIO(photo_bytes))
+    img = Image.open(photo_bytes)
 
     # Prepare a BytesIO stream for the response
     img_byte_arr = io.BytesIO()

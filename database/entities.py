@@ -2,7 +2,7 @@ import datetime
 import uuid
 from typing import Optional
 
-from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Numeric, Text, func, PrimaryKeyConstraint
+from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Text, func, PrimaryKeyConstraint
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -24,8 +24,8 @@ class User(Base):
     __tablename__ = 'users'
 
     telegram_id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True)
-    balance: Mapped[int] = mapped_column(type_=Numeric, default=0)
-    bmeme_balance: Mapped[int] = mapped_column(type_=Numeric, default=0)
+    balance: Mapped[int] = mapped_column(type_=BigInteger, default=0)
+    bmeme_balance: Mapped[int] = mapped_column(type_=BigInteger, default=0)
     referred_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger)
     blocked: Mapped[bool] = mapped_column(default=False)
     language: Mapped[Lang] = mapped_column(SQLEnum(Lang), default=Lang.EN)

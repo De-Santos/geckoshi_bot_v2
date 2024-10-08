@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+import auth
 from api import admin_api
 from api import coin_api
 from api import language_api
@@ -16,5 +17,6 @@ base_router.include_router(language_api.router)
 base_router.include_router(slots_api.router)
 base_router.include_router(user_api.router)
 base_router.include_router(task_api.router)
+base_router.include_router(auth.router)
 
 __all__ = ['base_router']

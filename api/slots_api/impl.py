@@ -1,5 +1,6 @@
 import uuid
 
+from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import with_session, get_user_balance, SlotsBetHistory, TransactionOperation, BetType
@@ -12,7 +13,7 @@ from .dto import BetResultDto
 async def process_play(user_id: int, amount: int, s: AsyncSession = None) -> BetResultDto:
     balance = await get_user_balance(user_id, s=s)
     if balance < amount:
-        raise Exception('Not enough balance')
+        raise HTTPException(status_code=422, detail='Not enough balance')
     trace = uuid.uuid4()
     combination, win_amount, bet_type = play_slots(amount)
 

@@ -8,6 +8,6 @@ async def get_user_balance(user_id: int) -> Dict[CurrencyType, int] | None:
     if user is None:
         return None
     return {
-        CurrencyType.GMEME: user.balance,
-        CurrencyType.BMEME: user.bmeme_balance,
+        CurrencyType.GMEME.name: int(user.balance),
+        CurrencyType.BMEME.name: int(user.bmeme_balance),
     }

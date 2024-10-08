@@ -16,9 +16,9 @@ logger = logging.getLogger(__name__)
 async def get_task_page(user_id: int,
                         page: int = 1,
                         task_type: TaskType = None,
-                        limit: int = 1, ) -> Pagination[TaskDto]:
+                        limit: int = 1, ) -> Pagination[dict]:
     tasks: Pagination = await get_active_tasks_page(user_id=user_id, page=page, task_type=task_type, limit=limit)
-    tasks.map_each(lambda task: TaskDto.model_validate(task, from_attributes=True))
+    tasks.map_each(lambda task: TaskDto.model_validate(task, from_attributes=True).model_dump(mode='json'))
     return tasks
 
 
