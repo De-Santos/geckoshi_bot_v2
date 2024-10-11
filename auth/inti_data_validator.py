@@ -15,7 +15,7 @@ class ValidationResult(BaseModel):
     user: Dict[str, Any]
 
 
-def validate_telegram_webapp_data(telegram_init_data: QueryParams) -> ValidationResult:
+def validate_telegram_webapp_data(telegram_init_data: QueryParams | dict) -> ValidationResult:
     bot_token = os.getenv('API_TOKEN')
 
     # Extract the hash
