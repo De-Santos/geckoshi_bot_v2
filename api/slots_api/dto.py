@@ -4,6 +4,6 @@ from database import BetType
 
 
 class BetResultDto(BaseModel):
-    combination: str
+    combination: list[str]
     win_amount: int = Field(0, ge=0)
     bet_type: BetType

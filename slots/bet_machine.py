@@ -5,17 +5,17 @@ from slots.conf import win_probability, COMBINATIONS, symbols
 
 
 # Helper function to generate a random non-winning combination
-def random_now_combination() -> str:
+def random_now_combination() -> list[str]:
     while True:
         # Generate a random combination of 3 symbols
-        r = ''.join(random.choices(symbols, k=3))
+        r = random.choices(symbols, k=3)
         # If the generated combination is not a winning combination, return it
         if r not in [comb[0] for comb in COMBINATIONS]:
             return r
 
 
 # Function to play the slot game
-def play_slots(amount: int) -> (str, int, BetType):
+def play_slots(amount: int) -> (list[str], int, BetType):
     # Determine if the player wins or loses
     if random.random() <= win_probability:
         # Determine which combination the player wins with
