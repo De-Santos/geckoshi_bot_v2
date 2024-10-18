@@ -1,4 +1,5 @@
 import logging
+from io import BytesIO
 from typing import Annotated
 
 from aiogram.types import ChatFullInfo
@@ -75,4 +76,6 @@ async def get_user_info(img_type: Annotated[str, Query(alias='type', description
                         user_id=Depends(auth.auth_dependency)):
     result: ChatFullInfo = await get_tg_user(user_id)
     img_bytes = await get_chat_img(result, img_type)
+    if img_bytes is None:
+        return StreamingResponse(BytesIO(), status_code=204, media_type="image/png")
     return StreamingResponse(img_bytes, media_type="image/png")

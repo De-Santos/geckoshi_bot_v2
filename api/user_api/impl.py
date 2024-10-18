@@ -27,9 +27,11 @@ async def get_tg_user(user_id: int) -> ChatFullInfo | None:
     return await bot.get_chat(user_id)
 
 
-async def get_chat_img(chat_info: ChatFullInfo, img_filed_name: str) -> BytesIO:
+async def get_chat_img(chat_info: ChatFullInfo, img_filed_name: str) -> BytesIO | None:
     # Dynamically access the file_id using the provided field name
     file_id = getattr(chat_info.photo, img_filed_name)
+    if file_id is None:
+        return None
 
     # Get the file for the chat photo
     file = await bot.get_file(file_id)

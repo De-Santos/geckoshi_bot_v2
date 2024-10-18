@@ -57,12 +57,8 @@ def prod() -> None:
 
     logger.info("Including routers and setting up production mode...")
     dp.include_router(handlers.base_router)
+    dp.include_router(handlers.custom_router)
 
     logger.info(f"Starting web server at {WEB_SERVER_HOST}:{WEB_SERVER_PORT}...")
     import uvicorn
-    # log_config = uvicorn.config.LOGGING_CONFIG
-    # log_config["formatters"]["access"]["fmt"] = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-    # log_config["formatters"]["default"]["fmt"] = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-    # log_config["handlers"]["default"]["stream"] = "ext://sys.stdout"
-
     uvicorn.run(app, host=WEB_SERVER_HOST, port=WEB_SERVER_PORT, log_config=uvicorn_logging_config)

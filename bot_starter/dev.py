@@ -15,6 +15,7 @@ async def dev() -> None:
 
     logger.info("Including routers and setting up development mode...")
     dp.include_router(handlers.base_router)
+    dp.include_router(handlers.custom_router)
 
     await crate_consumer()
 
