@@ -63,6 +63,11 @@ class CurrencyType(Enum):
     BMEME = 1
 
 
+class CustomClientTokenType(Enum):
+    PROJECT = 0
+    PRIVATE = 1
+
+
 class ChequeType(Enum):
     PERSONAL = 0
     MULTY = 1

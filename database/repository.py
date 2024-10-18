@@ -10,7 +10,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import coalesce
 
 import cache
-from database import User, Setting, SettingsKey, MailingMessageStatus, MailingMessage, Mailing, now, MailingStatus, Task, TaskType, TaskDoneHistory, UserActivityStatistic, CustomClientToken, Cheque, ChequeActivation
+from database import User, Setting, SettingsKey, MailingMessageStatus, MailingMessage, Mailing, now, MailingStatus, Task, TaskType, TaskDoneHistory, UserActivityStatistic, CustomClientToken, UserActivityContext, CustomClientTokenType, Cheque, ChequeActivation
 from database.decorators import with_session
 from lang.lang_based_provider import Lang
 from utils.pagination import Pagination
@@ -50,6 +50,39 @@ async def get_activity_statistic(s: AsyncSession = None):
         )
         .group_by(text('activity_date'))
         .order_by(text('activity_date DESC'))
+    )
+    result = await s.execute(stmt)
+    return reversed(result.all())
+
+
+@cache.cacheable(ttl="10m", save_as_blob=True, function_name_as_id=True)
+@with_session
+async def get_dirty_incoming_statistic(s: AsyncSession = None):
+    stmt = (
+        select(
+            func.date(User.created_at).label('joined_date'),
+            func.count(User.telegram_id)
+        )
+        .group_by(text('joined_date'))
+        .order_by(text('joined_date DESC'))
+        .limit(30)
+    )
+    result = await s.execute(stmt)
+    return reversed(result.all())
+
+
+@cache.cacheable(ttl="10m", save_as_blob=True, function_name_as_id=True)
+@with_session
+async def get_incoming_statistic(s: AsyncSession = None):
+    stmt = (
+        select(
+            func.date(User.created_at).label('joined_date'),
+            func.count(User.telegram_id)
+        )
+        .where(User.is_bot_start_completed.__eq__(True))
+        .group_by(text('joined_date'))
+        .order_by(text('joined_date DESC'))
+        .limit(30)
     )
     result = await s.execute(stmt)
     return reversed(result.all())
@@ -320,6 +353,11 @@ async def get_admin_ids(s: AsyncSession = None) -> ScalarResult[Any]:
     return result
 
 
+@with_session
+async def save_task(task: Task, s: AsyncSession = None) -> None:
+    s.add(task)
+
+
 @with_session(override_name='session')
 async def get_active_tasks(session: AsyncSession = None):
     # Subquery to count the number of times each DONE_BASED task has been completed
@@ -584,7 +622,7 @@ async def get_tasks_statistics(s: AsyncSession = None):
     stmt = (
         select(
             Task.id,
-            func.count(TaskDoneHistory.id).label('done_count')
+            func.count(TaskDoneHistory.id).label('done_count'),
         )
         .join(TaskDoneHistory, TaskDoneHistory.task_id == Task.id)
         .where(Task.expires_at > func.now())
@@ -601,7 +639,7 @@ async def get_tasks_statistics(s: AsyncSession = None):
 async def get_task_statistic(id_: int, s: AsyncSession = None):
     stmt = (
         select(
-            Task.id,
+            Task,
             func.count(TaskDoneHistory.id).label('done_count')
         )
         .join(TaskDoneHistory, TaskDoneHistory.task_id == Task.id)
@@ -610,7 +648,7 @@ async def get_task_statistic(id_: int, s: AsyncSession = None):
     )
 
     result = await s.execute(stmt)
-    return result.all()
+    return result.one_or_none()
 
 
 @with_session
@@ -627,7 +665,7 @@ async def check_task_is_done(task_id: int, user_id: int, s: AsyncSession = None)
 
 
 @with_session
-async def save_activity_statistic(user_id: int, context: UserActivityStatistic.Context = UserActivityStatistic.Context(), s: AsyncSession = None) -> None:
+async def save_activity_statistic(user_id: int, context: UserActivityContext, s: AsyncSession = None) -> None:
     statistic = UserActivityStatistic(
         user_id=user_id,
         context=context
@@ -635,12 +673,20 @@ async def save_activity_statistic(user_id: int, context: UserActivityStatistic.C
     s.add(statistic)
 
 
+@with_session
+async def get_user_activity_statistic(s: AsyncSession = None):
+    stmt = select(UserActivityStatistic).limit(1)
+    result = await s.execute(stmt)
+    return result.scalar()
+
+
 @cache.cacheable(ttl="10m")
 @with_session
-async def is_client_token_valid(id_: str, s: AsyncSession = None) -> bool:
+async def is_client_token_valid(id_: str, type_: CustomClientTokenType, s: AsyncSession = None) -> bool:
     stmt = (select(CustomClientToken)
             .where(and_(CustomClientToken.deleted_at.is_(None),
-                        CustomClientToken.id.__eq__(id_)))
+                        CustomClientToken.id.__eq__(id_),
+                        CustomClientToken.type.__eq__(type_)))
             .exists()
             .select()
             )

@@ -1,0 +1,2 @@
+class UnreachedJsonPathException(Exception):
+    pass

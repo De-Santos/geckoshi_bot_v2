@@ -76,6 +76,8 @@ class MessageKey(Enum):
     TASK_ALREADY_HAS_DONE = "task_already_has_done"
     PUBLIC_STATISTIC = "public_statistic"
     USER_ACTIVITY_STATISTIC = "user_activity_statistic"
+    USER_DIRTY_INCOMING_STATISTIC = "user_dirty_incoming_statistic"
+    USER_INCOMING_STATISTIC = "user_incoming_statistic"
     TASK_DONE_STATISTIC = "task_done_statistic"
     CHEQUE_MENU = "cheque_menu"
     CHEQUE_ACTION_MENU = "cheque_action_menu"
@@ -366,6 +368,14 @@ class ActivityStatistic(CallbackData, prefix="activity-statistic"):
     pass
 
 
+class DirtyIncomingStatistic(CallbackData, prefix="dirty-incoming-statistic"):
+    pass
+
+
+class IncomingStatistic(CallbackData, prefix="incoming-statistic"):
+    pass
+
+
 class TaskDoneStatistic(CallbackData, prefix="task-done-statistic"):
     pass
 
@@ -480,7 +490,9 @@ message_data = {
         MessageKey.SOLVE_CAPTCHA_REQUIRED: "Пройдите капчу, чтобы подтвердить, что вы человек.\n\nВыберите кнопку ниже с таким же текстом, как на картинке:",
         MessageKey.CAPTCHA_SOLVED_SUCCESSFULLY: "✅ Вы успешно прошли капчу!",
         MessageKey.CAPTCHA_SOLVED_UNSUCCESSFULLY: "Капчка не пройдена ❌\nПопробуйте ещё раз!",
-        MessageKey.USER_ACTIVITY_STATISTIC: "<b>📊 Статистика активных юзеров\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
+        MessageKey.USER_ACTIVITY_STATISTIC: "<b>📊 Статистика активных юзеров.\n⚠️ Так-же учитываются пользователи, которые не прошли регистрацию в боте.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
+        MessageKey.USER_DIRTY_INCOMING_STATISTIC: "<b>📊 Статистика грязного прихода юзеров.\n⚠️ Это юзеры, которые зашли в бота, но не прошли регистрацию.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
+        MessageKey.USER_INCOMING_STATISTIC: "<b>📊 Статистика прихода юзеров.\n⚠️ Это юзеры, которые зашли в бота и прошли регистрацию.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
         MessageKey.TASK_DONE_STATISTIC: "<b>📊 Статистика выполнения активных заданий</b>\n<pre>{text_table}</pre>",
         MessageKey.CHEQUE_MENU: "📋Выберете ваше дейвствие:",
         MessageKey.CHEQUE_ACTION_MENU: "📋Выберете ваше дейвствие:",
@@ -560,7 +572,9 @@ message_data = {
         MessageKey.SOLVE_CAPTCHA_REQUIRED: "Please complete the captcha to verify that you are human.\n\nSelect the button below with the same text as in the image:",
         MessageKey.CAPTCHA_SOLVED_SUCCESSFULLY: "✅ You have successfully solved the captcha!",
         MessageKey.CAPTCHA_SOLVED_UNSUCCESSFULLY: "Captcha not solved ❌\nPlease try again!",
-        MessageKey.USER_ACTIVITY_STATISTIC: "<b>📊 Active Users Statistics\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
+        MessageKey.USER_ACTIVITY_STATISTIC: "<b>📊 Active user statistics.\n⚠️ This also includes users who did not complete registration in the bot.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
+        MessageKey.USER_DIRTY_INCOMING_STATISTIC: "<b>📊 Dirty user incoming statistics.\n⚠️ These are users who entered the bot but did not complete registration.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
+        MessageKey.USER_INCOMING_STATISTIC: "<b>📊 User incoming statistics.\n⚠️ These are users who entered the bot and completed registration.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
         MessageKey.TASK_DONE_STATISTIC: "<b>📊 Task Completion Statistics</b>\n<pre>{text_table}</pre>",
 
     },
@@ -626,7 +640,9 @@ message_data = {
         MessageKey.SOLVE_CAPTCHA_REQUIRED: "İnsan olduğunuzu doğrulamak için lütfen captchayı tamamlayın.\n\nResimdeki ile aynı metne sahip olan düğmeyi aşağıdan seçin:",
         MessageKey.CAPTCHA_SOLVED_SUCCESSFULLY: "✅ Captcha başarıyla çözüldü!",
         MessageKey.CAPTCHA_SOLVED_UNSUCCESSFULLY: "Captcha çözülemedi ❌\nLütfen tekrar deneyin!",
-        MessageKey.USER_ACTIVITY_STATISTIC: "<b>📊 Aktif Kullanıcı İstatistikleri\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
+        MessageKey.USER_ACTIVITY_STATISTIC: "<b>📊 Aktif kullanıcı istatistikleri.\n⚠️ Ayrıca botta kaydını tamamlamayan kullanıcıları da içerir.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
+        MessageKey.USER_DIRTY_INCOMING_STATISTIC: "<b>📊 Kirli kullanıcı giriş istatistikleri.\n⚠️ Bunlar bota giren ancak kaydını tamamlamayan kullanıcılardır.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
+        MessageKey.USER_INCOMING_STATISTIC: "<b>📊 Kullanıcı giriş istatistikleri.\n⚠️ Bunlar bota girip kaydını tamamlayan kullanıcılardır.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
         MessageKey.TASK_DONE_STATISTIC: "<b>📊 Aktif Görevlerin İstatistikleri</b>\n<pre>{text_table}</pre>",
 
     },
@@ -692,11 +708,13 @@ message_data = {
         MessageKey.SOLVE_CAPTCHA_REQUIRED: "Bitte lösen Sie das Captcha, um zu bestätigen, dass Sie ein Mensch sind.\n\nWählen Sie die Schaltfläche unten mit dem gleichen Text wie im Bild aus:",
         MessageKey.CAPTCHA_SOLVED_SUCCESSFULLY: "✅ Sie haben das Captcha erfolgreich gelöst!",
         MessageKey.CAPTCHA_SOLVED_UNSUCCESSFULLY: "Captcha nicht gelöst ❌\nBitte versuchen Sie es erneut!",
-        MessageKey.USER_ACTIVITY_STATISTIC: "<b>📊 Statistik der aktiven Benutzer\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
+        MessageKey.USER_ACTIVITY_STATISTIC: "<b>📊 Statistiken der aktiven Nutzer.\n⚠️ Dies beinhaltet auch Nutzer, die die Registrierung im Bot nicht abgeschlossen haben.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
+        MessageKey.USER_DIRTY_INCOMING_STATISTIC: "<b>📊 Statistiken über nicht registrierte Nutzer.\n⚠️ Dies sind Nutzer, die den Bot betreten, aber die Registrierung nicht abgeschlossen haben.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
+        MessageKey.USER_INCOMING_STATISTIC: "<b>📊 Nutzerstatistiken.\n⚠️ Dies sind Nutzer, die den Bot betreten und die Registrierung abgeschlossen haben.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
         MessageKey.TASK_DONE_STATISTIC: "<b>📊 Statistik über abgeschlossene Aufgaben</b>\n<pre>{text_table}</pre>",
-
     },
 }
+
 keyboard_data = {
     KeyboardKey.SLOTS_MENU: [
         [
@@ -867,6 +885,10 @@ keyboard_data = {
                 M(text="стат. задания", callback_class=TaskDoneStatistic),
                 M(text="по id", callback_class=TaskDoneStatisticMenu),
             ],
+            [
+                M(text="гряз. приход", callback_class=DirtyIncomingStatistic),
+                M(text="приход", callback_class=IncomingStatistic),
+            ]
         ],
         KeyboardKey.YES_NO: [
             [
@@ -1098,6 +1120,10 @@ keyboard_data = {
                 M(text="Task done", callback_class=TaskDoneStatistic),
                 M(text="by id", callback_class=TaskDoneStatisticMenu),
             ],
+            [
+                M(text="dirty incoming", callback_class=DirtyIncomingStatistic),
+                M(text="incoming", callback_class=IncomingStatistic),
+            ],
         ],
         KeyboardKey.YES_NO: [
             [
@@ -1179,7 +1205,7 @@ keyboard_data = {
         ],
         KeyboardKey.SELECT_TASK_SUBMIT_BUTTON: [
             [
-                M(text="✅ Проверить", callback_class=TaskDone, with_callback_param_required=True),
+                M(text="✅ Check", callback_class=TaskDone, with_callback_param_required=True),
             ],
         ],
         KeyboardKey.SELECT_TASK_NAV_MENU: [
@@ -1291,6 +1317,10 @@ keyboard_data = {
                 M(text="Aktif", callback_class=ActivityStatistic),
                 M(text="Görev tamamlandı", callback_class=TaskDoneStatistic),
                 M(text="id'ye göre", callback_class=TaskDoneStatisticMenu),
+            ],
+            [
+                M(text="kirli gelen", callback_class=DirtyIncomingStatistic),
+                M(text="gelen", callback_class=IncomingStatistic),
             ],
         ],
         KeyboardKey.YES_NO: [
@@ -1485,6 +1515,10 @@ keyboard_data = {
                 M(text="Aktiv", callback_class=ActivityStatistic),
                 M(text="Aufgabe abgeschlossen", callback_class=TaskDoneStatistic),
                 M(text="nach id", callback_class=TaskDoneStatisticMenu),
+            ],
+            [
+                M(text="schmutziger Eingang", callback_class=DirtyIncomingStatistic),
+                M(text="Eingang", callback_class=IncomingStatistic),
             ],
         ],
         KeyboardKey.YES_NO: [

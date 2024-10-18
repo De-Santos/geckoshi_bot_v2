@@ -18,7 +18,7 @@ async def auth_dependency(authorization: str = Header(None)):
     token = authorization.split()[1]
     logger.info(f"Received token: {token}")
 
-    if not await is_client_token_valid(id_=token, type_=CustomClientTokenType.PROJECT, cache_id=token):
+    if not await is_client_token_valid(id_=token, type_=CustomClientTokenType.PRIVATE, cache_id=token):
         logger.error(f"Token validation failed for token: {token}")
         error()
 

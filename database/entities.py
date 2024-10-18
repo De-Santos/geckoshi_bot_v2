@@ -2,12 +2,14 @@ import datetime
 import uuid
 from typing import Optional
 
-from pydantic import BaseModel, Field
 from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Numeric, Text, func, PrimaryKeyConstraint, CheckConstraint, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
+from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType, TransactionInitiatorType, MailingStatus, MailingMessageStatus, BetType, TaskType, CurrencyType, CustomClientTokenType
+from database.json_classes import BotApiConfig, UserActivityContext
+from database.type_decorators import JSONEncoded, JSONEncodedList
 from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType, TransactionInitiatorType, MailingStatus, MailingMessageStatus, BetType, TaskType, CurrencyType, ChequeType
 from database.type_decorators import JSONEncodedDict
 from lang.lang_based_provider import Lang
@@ -123,6 +125,8 @@ class Task(Base):
     markup: Mapped[dict] = mapped_column(type_=JSONB, default=None, comment="serialized 'InlineKeyboardMarkup'")
     require_subscriptions: Mapped[list] = mapped_column(type_=JSONB, server_default=func.jsonb('[]'))
 
+    api_configs: Mapped[list[BotApiConfig]] = mapped_column(type_=JSONEncodedList(BotApiConfig), nullable=False, server_default=func.jsonb('[]'), comment="Stores API configurations for interactions with other projects")
+
     coin_type: Mapped[CurrencyType] = mapped_column(SQLEnum(CurrencyType), nullable=False)
 
     done_limit: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)
@@ -163,11 +167,8 @@ class UserActivityStatistic(Base):
     )
 
     user_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
-    context: Mapped["UserActivityStatistic.Context"] = mapped_column(type_=JSONEncodedDict, server_default=func.jsonb('{}'))
+    context: Mapped[UserActivityContext] = mapped_column(type_=JSONEncoded(UserActivityContext), server_default=func.jsonb('{}'))
     datetime_: Mapped[datetime.datetime] = mapped_column("datetime", DateTime(timezone=True), default=now)
-
-    class Context(BaseModel):
-        callback_query_prefix: Optional[str] = Field(default=None)
 
 
 class CustomClientToken(Base):
@@ -175,6 +176,7 @@ class CustomClientToken(Base):
 
     id: Mapped[str] = mapped_column(type_=Text, primary_key=True)
     name: Mapped[str] = mapped_column(type_=Text, nullable=True)
+    type: Mapped[CustomClientTokenType] = mapped_column(SQLEnum(CustomClientTokenType), nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime(timezone=True), default=now)
     deleted_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
