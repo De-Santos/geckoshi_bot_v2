@@ -7,8 +7,9 @@ from fastapi import APIRouter, Query, Depends
 from starlette.responses import JSONResponse, StreamingResponse
 
 import auth
+from chat_processor.chat_image import get_chat_img
 from .dto import UserDto
-from .impl import get_user, get_tg_user, get_chat_img
+from .impl import get_user, get_tg_user
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +73,7 @@ async def get_user_chat_info(user_id=Depends(auth.auth_dependency)):
             "requested image in PNG format."
     )
 )
-async def get_user_info(img_type: Annotated[str, Query(alias='type', description="img typs: 'small_file_id', 'big_file_id'")],
+async def get_user_info(img_type: Annotated[str, Query(alias='type', description="img types: 'small_file_id', 'big_file_id'")],
                         user_id=Depends(auth.auth_dependency)):
     result: ChatFullInfo = await get_tg_user(user_id)
     img_bytes = await get_chat_img(result, img_type)

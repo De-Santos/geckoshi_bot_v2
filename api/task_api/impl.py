@@ -1,11 +1,13 @@
 import asyncio
 import logging
+from io import BytesIO
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api_request import check_user_exists_via_api
+from chat_processor.chat_image import get_chat_img_by_chat_id
 from chat_processor.member import check_memberships
-from database import get_active_tasks_page, TaskType, Task, get_active_task_by_id, with_session, check_task_is_done, TaskDoneHistory, TransactionOperation
+from database import get_active_tasks_page, TaskType, Task, get_active_task_by_id, with_session, check_task_is_done, TaskDoneHistory, TransactionOperation, get_active_task
 from transaction_manager import make_transaction_from_system, generate_trace, TraceType
 from utils.pagination import Pagination
 from .dto import TaskDto
@@ -61,3 +63,17 @@ async def check_api_activation(user_id: int, task: Task) -> bool:
     logger.info(f"results list: {results}")
 
     return all(results)  # Return True if all API checks pass
+
+
+async def get_task_chat_photo(user_id: int, task_id: int, img_filed_name: str) -> BytesIO | None:
+    task: Task = await get_active_task(user_id, task_id)
+
+    if task.require_subscriptions is None or len(task.require_subscriptions) == 0:
+        return None
+
+    for rq in task.require_subscriptions:
+        result = await get_chat_img_by_chat_id(rq, img_filed_name)
+        if result is not None:
+            return result
+
+    return None

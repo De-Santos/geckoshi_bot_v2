@@ -1,7 +1,3 @@
-import io
-from io import BytesIO
-
-from PIL import Image
 from aiogram.types import ChatFullInfo
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,25 +21,3 @@ async def get_user(user_id: int, s: AsyncSession = None) -> UserDto | None:
 
 async def get_tg_user(user_id: int) -> ChatFullInfo | None:
     return await bot.get_chat(user_id)
-
-
-async def get_chat_img(chat_info: ChatFullInfo, img_filed_name: str) -> BytesIO | None:
-    # Dynamically access the file_id using the provided field name
-    file_id = getattr(chat_info.photo, img_filed_name)
-    if file_id is None:
-        return None
-
-    # Get the file for the chat photo
-    file = await bot.get_file(file_id)
-
-    # Download the photo as bytes
-    photo_bytes = await bot.download_file(file.file_path)
-
-    # Load it as an image using PIL
-    img = Image.open(photo_bytes)
-
-    # Prepare a BytesIO stream for the response
-    img_byte_arr = io.BytesIO()
-    img.save(img_byte_arr, format='PNG')
-    img_byte_arr.seek(0)
-    return img_byte_arr
