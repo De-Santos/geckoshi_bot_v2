@@ -8,9 +8,9 @@ from .log import logger
 
 async def crate_consumer():
     logger.info("Starting message consumer runner...")
-    gb = GlobalContext()
-    gb.message_consumer_runner = MessageConsumerRunner(asyncio.get_event_loop())
-    gb.message_consumer_runner.run()
+    # gb = GlobalContext()
+    # gb.message_consumer_runner = MessageConsumerRunner(asyncio.get_event_loop())
+    # gb.message_consumer_runner.run()
 
 
 async def shutdown() -> None:

@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 from aiogram import Router, types, F, Bot
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, BufferedInputFile, InputMediaPhoto
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -136,7 +136,7 @@ async def back_to_menu(query: CallbackQuery, callback_data: BackToMenu, state: F
                                reply_markup=get_user_menu_kbm(lang))
 
 
-@router.message(F.text == "/menu", IsGoodUserFilter())
+@router.message(Command('menu'), IsGoodUserFilter())
 async def menu(message: types.Message, lang: Lang, state: FSMContext) -> None:
     await message.delete()
     await state.clear()

@@ -3,12 +3,12 @@ import uuid
 from typing import Optional
 
 from pydantic import BaseModel, Field
-from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Numeric, Text, func, PrimaryKeyConstraint
+from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Numeric, Text, func, PrimaryKeyConstraint, CheckConstraint, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
-from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType, TransactionInitiatorType, MailingStatus, MailingMessageStatus, BetType, TaskType, CurrencyType
+from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType, TransactionInitiatorType, MailingStatus, MailingMessageStatus, BetType, TaskType, CurrencyType, ChequeType
 from database.type_decorators import JSONEncodedDict
 from lang.lang_based_provider import Lang
 
@@ -177,3 +177,36 @@ class CustomClientToken(Base):
     name: Mapped[str] = mapped_column(type_=Text, nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime(timezone=True), default=now)
     deleted_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class Cheque(Base):
+    __tablename__ = 'cheques'
+
+    __table_args__ = (
+        CheckConstraint('connected_to_user != created_by_id', name='check_connected_user_not_created_by'),
+    )
+
+    id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True, autoincrement=True)
+    type: Mapped[ChequeType] = mapped_column(SQLEnum(ChequeType), nullable=False)
+    amount: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
+    currency_type: Mapped[CurrencyType] = mapped_column(SQLEnum(CurrencyType), nullable=False)
+    description: Mapped[str] = mapped_column(type_=Text, nullable=True)
+    connected_to_user: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)
+    activation_limit: Mapped[int] = mapped_column(type_=BigInteger, nullable=False, server_default=text('1'))
+
+    created_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime(timezone=True), default=now, nullable=False)
+    deleted_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=True)
+    deleted_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    trace_uuid: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), default=uuid.uuid4, nullable=False)
+
+
+class ChequeActivation(Base):
+    __tablename__ = 'cheque_activations'
+
+    id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True, autoincrement=True)
+    cheque_id: Mapped[int] = mapped_column(ForeignKey('cheques.id'), type_=BigInteger, nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
+    datetime_: Mapped[datetime.datetime] = mapped_column("datetime", DateTime(timezone=True), default=now)
+    trace_uuid: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), default=uuid.uuid4, nullable=False)

@@ -3,7 +3,7 @@ from aiogram import Router
 from filters.base_filters import ChatTypeFilter
 from handlers.admin import admin_router
 from handlers.bonus import router as bonus_router
-from handlers.cheque import router as cheque_router
+from handlers.cheque import public_base_router as cheque_public_router
 from handlers.exit import router as exit_router
 from handlers.nft import router as nft_router
 from handlers.p2p import router as p2p_router
@@ -36,7 +36,7 @@ base_router.include_router(referral_router)
 base_router.include_router(profile_router)
 base_router.include_router(exit_router)
 base_router.include_router(premium_router)
-base_router.include_router(cheque_router)
+base_router.include_router(cheque_public_router)
 base_router.include_router(p2p_router)
 base_router.include_router(slots_router)
 base_router.include_router(nft_router)

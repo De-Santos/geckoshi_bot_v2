@@ -56,5 +56,19 @@ class TaskStates(StatesGroup):
     bonus_select = State()
 
 
+class PersonalChequeStates(StatesGroup):
+    menu = State()
+    action_menu = State()
+    amount_require = State()
+    review_amount = State()
+
+
+class ChequeModifyingStates(StatesGroup):
+    add_description = State()
+    connect_to_user = State()
+
+    link_to_user = State()
+
+
 class TaskDoneStatisticStates(StatesGroup):
     enter_task_id = State()

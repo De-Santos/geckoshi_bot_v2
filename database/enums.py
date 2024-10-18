@@ -29,6 +29,7 @@ class SettingsKey(Enum):
     PAY_FOR_REFERRAL = 1
     MIN_WITHDRAW_IN_AIRDROP = 2
     PREMIUM_GMEME_PRICE = 3
+    MIN_GMEME_CHEQUE_AMOUNT = 4
 
 
 class MailingStatus(Enum):
@@ -60,3 +61,9 @@ class TaskType(Enum):
 class CurrencyType(Enum):
     GMEME = 0
     BMEME = 1
+
+
+class ChequeType(Enum):
+    PERSONAL = 0
+    MULTY = 1
+

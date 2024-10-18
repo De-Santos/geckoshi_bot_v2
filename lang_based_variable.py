@@ -77,6 +77,22 @@ class MessageKey(Enum):
     PUBLIC_STATISTIC = "public_statistic"
     USER_ACTIVITY_STATISTIC = "user_activity_statistic"
     TASK_DONE_STATISTIC = "task_done_statistic"
+    CHEQUE_MENU = "cheque_menu"
+    CHEQUE_ACTION_MENU = "cheque_action_menu"
+    CHEQUE_AMOUNT_REQUIRE = "cheque_amount_require"
+    AMOUNT_IS_NOT_DIGIT = "amount_is_digit"
+    AMOUNT_LESS_THAN_MINIMUM = "amount_less_than_minimum"
+    AMOUNT_GREATER_THAN_BALANCE = "amount_greater_than_balance"
+    CHEQUE_DATA_CHECK = "cheque_data_check"
+    CHEQUE_SAVED = "cheque_saved"
+    REQUEST_CHEQUE_DESCRIPTION = "request_cheque_description"
+    CHEQUE_IS_NOT_MODIFIABLE = "cheque_is_not_modifiable"
+    CHEQUE_MODIFIED_SUCCESSFULLY = "cheque_modified_successfully"
+    CHEQUE_NOT_FOUND = "cheque_not_found"
+    REQUEST_CHEQUE_LINK_USER = "request_cheque_link_user"
+    CHEQUE_ALREADY_LINKED_TO_USER = "cheque_already_linked_to_user"
+    CHEQUE_LINKED_TO_USER_SUCCESSFULLY = "cheque_linked_to_user_successfully"
+    FAILED_TO_FIND_THE_USER = "failed_to_find_the_user"
 
 
 class KeyboardKey(Enum):
@@ -114,6 +130,11 @@ class KeyboardKey(Enum):
     PAGINATION_MENU = "pagination_menu"
     BONUS_TASK_BUTTON = "bonus_task_button"
     SKIP = "skip"
+    PUBLIC_CHEQUE_MENU = "public_cheque_menu"
+    CHEQUE_TYPE_SELECT = "cheque_type_select"
+    CHEQUE_ACTION_MENU = "cheque_action_menu"
+    CHEQUE_MODIFICATION_MENU = "cheque_modification_menu"
+    CHEQUE_ALREADY_LINKED_TO_USER_MENU = "cheque_already_linked_to_user_menu"
 
 
 class M(BaseModel):
@@ -353,6 +374,47 @@ class TaskDoneStatisticMenu(CallbackData, prefix="task-done-statistic-menu"):
     pass
 
 
+class ChequeCreateMenu(CallbackData, prefix="cheque-create-menu"):
+    pass
+
+
+class ChequeMenu(CallbackData, prefix="cheque-menu"):
+    pass
+
+
+class MyCheques(CallbackData, prefix="my-cheques"):
+    pass
+
+
+class CreateChequeMenu(CallbackData, prefix="create-cheque-menu"):
+    pass
+
+
+class AddDescriptionToCheque(CallbackData, prefix="add-description-to-cheque"):
+    cheque_id: int
+
+
+class LinkChequeToUser(CallbackData, prefix="link-cheque-to-user"):
+    cheque_id: int
+    override: bool = False
+
+
+class RemoveLinkChequeToUser(CallbackData, prefix="remove-link-cheque-to-user"):
+    cheque_id: int
+
+
+class DeleteCheque(CallbackData, prefix="delete-cheque"):
+    cheque_id: int
+
+
+class ChequeModifiableView(CallbackData, prefix="cheque_modifiable_view"):
+    cheque_id: int
+
+
+class ChequeView(CallbackData, prefix="cheque_view"):
+    cheque_id: int
+
+
 message_data = {
     MessageKey.START: """<b>Geckoshi Аирдроп первый в мире инвестиционной мем монеты 🦎 Ниже выберите подходящий вам язык 🌐 и начните зарабатывать $GMEME прямо сейчас!\n\n____\n\n\nGeckoshi Airdrop the world's first investment meme coin 🦎 Below, select the lang that suits you 🌐 and start earning $GMEME right now!</b>""",
 
@@ -420,6 +482,21 @@ message_data = {
         MessageKey.CAPTCHA_SOLVED_UNSUCCESSFULLY: "Капчка не пройдена ❌\nПопробуйте ещё раз!",
         MessageKey.USER_ACTIVITY_STATISTIC: "<b>📊 Статистика активных юзеров\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
         MessageKey.TASK_DONE_STATISTIC: "<b>📊 Статистика выполнения активных заданий</b>\n<pre>{text_table}</pre>",
+        MessageKey.CHEQUE_MENU: "📋Выберете ваше дейвствие:",
+        MessageKey.CHEQUE_ACTION_MENU: "📋Выберете ваше дейвствие:",
+        MessageKey.CHEQUE_AMOUNT_REQUIRE: "Введите сумму чека в $GMEME:",
+        MessageKey.AMOUNT_LESS_THAN_MINIMUM: "Сумма меньше минимальной, попробуйте ещё раз.\n Мин. {amount} ${currency}",
+        MessageKey.AMOUNT_GREATER_THAN_BALANCE: "Сумма больше текущего баланса, попробуйте ещё раз.",
+        MessageKey.CHEQUE_DATA_CHECK: "Проверьте данные чека:\nСумма чека: {amount} ${currency}\n\nДанные чека коректны ?",
+        MessageKey.CHEQUE_SAVED: "Сумма чека: {amount} ${currency}\n\nСсылка на чек:\n<tg-spoiler>{cheque_link}</tg-spoiler>",
+        MessageKey.REQUEST_CHEQUE_DESCRIPTION: "Введите текст для описания чека:",
+        MessageKey.CHEQUE_IS_NOT_MODIFIABLE: "❌ Чек не может быть изменён !",
+        MessageKey.CHEQUE_MODIFIED_SUCCESSFULLY: "✅ Чек изменён успешно !",
+        MessageKey.CHEQUE_NOT_FOUND: "😞 Чек не найден !",
+        MessageKey.REQUEST_CHEQUE_LINK_USER: "Отправьте @username пользователя или перешлите сообщение от него.",
+        MessageKey.CHEQUE_ALREADY_LINKED_TO_USER: "Обратите внимание пользователь @{username} уже привязан к данному чеку.",
+        MessageKey.CHEQUE_LINKED_TO_USER_SUCCESSFULLY: "✅ Чек успешно привязан к пользователю @{username}!",
+        MessageKey.FAILED_TO_FIND_THE_USER: "😞 Не удалось найти пользователя с юзернеймом: @{username}.",
     },
     Lang.EN: {
         MessageKey.LANG_CHANGE: "Language successfully changed to English!",
@@ -885,6 +962,43 @@ keyboard_data = {
                 M(text="Пропустить ⤵️", callback_class=Skip),
             ],
         ],
+        KeyboardKey.PUBLIC_CHEQUE_MENU: [
+            [
+                M(text="Персональный ({count})", callback_class=ChequeMenu, with_callback_param_required=True),
+                M(text="Мульти-чек ({count})", callback_class=ChequeMenu, with_callback_param_required=True),
+            ],
+        ],
+        KeyboardKey.CHEQUE_ACTION_MENU: [
+            [
+                M(text="Создать чек", callback_class=CreateChequeMenu, with_callback_param_required=True),
+            ],
+            [
+                M(text="Мои чеки", callback_class=MyCheques, with_callback_param_required=True),
+            ],
+        ],
+        KeyboardKey.CHEQUE_MODIFICATION_MENU: [
+            [
+                M(text="💸 Отправить", url="https://t.me/share/url?url={link}", with_url_placeholder=True),
+            ],
+            [
+                M(text="Добавить описание", callback_class=AddDescriptionToCheque, with_callback_param_required=True),
+            ],
+            [
+                M(text="Привязать к пользователю", callback_class=LinkChequeToUser, with_callback_param_required=True),
+            ],
+            [
+                M(text="Удалить", callback_class=DeleteCheque, with_callback_param_required=True),
+            ],
+        ],
+        KeyboardKey.CHEQUE_ALREADY_LINKED_TO_USER_MENU: [
+            [
+                M(text="Всеравно привязать к пользователю", callback_class=LinkChequeToUser, with_callback_param_required=True),
+            ],
+            [
+                M(text="Удалить привязку", callback_class=RemoveLinkChequeToUser, with_callback_param_required=True),
+            ],
+        ],
+
     },
     Lang.EN: {
         KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB: [

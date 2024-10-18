@@ -1,7 +1,7 @@
 import logging
 import uuid
 from datetime import datetime, date
-from typing import Any, Sequence, Union
+from typing import Any, Sequence, Union, Optional
 
 from sqlalchemy import and_, or_, func, union, text
 from sqlalchemy import select, desc, Row, update, ScalarResult
@@ -10,7 +10,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import coalesce
 
 import cache
-from database import User, Setting, SettingsKey, MailingMessageStatus, MailingMessage, Mailing, now, MailingStatus, Task, TaskType, TaskDoneHistory, UserActivityStatistic, CustomClientToken
+from database import User, Setting, SettingsKey, MailingMessageStatus, MailingMessage, Mailing, now, MailingStatus, Task, TaskType, TaskDoneHistory, UserActivityStatistic, CustomClientToken, Cheque, ChequeActivation
 from database.decorators import with_session
 from lang.lang_based_provider import Lang
 from utils.pagination import Pagination
@@ -646,3 +646,26 @@ async def is_client_token_valid(id_: str, s: AsyncSession = None) -> bool:
             )
     result = await s.execute(stmt)
     return result.scalar()
+
+
+@with_session
+async def get_active_cheque_by_id(id_: int, s: AsyncSession = None) -> Optional[Cheque]:
+    # Subquery to count the number of activations for the given cheque
+    activation_count_subquery = (
+        select(func.count(ChequeActivation.id))
+        .where(ChequeActivation.cheque_id == Cheque.id)
+        .scalar_subquery()
+    )
+
+    # Main query to get the cheque and filter based on the activation count
+    stmt = (
+        select(Cheque)
+        .where(and_(
+            Cheque.id == id_,
+            Cheque.deleted_at.is_(None),
+            activation_count_subquery < Cheque.activation_limit
+        ))
+    )
+
+    result = await s.execute(stmt)
+    return result.scalar_one_or_none()

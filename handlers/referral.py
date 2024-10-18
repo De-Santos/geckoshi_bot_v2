@@ -1,7 +1,7 @@
 import os
 
 from aiogram import Bot, Router
-from aiogram.types import Message, CallbackQuery, FSInputFile
+from aiogram.types import CallbackQuery, FSInputFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import settings
@@ -39,15 +39,10 @@ async def process_paying_for_referral(user_id: int, bot: Bot, s: AsyncSession) -
         user.referred_by_id = None
 
 
-def build_ref_link(message: Message) -> str:
-    arg = TgArg(ArgType.REFERRAL, message.from_user.id)
-    return arg.get()
-
-
 @router.callback_query(MenuToRefCallback.filter(), UserExistsFilter())
 async def process_menu_to_ref_callback(query: CallbackQuery, lang: Lang, bot: Bot) -> None:
     await query.message.delete()
-    ref_link = TgArg.of(ArgType.REFERRAL, query.from_user.id)
+    ref_link = TgArg(query.from_user.id).encode(ArgType.REFERRAL)
     await bot.send_photo(chat_id=query.message.chat.id,
                          photo=FSInputFile(path=os.getenv("PHOTO_01_PATH")),
                          caption=format_string(get_message(MessageKey.REF_INVITE, lang),

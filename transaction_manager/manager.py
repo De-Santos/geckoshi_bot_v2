@@ -97,6 +97,40 @@ async def make_transaction_from_system(target: int,
     await session.commit()
 
 
+@with_session(transaction=True, override_name='session')
+async def make_transaction_from_system(target: int,
+                                       operation: TransactionOperation,
+                                       amount: int,
+                                       transaction_type: TransactionType = TransactionType.INTERNAL,
+                                       created_by: int | None = None,
+                                       description: str = None,
+                                       trace: dict = None,
+                                       session: AsyncSession = None,
+                                       currency_type: CurrencyType = CurrencyType.GMEME,
+                                       auto_commited: bool = True) -> None:
+    user: User = await get_user_by_tg(target, s=session)
+    old, new = __currency_based_operation(user, operation, currency_type, amount)
+    transaction = Transaction(
+        operation=operation,
+        type=transaction_type,
+        amount=amount,
+        currency_type=currency_type,
+        destination_balance_before=old,
+        destination_balance_after=new,
+        source_balance_before=0,
+        source_balance_after=0,
+        status=TransactionStatus.COMPLETED,
+        destination_id=user.telegram_id,
+        created_by_id=created_by,
+        description=description,
+        initiator_type=TransactionInitiatorType.SYSTEM,
+        trace=trace
+    )
+    session.add(transaction)
+    if auto_commited:
+        await session.commit()
+
+
 @with_session
 async def select_transactions_sum_amount(tg_user_id: int, transaction_type: TransactionType, s: AsyncSession = None) -> int:
     stmt = (select(func.sum(Transaction.amount))

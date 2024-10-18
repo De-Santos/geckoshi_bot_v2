@@ -22,6 +22,7 @@ redis = Redis.from_url(url=os.getenv('REDIS_URL'))
 storage = RedisStorage(redis)
 dp = Dispatcher(storage=storage)
 bot: Bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+bot_url: str = os.getenv('BOT_URL')
 start_time = datetime.datetime.now()
 
 # web server settings

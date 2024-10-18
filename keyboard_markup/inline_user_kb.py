@@ -5,6 +5,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from database import TaskType
+from database.enums import ChequeType
 from lang.lang_based_provider import *
 from lang_based_variable import Lang, KeyboardKey, LangSetCallback
 
@@ -22,7 +23,7 @@ def build_inline_keyboard_button(m: M, text_param=None, url_param=None, **kwargs
         text = format_string(m.text, **text_param)
     if url_param is not None and m.callback_class is None:
         return InlineKeyboardButton(text=text,
-                                    url=format_string(m.url, **dict([url_param])))
+                                    url=format_string(m.url, **url_param))
     elif m.callback_class is None:
         return InlineKeyboardButton(text=text,
                                     url=m.url)
@@ -235,3 +236,42 @@ def get_captcha_select_menu_kbm(kaptcha_list: list[str]) -> InlineKeyboardMarkup
         builder.row(build_inline_keyboard_button(m, text_param={'text': kpt}, captcha_text=kpt))
 
     return with_regenerate_captcha_button(builder.as_markup())
+
+
+def get_public_cheque_menu_kbm(lang: Lang) -> InlineKeyboardMarkup:
+    params = [
+        {'type_': ChequeType.PERSONAL.value},
+        {'type_': ChequeType.MULTY.value},
+    ]
+    return build_markup(lang, KeyboardKey.PUBLIC_CHEQUE_MENU, callback_data_param=params)
+
+
+def get_cheque_action_menu_kbm(lang: Lang, cheque_type: int) -> InlineKeyboardMarkup:
+    params = [
+        {'type_': cheque_type},
+        {'type_': cheque_type},
+    ]
+    return build_markup(lang, KeyboardKey.CHEQUE_ACTION_MENU, callback_data_param=params)
+
+
+def get_cheque_modification_menu_kbm(lang: Lang, cheque_id: int, link: str) -> InlineKeyboardMarkup:
+    url_params = [
+        {'link': link},
+    ]
+    params = [
+        {'cheque_id': cheque_id},
+        {'cheque_id': cheque_id},
+        {'cheque_id': cheque_id},
+    ]
+    return build_markup(lang, KeyboardKey.CHEQUE_MODIFICATION_MENU, url_params=url_params, callback_data_param=params)
+
+
+def get_cheque_already_linked_to_user_menu_kbm(lang: Lang, cheque_id: int) -> InlineKeyboardMarkup:
+    params = [
+        {
+            'cheque_id': cheque_id,
+            'override': True
+        },
+        {'cheque_id': cheque_id},
+    ]
+    return build_markup(lang, KeyboardKey.CHEQUE_ALREADY_LINKED_TO_USER_MENU, callback_data_param=params)
