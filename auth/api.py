@@ -28,7 +28,7 @@ class AccessTokenResponse(BaseModel):
                         "validates it, and generates an access token if valid.")
 async def create_access_token(request: Request):
     params = request.query_params
-    data: ValidationResult = validate_telegram_webapp_data(params)
+    data: ValidationResult = await validate_telegram_webapp_data(params)
     token: str = create_jwt_token(data.user.get('id'))
     return JSONResponse({"status": "OK",
                          "access_token": token})
@@ -40,7 +40,7 @@ async def create_access_token(request: Request):
                          "validates it, and generates an access token if valid.")
 async def create_access_token_v2(request: Request):
     params = request.query_params
-    data: ValidationResult = validate_telegram_webapp_data(params)
+    data: ValidationResult = await validate_telegram_webapp_data(params)
     token: str = create_jwt_token(data.user.get('id'))
     return JSONResponse({"status": "OK",
                          "access_token": token})
@@ -53,7 +53,7 @@ async def create_access_token_v2(request: Request):
 async def create_access_token_v3(request: Request):
     data: dict = await request.json()
     parsed_data = {k: v[0] for k, v in parse_qs(urlparse(f"?{data.get('data')}").query).items()}
-    data: ValidationResult = validate_telegram_webapp_data(parsed_data)
+    data: ValidationResult = await validate_telegram_webapp_data(parsed_data)
     token: str = create_jwt_token(data.user.get('id'))
     return JSONResponse({"status": "OK",
                          "access_token": token})

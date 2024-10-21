@@ -79,7 +79,6 @@ async def get_incoming_statistic(s: AsyncSession = None):
             func.date(User.created_at).label('joined_date'),
             func.count(User.telegram_id)
         )
-        .where(User.is_bot_start_completed.__eq__(True))
         .group_by(text('joined_date'))
         .order_by(text('joined_date DESC'))
         .limit(30)
@@ -94,7 +93,7 @@ async def get_user_balance(tg_user_id: int, s: AsyncSession = None) -> int:
     return await s.scalar(stmt)
 
 
-@cache.cacheable(ttl="10m")
+@cache.cacheable(ttl="10m", cache_result_ignore_val=False)
 @with_session
 async def is_user_exists_by_tg(tg_user_id: int, s: AsyncSession = None) -> bool:
     stmt = select(User).where(User.telegram_id.__eq__(tg_user_id)).exists().select()
@@ -116,7 +115,6 @@ async def is_good_user_by_tg(tg_user_id: int, s: AsyncSession = None) -> bool:
         .where(User.telegram_id.__eq__(tg_user_id)) \
         .where(User.blocked.__eq__(False)) \
         .where(User.deleted_at.__eq__(None)) \
-        .where(User.is_bot_start_completed.__eq__(True)) \
         .exists() \
         .select()
     result = await s.execute(ext)
@@ -135,7 +133,8 @@ async def is_admin(tg_user_id: int, s: AsyncSession = None) -> bool:
     return result.scalar()
 
 
-async def save_user(s: AsyncSession, user: User) -> None:
+@with_session
+async def save_user(user: User, s: AsyncSession = None) -> None:
     s.add(user)
     await s.commit()
 
@@ -165,10 +164,11 @@ async def get_user_language(tg_user_id: int, s: AsyncSession = None) -> Lang:
 
 @with_session
 async def update_user_is_bot_start_completed_by_tg_id(tg_user_id: int, val: bool, s: AsyncSession = None) -> None:
-    await s.begin()
-    user = await get_user_by_tg(tg_user_id, s=s)
-    user.is_bot_start_completed = val
-    await s.commit()
+    # await s.begin()
+    # user = await get_user_by_tg(tg_user_id, s=s)
+    # user.is_bot_start_completed = val
+    # await s.commit()
+    pass
 
 
 @with_session
@@ -206,8 +206,7 @@ async def update_user_premium(tg_user_id: int, premium: bool, s: AsyncSession = 
 async def get_verified_user_count(s: AsyncSession = None) -> int:
     stmt = (select(func.count())
             .where(User.deleted_at.__eq__(None))
-            .where(User.blocked.__eq__(False))
-            .where(User.is_bot_start_completed.__eq__(True)))
+            .where(User.blocked.__eq__(False)))
     return await s.scalar(stmt)
 
 

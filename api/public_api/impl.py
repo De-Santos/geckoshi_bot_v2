@@ -7,4 +7,4 @@ async def get_user_register_info(user_id: int) -> UserRegistrationInfo:
     if user is None:
         return UserRegistrationInfo(exists=False)
 
-    return UserRegistrationInfo(exists=True, registration_finished=user.is_bot_start_completed)
+    return UserRegistrationInfo(exists=True, registration_finished=True)

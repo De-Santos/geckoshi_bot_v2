@@ -15,12 +15,13 @@ from lang.lang_provider import get_cached_lang
 from lang_based_variable import MenuToRefCallback
 from providers.tg_arg_provider import TgArg, ArgType
 from settings import get_setting
+from variables import bot
 
 router = Router(name="referral_router")
 
 
 @with_session
-async def process_paying_for_referral(user_id: int, bot: Bot, s: AsyncSession) -> None:
+async def process_paying_for_referral(user_id: int, s: AsyncSession) -> None:
     user: User = await get_user_by_tg(user_id, s=s)
     if user.referred_by_id is None:
         return
