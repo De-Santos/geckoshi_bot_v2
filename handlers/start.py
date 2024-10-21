@@ -141,6 +141,6 @@ async def back_to_menu(query: CallbackQuery, callback_data: BackToMenu, state: F
 @router.message(F.text == "/menu", IsGoodUserFilter())
 async def menu(message: types.Message, lang: Lang, state: FSMContext) -> None:
     await message.delete()
-    await state.clear()
-    await message.answer(text=get_message(MessageKey.MENU_MESSAGE, lang),
-                         reply_markup=get_user_menu_kbm(lang))
+    # await state.clear()
+    # await message.answer(text=get_message(MessageKey.MENU_MESSAGE, lang),
+    #                      reply_markup=get_user_menu_kbm(lang))
