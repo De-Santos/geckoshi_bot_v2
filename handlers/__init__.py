@@ -48,8 +48,8 @@ base_router.include_router(statistic.public_router)
 base_router.include_router(bonus_router)
 
 custom_router = Router(name="custom_router")
-base_router.message.filter(ChatTypeFilter(ChatType.CHANNEL))
-base_router.callback_query.filter(ChatTypeFilter(ChatType.CHANNEL))
+custom_router.message.filter(ChatTypeFilter(ChatType.CHANNEL))
+custom_router.callback_query.filter(ChatTypeFilter(ChatType.CHANNEL))
 
 custom_router.include_router(channel_router)
 
