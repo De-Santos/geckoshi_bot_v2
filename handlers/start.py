@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from aiogram import Router, types, F, Bot
+from aiogram import Router, types, Bot
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, BufferedInputFile, InputMediaPhoto

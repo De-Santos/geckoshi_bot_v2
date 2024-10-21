@@ -1,8 +1,8 @@
 from aiogram import Router
 
+from . import management
 from . import menu
 from . import personal_cheque
-from . import management
 
 public_base_router = Router(name="public_cheque_router")
 

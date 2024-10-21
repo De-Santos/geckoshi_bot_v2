@@ -71,4 +71,3 @@ class CustomClientTokenType(Enum):
 class ChequeType(Enum):
     PERSONAL = 0
     MULTY = 1
-

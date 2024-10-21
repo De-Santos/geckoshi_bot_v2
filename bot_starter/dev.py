@@ -1,7 +1,6 @@
 import handlers
 from bot_starter.same import crate_consumer, shutdown
 from database import init_db
-from middleware.metadata_providers import LangProviderMiddleware
 from variables import bot, dp
 from .log import logger
 

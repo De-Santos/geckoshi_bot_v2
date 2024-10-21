@@ -7,11 +7,10 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
-from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType, TransactionInitiatorType, MailingStatus, MailingMessageStatus, BetType, TaskType, CurrencyType, CustomClientTokenType
+from database.enums import CustomClientTokenType
+from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType, TransactionInitiatorType, MailingStatus, MailingMessageStatus, BetType, TaskType, CurrencyType, ChequeType
 from database.json_classes import BotApiConfig, UserActivityContext
 from database.type_decorators import JSONEncoded, JSONEncodedList
-from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType, TransactionInitiatorType, MailingStatus, MailingMessageStatus, BetType, TaskType, CurrencyType, ChequeType
-from database.type_decorators import JSONEncodedDict
 from lang.lang_based_provider import Lang
 
 
