@@ -73,8 +73,8 @@ async def get_task_photo(task_id: Annotated[int, Query(alias='id', description="
             "On successful completion, the endpoint returns a confirmation."
     )
 )
-async def get_active_task_page(task_id: Annotated[int, Query(description='The task id')],
-                               user_id=Depends(auth.auth_dependency)):
+async def done_task(task_id: Annotated[int, Query(description='The task id')],
+                    user_id=Depends(auth.auth_dependency)):
     result = await process_task_done(user_id, task_id)
     return JSONResponse({"status": "OK",
                          "done_successfully": result})

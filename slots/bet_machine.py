@@ -25,6 +25,6 @@ def play_slots(amount: int) -> (list[str], int, BetType):
             cumulative_probability += probability
             if roll <= cumulative_probability:
                 # Player wins, return the combination and the win amount
-                return combo, int(amount * multiplier), BetType.WIN
+                return combo, int(amount * multiplier) - amount, BetType.WIN
     # Player loses, return a random combination and 0 win
     return random_now_combination(), 0, BetType.LOSS
