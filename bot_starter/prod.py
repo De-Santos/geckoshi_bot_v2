@@ -48,6 +48,19 @@ async def webhook_handler(request: Request):
     return JSONResponse({"status": "OK"})
 
 
+@app.exception_handler(Exception)
+async def global_exception_handler(r: Request, exc: Exception):
+    return JSONResponse(
+        status_code=200,
+        content={
+            "status": "ERROR",
+            "message": "An unexpected error occurred. Please try again later.",
+            "details": f"{type(exc)}: {exc}",
+            "request": f"{r}"
+        }
+    )
+
+
 # Run the FastAPI server
 def prod() -> None:
     logger.info("Setting up production mode...")

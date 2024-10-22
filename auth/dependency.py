@@ -13,9 +13,6 @@ async def auth_dependency(authorization: str = Header(None, alias='Authorization
         logger.warning(f"Unauthorized access attempt with header: {authorization}")
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    if True:
-        return 728740521
-
     if authorization is None or authorization.strip() == "" or len(authorization.split()) == 1:
         error()
 
