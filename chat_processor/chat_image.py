@@ -1,3 +1,4 @@
+import logging
 from io import BytesIO
 
 from PIL import Image
@@ -5,10 +6,11 @@ from aiogram.types import ChatFullInfo
 
 from variables import bot
 
+logger = logging.getLogger(__name__)
+
 
 async def get_chat_img(chat_info: ChatFullInfo, img_filed_name: str) -> BytesIO | None:
-    # Dynamically access the file_id using the provided field name
-    file_id = getattr(chat_info.photo, img_filed_name)
+    file_id = getattr(chat_info.photo, img_filed_name, None)
     if file_id is None:
         return None
 
@@ -17,8 +19,12 @@ async def get_chat_img(chat_info: ChatFullInfo, img_filed_name: str) -> BytesIO 
     if photo is None:
         return None
 
-    # Load it as an image using PIL
-    img = Image.open(photo.read())
+    # Check if the downloaded photo is valid and readable
+    try:
+        img = Image.open(photo)
+    except Exception as e:
+        logger.error(f"Failed to open image: {e}")
+        return None
 
     # Prepare a BytesIO stream for the response
     img_byte_arr = BytesIO()
