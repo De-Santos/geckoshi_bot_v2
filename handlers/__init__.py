@@ -1,8 +1,10 @@
 from aiogram import Router
+from aiogram.enums import ChatType
 
 from filters.base_filters import ChatTypeFilter
 from handlers.admin import admin_router
 from handlers.bonus import router as bonus_router
+from handlers.channel import router as channel_router
 from handlers.cheque import public_base_router as cheque_public_router
 from handlers.exit import router as exit_router
 from handlers.nft import router as nft_router
@@ -26,25 +28,32 @@ base_router.callback_query.middleware(ActivityStatisticMiddleware())
 base_router.message.middleware(LangProviderMiddleware())
 base_router.callback_query.middleware(LangProviderMiddleware())
 
-base_router.message.filter(ChatTypeFilter())
-base_router.callback_query.filter(ChatTypeFilter())
+base_router.message.filter(ChatTypeFilter(ChatType.PRIVATE))
+base_router.callback_query.filter(ChatTypeFilter(ChatType.PRIVATE))
 
 base_router.include_router(bot_router)
-base_router.include_router(settings_router)
+# base_router.include_router(settings_router)
 base_router.include_router(start_router)
-base_router.include_router(referral_router)
-base_router.include_router(profile_router)
-base_router.include_router(exit_router)
-base_router.include_router(premium_router)
-base_router.include_router(cheque_public_router)
-base_router.include_router(p2p_router)
-base_router.include_router(slots_router)
-base_router.include_router(nft_router)
+# base_router.include_router(referral_router)
+# base_router.include_router(profile_router)
+# base_router.include_router(exit_router)
+# base_router.include_router(premium_router)
+# base_router.include_router(cheque_public_router)
+# base_router.include_router(p2p_router)
+# base_router.include_router(slots_router)
+# base_router.include_router(nft_router)
 base_router.include_router(admin_router)
-base_router.include_router(task_router)
-base_router.include_router(statistic.public_router)
-base_router.include_router(bonus_router)
+# base_router.include_router(task_router)
+# base_router.include_router(statistic.public_router)
+# base_router.include_router(bonus_router)
+
+custom_router = Router(name="custom_router")
+custom_router.message.filter(ChatTypeFilter(ChatType.CHANNEL))
+custom_router.callback_query.filter(ChatTypeFilter(ChatType.CHANNEL))
+
+custom_router.include_router(channel_router)
 
 __all__ = [
-    'base_router'
+    'base_router',
+    'custom_router',
 ]

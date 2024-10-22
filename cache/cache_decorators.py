@@ -34,7 +34,7 @@ def generate_cache_key(func: Callable, args: tuple, kwargs: dict, just_function_
     return f"{func.__name__}:{str(cache_id)}"
 
 
-def cacheable(ttl: str = None, associate_none_as: Any = None, function_name_as_id: bool = False, save_as_blob: bool = False):
+def cacheable(ttl: str = None, associate_none_as: Any = None, function_name_as_id: bool = False, save_as_blob: bool = False, cache_result_ignore_val: Any = None):
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -64,6 +64,9 @@ def cacheable(ttl: str = None, associate_none_as: Any = None, function_name_as_i
 
             try:
                 result = await func(*args, **kwargs)
+                if cache_result_ignore_val == result:
+                    logging.info(f"caching call of function - ignored: {cache_key}")
+                    return result
                 logging.info(f"caching call of function: {cache_key}")
 
                 if save_as_blob:

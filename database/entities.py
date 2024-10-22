@@ -2,7 +2,7 @@ import datetime
 import uuid
 from typing import Optional
 
-from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Numeric, Text, func, PrimaryKeyConstraint, CheckConstraint, text
+from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Text, func, PrimaryKeyConstraint, CheckConstraint, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -25,14 +25,13 @@ class User(Base):
     __tablename__ = 'users'
 
     telegram_id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True)
-    balance: Mapped[int] = mapped_column(type_=Numeric, default=0)
-    bmeme_balance: Mapped[int] = mapped_column(type_=Numeric, default=0)
+    balance: Mapped[int] = mapped_column(type_=BigInteger, default=0)
+    bmeme_balance: Mapped[int] = mapped_column(type_=BigInteger, default=0)
     referred_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger)
     blocked: Mapped[bool] = mapped_column(default=False)
     language: Mapped[Lang] = mapped_column(SQLEnum(Lang), default=Lang.EN)
     is_admin: Mapped[bool] = mapped_column(default=False, nullable=False)
     is_premium: Mapped[bool] = mapped_column(default=False, nullable=False)
-    is_bot_start_completed: Mapped[bool] = mapped_column(default=False)
     created_at = mapped_column("created_at", DateTime(timezone=True), default=now, index=True)
     deleted_at = Column(DateTime(timezone=True), default=None)
 
@@ -156,6 +155,7 @@ class TaskDoneHistory(Base):
 
     task_id: Mapped[int] = mapped_column(ForeignKey('tasks.id'), type_=BigInteger, nullable=False)
     task: Mapped[Mailing] = relationship("Task", foreign_keys=[task_id])
+    created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime(timezone=True), default=now)
 
 
 class UserActivityStatistic(Base):

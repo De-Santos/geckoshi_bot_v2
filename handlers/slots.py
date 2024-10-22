@@ -45,9 +45,9 @@ async def slots_play(query: CallbackQuery, callback_data: SlotsPlay, lang: Lang,
     await make_transaction_from_system(query.from_user.id, operation, amount, description="slots play", trace=generate_trace(TraceType.SLOTS_BET, str(trace)), session=s)
 
     if bet_type == BetType.WIN:
-        text = format_string(get_message(MessageKey.SLOTS_WIN, lang), amount=amount, combination=combination)
+        text = format_string(get_message(MessageKey.SLOTS_WIN, lang), amount=amount, combination=''.join(combination))
     else:
-        text = format_string(get_message(MessageKey.SLOTS_LOSS, lang), amount=amount, combination=combination)
+        text = format_string(get_message(MessageKey.SLOTS_LOSS, lang), amount=amount, combination=''.join(combination))
 
     await query.message.answer(text=text, reply_markup=with_back_to_menu_button(lang, get_slots_continue_kbm(lang, [{'amount': callback_data.amount}])))
 
