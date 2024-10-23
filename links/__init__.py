@@ -1,1 +1,1 @@
-from .generator import generate
+from .generator import generate, simple_generate

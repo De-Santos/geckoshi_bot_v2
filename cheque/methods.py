@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Optional
 from uuid import uuid4
 
@@ -10,7 +11,7 @@ from .classes import ChequeModifier
 
 @with_session
 async def generate(
-        amount: int,
+        amount: Decimal,
         creator_id: int,
         type_: ChequeType,
         currency: CurrencyType,

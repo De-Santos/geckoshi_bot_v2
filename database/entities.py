@@ -1,8 +1,9 @@
 import datetime
 import uuid
+from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Text, func, PrimaryKeyConstraint, CheckConstraint, text
+from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Text, func, PrimaryKeyConstraint, CheckConstraint, text, Numeric
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -25,8 +26,8 @@ class User(Base):
     __tablename__ = 'users'
 
     telegram_id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True)
-    balance: Mapped[int] = mapped_column(type_=BigInteger, default=0)
-    bmeme_balance: Mapped[int] = mapped_column(type_=BigInteger, default=0)
+    balance: Mapped[Decimal] = mapped_column(type_=Numeric(precision=20, scale=8), default=Decimal(0))
+    bmeme_balance: Mapped[Decimal] = mapped_column(type_=Numeric(precision=20, scale=8), default=Decimal(0))
     referred_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger)
     blocked: Mapped[bool] = mapped_column(default=False)
     language: Mapped[Lang] = mapped_column(SQLEnum(Lang), default=Lang.EN)
@@ -42,12 +43,12 @@ class Transaction(Base):
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     operation: Mapped[TransactionOperation] = mapped_column(SQLEnum(TransactionOperation), nullable=False)
     type: Mapped[TransactionType] = mapped_column(SQLEnum(TransactionType), nullable=False)
-    amount: Mapped[int] = mapped_column(type_=BigInteger)
+    amount: Mapped[Decimal] = mapped_column(type_=Numeric(precision=20, scale=8))
     currency_type: Mapped[CurrencyType] = mapped_column(SQLEnum(CurrencyType), nullable=False)
-    destination_balance_before: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
-    destination_balance_after: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
-    source_balance_before: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
-    source_balance_after: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
+    destination_balance_before: Mapped[Decimal] = mapped_column(type_=Numeric(precision=20, scale=8), nullable=False)
+    destination_balance_after: Mapped[Decimal] = mapped_column(type_=Numeric(precision=20, scale=8), nullable=False)
+    source_balance_before: Mapped[Decimal] = mapped_column(type_=Numeric(precision=20, scale=8), nullable=False)
+    source_balance_after: Mapped[Decimal] = mapped_column(type_=Numeric(precision=20, scale=8), nullable=False)
     status: Mapped[TransactionStatus] = mapped_column(SQLEnum(TransactionStatus))
     initiator_type: Mapped[TransactionInitiatorType] = mapped_column(SQLEnum(TransactionInitiatorType), nullable=False)
     description: Mapped[str] = mapped_column()
@@ -188,8 +189,9 @@ class Cheque(Base):
     )
 
     id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(type_=Text, nullable=True, default=lambda: f"cheque-{str(uuid.uuid4())[:5]}")
     type: Mapped[ChequeType] = mapped_column(SQLEnum(ChequeType), nullable=False)
-    amount: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
+    amount: Mapped[Decimal] = mapped_column(type_=Numeric(precision=20, scale=8), nullable=False)
     currency_type: Mapped[CurrencyType] = mapped_column(SQLEnum(CurrencyType), nullable=False)
     description: Mapped[str] = mapped_column(type_=Text, nullable=True)
     connected_to_user: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)

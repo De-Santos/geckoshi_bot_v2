@@ -14,3 +14,8 @@ def _get_bot_url_with_argument(argument: str) -> str:
 def generate(at: ArgType, val: Any) -> str:
     arg = TgArg(val)
     return _get_bot_url_with_argument(arg.encode(at))
+
+
+def simple_generate(at: ArgType, val: Any) -> str:
+    arg = TgArg(val)
+    return arg.encode(at)

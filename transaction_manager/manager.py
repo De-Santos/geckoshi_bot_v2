@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Tuple
 
 from sqlalchemy import func, select
@@ -6,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import TransactionOperation, Transaction, get_user_by_tg, User, TransactionStatus, TransactionType, TransactionInitiatorType, CurrencyType, with_session
 
 
-def __calculate_operation(balance: int, operation: TransactionOperation, amount: int) -> int:
+def __calculate_operation(balance: Decimal, operation: TransactionOperation, amount: Decimal) -> Decimal:
     if operation == TransactionOperation.OVERRIDE:
         return amount
     elif operation == TransactionOperation.INCREMENT:
@@ -18,12 +19,12 @@ def __calculate_operation(balance: int, operation: TransactionOperation, amount:
         return nb
 
 
-def __process_operation(balance: int, *args) -> Tuple[int, int]:
+def __process_operation(balance: Decimal, *args) -> Tuple[Decimal, Decimal]:
     return balance, __calculate_operation(balance, *args)
 
 
 def __currency_based_operation(user: User, operation: TransactionOperation,
-                               currency_type: CurrencyType, amount: int) -> Tuple[int, int]:
+                               currency_type: CurrencyType, amount: Decimal) -> Tuple[Decimal, Decimal]:
     if currency_type == CurrencyType.GMEME:
         old, new = __process_operation(user.balance, operation, amount)
         user.balance = new
@@ -68,7 +69,7 @@ def __currency_based_operation(user: User, operation: TransactionOperation,
 @with_session(transaction=True, override_name='session')
 async def make_transaction_from_system(target: int,
                                        operation: TransactionOperation,
-                                       amount: int,
+                                       amount: Decimal,
                                        transaction_type: TransactionType = TransactionType.INTERNAL,
                                        created_by: int | None = None,
                                        description: str = None,
@@ -84,8 +85,8 @@ async def make_transaction_from_system(target: int,
         currency_type=currency_type,
         destination_balance_before=old,
         destination_balance_after=new,
-        source_balance_before=0,
-        source_balance_after=0,
+        source_balance_before=Decimal(0),
+        source_balance_after=Decimal(0),
         status=TransactionStatus.COMPLETED,
         destination_id=user.telegram_id,
         created_by_id=created_by,
@@ -95,40 +96,6 @@ async def make_transaction_from_system(target: int,
     )
     session.add(transaction)
     await session.commit()
-
-
-@with_session(transaction=True, override_name='session')
-async def make_transaction_from_system(target: int,
-                                       operation: TransactionOperation,
-                                       amount: int,
-                                       transaction_type: TransactionType = TransactionType.INTERNAL,
-                                       created_by: int | None = None,
-                                       description: str = None,
-                                       trace: dict = None,
-                                       session: AsyncSession = None,
-                                       currency_type: CurrencyType = CurrencyType.GMEME,
-                                       auto_commited: bool = True) -> None:
-    user: User = await get_user_by_tg(target, s=session)
-    old, new = __currency_based_operation(user, operation, currency_type, amount)
-    transaction = Transaction(
-        operation=operation,
-        type=transaction_type,
-        amount=amount,
-        currency_type=currency_type,
-        destination_balance_before=old,
-        destination_balance_after=new,
-        source_balance_before=0,
-        source_balance_after=0,
-        status=TransactionStatus.COMPLETED,
-        destination_id=user.telegram_id,
-        created_by_id=created_by,
-        description=description,
-        initiator_type=TransactionInitiatorType.SYSTEM,
-        trace=trace
-    )
-    session.add(transaction)
-    if auto_commited:
-        await session.commit()
 
 
 @with_session
