@@ -1,4 +1,5 @@
 import logging
+import os
 
 from fastapi import Header, HTTPException
 from mako.exceptions import RuntimeException
@@ -12,6 +13,9 @@ async def auth_dependency(authorization: str = Header(None, alias='Authorization
     def error():
         logger.warning(f"Unauthorized access attempt with header: {authorization}")
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+    if bool(int(os.getenv('REMOVE_AUTHORIZATION'))):
+        return int(os.getenv('DEFAULT_USER_ID'))
 
     if authorization is None or authorization.strip() == "" or len(authorization.split()) == 1:
         error()
