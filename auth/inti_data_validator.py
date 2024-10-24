@@ -9,20 +9,14 @@ from mako.exceptions import RuntimeException
 from pydantic import BaseModel
 from starlette.datastructures import QueryParams
 
-from database import User, save_user, is_user_exists_by_tg
-
 
 class ValidationResult(BaseModel):
     validated_data: Dict[str, str]
     user: Dict[str, Any]
 
 
-async def validate_telegram_webapp_data(telegram_init_data: QueryParams | dict) -> ValidationResult:
+def validate_telegram_webapp_data(telegram_init_data: QueryParams | dict) -> ValidationResult:
     bot_token = os.getenv('API_TOKEN')
-    user_id = json.loads(telegram_init_data.get('user')).get('id')
-
-    if not await is_user_exists_by_tg(user_id, cache_id=user_id):
-        await save_user(User(telegram_id=user_id))
 
     # Extract the hash
     hash_value = telegram_init_data.get('hash', None)
