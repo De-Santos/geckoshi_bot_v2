@@ -1,7 +1,9 @@
+import logging
 import os
 
 from aiogram import Bot, Router
 from aiogram.types import Message, CallbackQuery, FSInputFile
+from mako.exceptions import RuntimeException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import settings
@@ -19,25 +21,30 @@ from variables import bot
 
 router = Router(name="referral_router")
 
+logger = logging.getLogger(__name__)
+
 
 @with_session
 async def process_paying_for_referral(user_id: int, s: AsyncSession) -> None:
-    user: User = await get_user_by_tg(user_id, s=s)
-    if user.referred_by_id is None:
-        return
-    if await is_good_user_by_tg(user.referred_by_id, s=s, cache_id=user.referred_by_id):
-        ref_pay_amount = await settings.get_setting(SettingsKey.PAY_FOR_REFERRAL)
-        await transaction_manager.make_transaction_from_system(target=user.referred_by_id,
-                                                               created_by=user.telegram_id,
-                                                               operation=TransactionOperation.INCREMENT,
-                                                               amount=ref_pay_amount,
-                                                               description="Payment for referral",
-                                                               session=s)
-        await bot.send_message(chat_id=user.referred_by_id,
-                               text=format_string(get_message(MessageKey.REF_INVITED_STEP_TWO, await get_cached_lang(user.referred_by_id)),
-                                                  user_link=user_id, amount=ref_pay_amount))
-    else:
-        user.referred_by_id = None
+    try:
+        user: User = await get_user_by_tg(user_id, s=s)
+        if user.referred_by_id is None:
+            return
+        if await is_good_user_by_tg(user.referred_by_id, s=s, cache_id=user.referred_by_id):
+            ref_pay_amount = await settings.get_setting(SettingsKey.PAY_FOR_REFERRAL)
+            await transaction_manager.make_transaction_from_system(target=user.referred_by_id,
+                                                                   created_by=user.telegram_id,
+                                                                   operation=TransactionOperation.INCREMENT,
+                                                                   amount=ref_pay_amount,
+                                                                   description="Payment for referral",
+                                                                   session=s)
+            await bot.send_message(chat_id=user.referred_by_id,
+                                   text=format_string(get_message(MessageKey.REF_INVITED_STEP_TWO, await get_cached_lang(user.referred_by_id)),
+                                                      user_link=user_id, amount=ref_pay_amount))
+        else:
+            user.referred_by_id = None
+    except RuntimeException as e:
+        logger.error('failed pay for referral', e)
 
 
 def build_ref_link(message: Message) -> str:
