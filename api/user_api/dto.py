@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -17,3 +18,4 @@ class UserDto(BaseModel):
     referred_users_count: int = Field(default=0)
     is_bot_start_completed: bool = Field(default=True)
     created_at: datetime
+    referral_id: Optional[str] = Field(default=None)

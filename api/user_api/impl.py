@@ -2,6 +2,7 @@ from aiogram.types import ChatFullInfo
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_user_by_tg, get_user_referrals_count, with_session, TransactionType
+from providers.tg_arg_provider import TgArg, ArgType
 from transaction_manager.manager import select_transactions_sum_amount
 from variables import bot
 from .dto import UserDto
@@ -16,6 +17,7 @@ async def get_user(user_id: int, s: AsyncSession = None) -> UserDto | None:
     dto = UserDto.model_validate(user, from_attributes=True)
     dto.referred_users_count = ref_count
     dto.withdrew = await select_transactions_sum_amount(user.telegram_id, TransactionType.WITHDRAW, s=s)
+    dto.referral_id = TgArg.of(ArgType.REFERRAL, dto.telegram_id)
     return dto
 
 
