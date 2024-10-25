@@ -16,10 +16,11 @@ async def generate(
         type_: ChequeType,
         currency: CurrencyType,
         s: AsyncSession = None,
+        **kwargs
 ) -> ChequeModifier:
     trace_uid = uuid4()
 
-    await make_transaction_from_system(
+    uid = await make_transaction_from_system(
         target=creator_id,
         operation=TransactionOperation.DECREMENT,
         amount=amount,
@@ -36,7 +37,9 @@ async def generate(
         amount=amount,
         currency_type=currency,
         created_by_id=creator_id,
-        trace_uuid=trace_uid
+        trace_uuid=trace_uid,
+        allocation_transaction_id=uid,
+        **kwargs,
     )
     s.add(entity)
     await s.commit()

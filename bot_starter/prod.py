@@ -55,6 +55,7 @@ async def global_exception_handler(r: Request, exc: Exception):
         content={
             "status": "ERROR",
             "message": "An unexpected error occurred. Please try again later.",
+            "exc_message": str(exc),
             "details": f"{type(exc)}: {exc}",
             "request": f"{r}"
         }

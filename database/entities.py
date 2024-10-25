@@ -202,6 +202,7 @@ class Cheque(Base):
     deleted_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=True)
     deleted_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    allocation_transaction_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey('transactions.id'), type_=PG_UUID, nullable=False)
     trace_uuid: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), default=uuid.uuid4, nullable=False)
 
 

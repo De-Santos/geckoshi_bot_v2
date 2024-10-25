@@ -17,7 +17,7 @@ async def get_user(user_id: int, s: AsyncSession = None) -> UserDto | None:
     dto = UserDto.model_validate(user, from_attributes=True)
     dto.referred_users_count = ref_count
     dto.withdrew = await select_transactions_sum_amount(user.telegram_id, TransactionType.WITHDRAW, s=s)
-    dto.referral_id = TgArg.of(ArgType.REFERRAL, dto.telegram_id)
+    dto.referral_id = TgArg(dto.telegram_id).encode(ArgType.REFERRAL)
     return dto
 
 

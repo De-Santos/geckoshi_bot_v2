@@ -1,3 +1,4 @@
+import uuid
 from decimal import Decimal
 from typing import Tuple
 
@@ -75,7 +76,8 @@ async def make_transaction_from_system(target: int,
                                        description: str = None,
                                        trace: dict = None,
                                        session: AsyncSession = None,
-                                       currency_type: CurrencyType = CurrencyType.GMEME):
+                                       currency_type: CurrencyType = CurrencyType.GMEME,
+                                       auto_commited: bool = True) -> uuid.UUID:
     user: User = await get_user_by_tg(target, s=session)
     old, new = __currency_based_operation(user, operation, currency_type, amount)
     transaction = Transaction(
@@ -95,7 +97,11 @@ async def make_transaction_from_system(target: int,
         trace=trace
     )
     session.add(transaction)
-    await session.commit()
+    if auto_commited:
+        await session.commit()
+    else:
+        await session.flush()
+    return transaction.id
 
 
 @with_session
