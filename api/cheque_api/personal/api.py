@@ -7,7 +7,7 @@ from starlette.responses import JSONResponse
 import auth
 from utils.pagination import PaginatedResponse
 from .dto import NewPersonalChequeDto, PersonalChequeDto
-from .impl import create_new_cheque_impl, update_cheque_impl, get_cheque_impl, get_my_cheque_page_impl, get_my_historic_cheque_page_impl
+from .impl import create_new_cheque_impl, update_cheque_impl, get_cheque_impl, get_my_cheque_page_impl, get_my_historic_cheque_page_impl, delete_cheque_impl
 
 logger = logging.getLogger(__name__)
 
@@ -76,3 +76,10 @@ async def get_my_historic_cheque_page(user_id=Depends(auth.auth_dependency),
                                       limit: int = 1):
     result = await get_my_historic_cheque_page_impl(user_id, page, limit)
     return PaginatedResponse(result)
+
+
+@router.delete('')
+async def delete_cheque(cheque_id: Annotated[int, Query(alias='id', description="Id of the cheque")],
+                        user_id=Depends(auth.auth_dependency)):
+    await delete_cheque_impl(cheque_id, user_id)
+    return JSONResponse({"status": "OK"})

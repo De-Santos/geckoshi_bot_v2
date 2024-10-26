@@ -63,7 +63,7 @@ class ChequeModifier:
     @with_session
     async def delete_cheque(self, initiator: int, s: AsyncSession = None) -> None:
         await make_transaction_from_system(
-            target=self.entity.id,
+            target=self.entity.created_by_id,
             operation=TransactionOperation.INCREMENT,
             amount=self.entity.amount,
             created_by=initiator,

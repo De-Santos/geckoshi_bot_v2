@@ -64,3 +64,14 @@ async def get_my_historic_cheque_page_impl(user_id: int, page: int = 1, limit: i
     cm_page.map_each(__to_dto)
     cm_page.map_each(lambda dto: dto.model_dump(mode='json'))
     return cm_page
+
+
+async def delete_cheque_impl(cheque_id: int, user_id: int) -> None:
+    cm: Optional[ChequeModifier] = await get_active(cheque_id)
+
+    if cm is None:
+        raise ChequeInactive()
+    elif not (cm.is_creator(user_id)):
+        raise ChequeForbidden()
+
+    await cm.delete_cheque(initiator=user_id)
