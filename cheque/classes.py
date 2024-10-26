@@ -1,26 +1,30 @@
-from copy import deepcopy
 from typing import Set
 
-from pydantic import BaseModel, Field
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import make_transient
 
 from database import Cheque, with_session, now, TransactionOperation
 from transaction_manager import make_transaction_from_system, generate_trace, TraceType
 
 
-class ChequeModifier(BaseModel):
-    entity: Cheque = Field()
+class ChequeModifier:
     ALLOWED_UPDATE_FIELDS: Set = {
         Cheque.name,
         Cheque.description,
         Cheque.connected_to_user,
     }
 
-    def __init__(self, **data):
-        if 'entity' in data:
-            data['entity'] = deepcopy(data['entity'])
-        super().__init__(**data)
+    def __init__(self, entity: Cheque):
+        if isinstance(entity, Cheque):
+            make_transient(entity)  # Detaches from the session
+            self.entity = entity
+        else:
+            raise TypeError('entity must be Cheque type')
+
+    def __update_entity(self, entity: Cheque):
+        make_transient(entity)
+        self.entity = entity
 
     @with_session
     async def link_user(self, user_id: int, s: AsyncSession = None) -> None:
@@ -37,7 +41,7 @@ class ChequeModifier(BaseModel):
         if updated_cheque is None:
             raise ValueError(f"No cheque found with id {self.entity.id} to update.")
 
-        self.entity = deepcopy(updated_cheque)
+        self.__update_entity(updated_cheque)
 
     @with_session
     async def update_description(self, description: str, s: AsyncSession = None) -> None:
@@ -54,7 +58,7 @@ class ChequeModifier(BaseModel):
         if updated_cheque is None:
             raise ValueError(f"No cheque found with id {self.entity.id} to update.")
 
-        self.entity = deepcopy(updated_cheque)
+        self.__update_entity(updated_cheque)
 
     @with_session
     async def delete_cheque(self, initiator: int, s: AsyncSession = None) -> None:
@@ -89,7 +93,7 @@ class ChequeModifier(BaseModel):
         if updated_cheque is None:
             raise ValueError(f"No cheque found with id {self.entity.id} to update.")
 
-        self.entity = deepcopy(updated_cheque)
+        self.__update_entity(updated_cheque)
 
     def __validate_update(self, **kwargs) -> None:
         allowed_field_names = {field.name for field in self.ALLOWED_UPDATE_FIELDS}
@@ -99,6 +103,11 @@ class ChequeModifier(BaseModel):
 
     def is_creator(self, user_id: int) -> bool:
         return self.entity.created_by_id == user_id
+
+    def is_connected_to_user(self, user_id: int) -> bool:
+        if self.entity.connected_to_user is None:
+            return True
+        return self.entity.connected_to_user == user_id
 
     class Config:
         arbitrary_types_allowed = True

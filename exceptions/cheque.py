@@ -9,3 +9,13 @@ class ChequeIsNotModifiable(HTTPException):
 class ChequeModificationForbidden(HTTPException):
     def __init__(self) -> None:
         super().__init__(status.HTTP_403_FORBIDDEN, "Cheque modification forbidden")
+
+
+class ChequeForbidden(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(status.HTTP_403_FORBIDDEN, "Cheque forbidden")
+
+
+class ChequeInactive(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(status.HTTP_410_GONE, "Cheque inactive")

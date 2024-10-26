@@ -4,8 +4,9 @@ from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import CurrencyType, with_session, Cheque, ChequeType, TransactionOperation, get_active_cheque_by_id
+from database import CurrencyType, with_session, Cheque, ChequeType, TransactionOperation, get_active_cheque_by_id, get_active_cheque_page, get_historic_cheque_page
 from transaction_manager import make_transaction_from_system, generate_trace, TraceType
+from utils.pagination import Pagination
 from .classes import ChequeModifier
 
 
@@ -53,7 +54,27 @@ async def get_active(id_: int) -> Optional[ChequeModifier]:
     return ChequeModifier(entity=cheque)
 
 
+async def get_active_page(user_id: int, page: int = 1, limit: int = 1) -> Pagination[ChequeModifier]:
+    def map_(cheque: Cheque) -> ChequeModifier:
+        return ChequeModifier(entity=cheque)
+
+    cheque_page = await get_active_cheque_page(user_id, page, limit)
+    cheque_page.map_each(map_)
+    return cheque_page
+
+
+async def get_historic_page(user_id: int, page: int = 1, limit: int = 1) -> Pagination[ChequeModifier]:
+    def map_(cheque: Cheque) -> ChequeModifier:
+        return ChequeModifier(entity=cheque)
+
+    cheque_page = await get_historic_cheque_page(user_id, page, limit)
+    cheque_page.map_each(map_)
+    return cheque_page
+
+
 __all__ = [
     'generate',
     'get_active',
+    'get_active_page',
+    'get_historic_page'
 ]
