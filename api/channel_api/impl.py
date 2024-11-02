@@ -13,7 +13,7 @@ async def get_post_link() -> dict | None:
         return None
     return {
         "link": f"https://t.me/{message.chat.username}/{message.message_id}",
-        "channel": message.chat,
+        "channel": message.chat.model_dump(mode='json'),
     }
 
 
