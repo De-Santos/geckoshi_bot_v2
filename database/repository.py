@@ -15,6 +15,9 @@ from database import User, Setting, SettingsKey, MailingMessageStatus, MailingMe
 from database.decorators import with_session
 from lang.lang_based_provider import Lang
 from utils.pagination import Pagination
+from .decorators import with_session
+from .entities import User, Setting, SettingsKey, MailingMessageStatus, MailingMessage, Mailing, now, MailingStatus, Task, TaskType, TaskDoneHistory, UserActivityStatistic, CustomClientToken, UserActivityContext, CustomClientTokenType, EventBonus, \
+    EventBonusActivation
 
 logger = logging.getLogger(__name__)
 
@@ -692,6 +695,52 @@ async def is_client_token_valid(id_: str, type_: CustomClientTokenType, s: Async
             )
     result = await s.execute(stmt)
     return result.scalar()
+
+
+@with_session
+async def get_active_events(s: AsyncSession = None) -> list[EventBonus]:
+    current_time = now()
+
+    query = (
+        select(EventBonus)
+        .where(EventBonus.start_datetime <= current_time)
+        .where(EventBonus.end_datetime >= current_time)
+    )
+
+    result = await s.execute(query)
+    active_events = result.scalars().all()
+
+    return list(active_events)
+
+
+@cache.cacheable(ttl="10m", save_as_blob=True)
+@with_session
+async def get_active_event_by_id(id_: int, s: AsyncSession = None) -> EventBonus | None:
+    current_time = now()
+
+    query = (
+        select(EventBonus)
+        .where(EventBonus.start_datetime <= current_time)
+        .where(EventBonus.end_datetime >= current_time)
+        .where(EventBonus.id.__eq__(id_))
+    )
+
+    result = await s.execute(query)
+    active_events = result.scalar_one_or_none()
+
+    return active_events
+
+
+@with_session
+async def get_total_amount_by_user_event(user_id: int, event_bonus_id: int, s: AsyncSession = None) -> int:
+    result = await s.execute(
+        select(func.sum(EventBonusActivation.amount))
+        .where(EventBonusActivation.user_id.__eq__(user_id))
+        .where(EventBonusActivation.event_bonus_id.__eq__(event_bonus_id))
+    )
+
+    total_amount = result.scalar() or 0
+    return total_amount
 
 
 @with_session

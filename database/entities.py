@@ -3,7 +3,7 @@ import uuid
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Text, func, PrimaryKeyConstraint, CheckConstraint, text, Numeric
+from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Text, func, PrimaryKeyConstraint, Index, CheckConstraint, text, Numeric
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -179,6 +179,32 @@ class CustomClientToken(Base):
     type: Mapped[CustomClientTokenType] = mapped_column(SQLEnum(CustomClientTokenType), nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime(timezone=True), default=now)
     deleted_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class EventBonus(Base):
+    __tablename__ = 'event_bonuses'
+    id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(type_=Text, nullable=True)
+    cooldown: Mapped[str] = mapped_column(nullable=False)
+    conversion_to: Mapped[CurrencyType] = mapped_column(SQLEnum(CurrencyType), nullable=False)
+    min_win: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
+    max_win: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
+    start_datetime: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    end_datetime: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class EventBonusActivation(Base):
+    __tablename__ = 'event_bonus_activations'
+
+    __table_args__ = (
+        PrimaryKeyConstraint('user_id', 'datetime', name='event_bonus_activations_pk'),
+        Index('ix_user_event_bonus', 'user_id', 'event_bonus_id'),
+    )
+
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
+    datetime_: Mapped[datetime.datetime] = mapped_column("datetime", DateTime(timezone=True), default=now)
+    amount: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
+    event_bonus_id: Mapped[int] = mapped_column(ForeignKey('event_bonuses.id'), type_=BigInteger, nullable=False)
 
 
 class Cheque(Base):

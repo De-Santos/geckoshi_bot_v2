@@ -1,9 +1,13 @@
+import os
+
 from fastapi import APIRouter
 
 import auth
 from api import admin_api
 from api import channel_api
 from api import coin_api
+from api import event_bonus_api
+from api import hot_bonus_api
 from api import language_api
 from api import public_api
 from api import slots_api
@@ -23,4 +27,8 @@ base_router.include_router(auth.router)
 base_router.include_router(channel_api.router)
 base_router.include_router(cheque_api.router)
 
+if not bool(int(os.getenv("DISABLE_HOT_BONUS", "0"))):
+    base_router.include_router(hot_bonus_api.router)
+
+base_router.include_router(event_bonus_api.router)
 __all__ = ['base_router']
