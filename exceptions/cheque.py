@@ -19,3 +19,8 @@ class ChequeForbidden(HTTPException):
 class ChequeInactive(HTTPException):
     def __init__(self) -> None:
         super().__init__(status.HTTP_410_GONE, "Cheque inactive")
+
+
+class MultipleChequeActivationForbidden(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(status.HTTP_403_FORBIDDEN, "Multiple cheque activation forbidden")

@@ -71,3 +71,9 @@ class CustomClientTokenType(Enum):
 class ChequeType(Enum):
     PERSONAL = 0
     MULTY = 1
+
+
+class ChequeActivationStatus(Enum):
+    IN_PROGRESS = 0
+    COMPLETED = 1
+    FAILED = 2

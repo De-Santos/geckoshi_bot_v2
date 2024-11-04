@@ -26,7 +26,7 @@ class TgArg(Generic[T]):
     def __init__(self, obj: Any):
         self.obj = obj
 
-    def parse(self):
+    def parse(self) -> T:
         if not isinstance(self.obj, str):
             raise TypeError("TgArg cannot parse non-str object")
         self.__parse_text(self.obj)

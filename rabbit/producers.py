@@ -83,3 +83,74 @@ class BlockingTransactionalPublisher:
     async def close(self):
         if self.connection and self.connection.is_open:
             await self.loop.run_in_executor(None, lambda: self.connection.close())
+
+
+class SingleMessagePublisher:
+    def __init__(self, queue_name: str, retry_attempts=5, base_retry_delay=1.0):
+        self.queue_name = queue_name
+        self.connection = None
+        self.channel = None
+        self.retry_attempts = retry_attempts
+        self.base_retry_delay = base_retry_delay
+        self.c_uid = uuid.uuid4()
+        self.loop = asyncio.get_event_loop()
+
+    async def __aenter__(self):
+        await self._connect()
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self.close()
+
+    async def _connect(self):
+        """Establish connection with retries."""
+        attempt = 0
+        while attempt < self.retry_attempts:
+            try:
+                self.connection = BlockingConnection(pika.URLParameters(os.getenv("RABBIT_URL")))
+                self.channel = self.connection.channel()
+                return
+            except AMQPConnectionError as e:
+                logger.warning(f"CLASS_UID: [{self.c_uid}] - Connection attempt {attempt + 1} failed: {e}")
+                await asyncio.sleep(self.base_retry_delay * 2 ** attempt)
+                attempt += 1
+
+        raise AMQPConnectionError(f"CLASS_UID: [{self.c_uid}] - Failed to connect after multiple attempts")
+
+    async def publish(self, message: BaseModel) -> bool:
+        """Publish a single message transactionally."""
+        if not self.channel:
+            await self._connect()
+
+        uid = uuid.uuid4()
+        start_time = time.perf_counter()
+        logger.info("UID: [%s] - Start sending message.", uid)
+
+        try:
+            await self.loop.run_in_executor(None, lambda: self.channel.tx_select())
+            await self.loop.run_in_executor(
+                None,
+                lambda: self.channel.basic_publish(
+                    exchange='',
+                    routing_key=self.queue_name,
+                    body=message.model_dump_json(),
+                    properties=BasicProperties(
+                        content_type='application/json',
+                        delivery_mode=DeliveryMode.Persistent
+                    )
+                )
+            )
+            await self.loop.run_in_executor(None, lambda: self.channel.tx_commit())
+            elapsed_time = time.perf_counter() - start_time
+            logger.info("CLASS_UID: [%s] UID: [%s] - Message published successfully in %.2f seconds.", self.c_uid, uid, elapsed_time)
+            return True
+        except AMQPError as e:
+            await self.loop.run_in_executor(None, lambda: self.channel.tx_rollback())
+            elapsed_time = time.perf_counter() - start_time
+            logger.error("CLASS_UID: [%s] UID: [%s] - Publishing failed, rolled back. Error: %s. Time: %.2f seconds.", self.c_uid, uid, e, elapsed_time)
+            return False
+
+    async def close(self):
+        """Close the connection if it is open."""
+        if self.connection and self.connection.is_open:
+            await self.loop.run_in_executor(None, lambda: self.connection.close())

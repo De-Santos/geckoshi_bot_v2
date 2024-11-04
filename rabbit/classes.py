@@ -16,3 +16,9 @@ class MessageDto(BaseModel):
 
     def deserialize_button_markup(self):
         return deserialize_inline_keyboard_markup(self.button_markup)
+
+
+class ActivationPersonalChequeDto(BaseModel):
+    user_id: int
+    cheque_id: int
+    cheque_activation_id: int

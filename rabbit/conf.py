@@ -6,6 +6,7 @@ import pika
 
 class Queue(Enum):
     MESSAGE = "message-queue"
+    PERSONAL_CHEQUE_ACTIVATION = "personal-cheque-activation-queue"
 
 
 parameters = pika.URLParameters(os.getenv("RABBIT_URL"))

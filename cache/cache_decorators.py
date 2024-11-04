@@ -14,6 +14,10 @@ def generate_cache_key(func: Callable, args: tuple, kwargs: dict, just_function_
     """
     Generate a cache key based on function name, args, and kwargs.
     """
+
+    def is_collection(obj):
+        return isinstance(obj, (list, set, tuple))
+
     cache_id = kwargs.pop('cache_id', None)
 
     if just_function_name:
@@ -30,6 +34,9 @@ def generate_cache_key(func: Callable, args: tuple, kwargs: dict, just_function_
 
     if callable(cache_id):
         cache_id = cache_id()
+
+    if is_collection(cache_id):
+        cache_id = "-".join([str(i) for i in cache_id])
 
     return f"{func.__name__}:{str(cache_id)}"
 

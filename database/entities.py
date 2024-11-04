@@ -3,12 +3,12 @@ import uuid
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Text, func, PrimaryKeyConstraint, Index, CheckConstraint, text, Numeric
+from sqlalchemy import Column, DateTime, ForeignKey, BigInteger, Enum as SQLEnum, Text, func, PrimaryKeyConstraint, CheckConstraint, text, Numeric, Index
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
-from database.enums import CustomClientTokenType
+from database.enums import CustomClientTokenType, ChequeActivationStatus
 from database.enums import TransactionOperation, TransactionStatus, SettingsKey, TransactionType, TransactionInitiatorType, MailingStatus, MailingMessageStatus, BetType, TaskType, CurrencyType, ChequeType
 from database.json_classes import BotApiConfig, UserActivityContext
 from database.type_decorators import JSONEncoded, JSONEncodedList
@@ -235,8 +235,17 @@ class Cheque(Base):
 class ChequeActivation(Base):
     __tablename__ = 'cheque_activations'
 
+    __table_args__ = (
+        Index('unique_completed_activation_per_user_cheque', 'user_id', 'cheque_id', unique=True, postgresql_where=text("status = 'COMPLETED'")),
+    )
+
     id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True, autoincrement=True)
     cheque_id: Mapped[int] = mapped_column(ForeignKey('cheques.id'), type_=BigInteger, nullable=False)
+    cheque: Mapped[Cheque] = relationship("Cheque", foreign_keys=[cheque_id])
     user_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
-    datetime_: Mapped[datetime.datetime] = mapped_column("datetime", DateTime(timezone=True), default=now)
+    status: Mapped[ChequeActivationStatus] = mapped_column(SQLEnum(ChequeActivationStatus), nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=now)
+    processed_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    failed_message: Mapped[str] = mapped_column(type_=Text, nullable=True)
+    payout_transaction_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey('transactions.id'), type_=PG_UUID, nullable=True)
     trace_uuid: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), default=uuid.uuid4, nullable=False)
