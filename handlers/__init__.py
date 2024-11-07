@@ -4,7 +4,6 @@ from aiogram.enums import ChatType
 from filters.base_filters import ChatTypeFilter
 from handlers.admin import admin_router
 from handlers.bonus import router as bonus_router
-from handlers.channel import router as channel_router
 from handlers.cheque import router as cheque_router
 from handlers.exit import router as exit_router
 from handlers.nft import router as nft_router
@@ -50,8 +49,6 @@ base_router.include_router(admin_router)
 custom_router = Router(name="custom_router")
 custom_router.message.filter(ChatTypeFilter(ChatType.CHANNEL))
 custom_router.callback_query.filter(ChatTypeFilter(ChatType.CHANNEL))
-
-custom_router.include_router(channel_router)
 
 __all__ = [
     'base_router',
