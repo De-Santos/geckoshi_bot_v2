@@ -90,7 +90,7 @@ def cacheable(ttl: str = None, associate_none_as: Any = None, function_name_as_i
                         json_obj = json.dumps(result)
                         if ttl is not None:
                             seconds_ttl = humanfriendly.parse_timespan(ttl)
-                            await redis.setex(cache_key, int(seconds_ttl), json_obj)
+                            await redis.setex(cache_key, int(seconds_ttl), json_obj)  # todo: add lazy caching
                         else:
                             await redis.set(cache_key, json_obj)
                     except (TypeError, OverflowError):

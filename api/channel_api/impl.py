@@ -1,3 +1,4 @@
+import logging
 import os
 from io import BytesIO
 
@@ -5,6 +6,8 @@ from aiogram.types import Message
 
 from posts_manager import get_post
 from variables import bot
+
+logger = logging.getLogger(__name__)
 
 
 async def get_post_link() -> dict | None:

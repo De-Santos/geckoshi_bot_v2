@@ -9,11 +9,7 @@ from variables import bot
 logger = logging.getLogger(__name__)
 
 
-async def get_chat_img(chat_info: ChatFullInfo, img_filed_name: str) -> BytesIO | None:
-    file_id = getattr(chat_info.photo, img_filed_name, None)
-    if file_id is None:
-        return None
-
+async def get_chat_img(file_id) -> BytesIO | None:
     # Download the photo as bytes
     photo = await bot.download(file_id)
     if photo is None:
@@ -33,8 +29,16 @@ async def get_chat_img(chat_info: ChatFullInfo, img_filed_name: str) -> BytesIO 
     return img_byte_arr
 
 
+async def get_chat_img_by_filed_id(chat_info: ChatFullInfo, img_filed_name: str) -> BytesIO | None:
+    file_id = getattr(chat_info.photo, img_filed_name, None)
+    if file_id is None:
+        return None
+    return await get_chat_img(file_id)
+
+
+# todo: add caching
 async def get_chat_img_by_chat_id(chat_id: int, img_filed_name: str) -> BytesIO | None:
     chat = await bot.get_chat(chat_id)
     if chat is None:
         return None
-    return await get_chat_img(chat, img_filed_name)
+    return await get_chat_img_by_filed_id(chat, img_filed_name)

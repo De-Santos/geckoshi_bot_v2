@@ -4,7 +4,6 @@ from typing import Union, List
 
 import humanfriendly
 from aiogram import Router, Bot
-from aiogram.enums import ChatMemberStatus
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, InlineKeyboardButton
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -151,25 +150,6 @@ async def parse_chat_ids(chat_ids_str: str, message: Message) -> List[Union[str,
                 await message.answer(f"Invalid ID format: {raw_id}")
 
     return chat_ids
-
-
-async def validate_bot_in_chats(bot: Bot, chat_ids: List[Union[str, int]]) -> dict[Union[str, int], str]:
-    results = {}
-
-    for chat_id in chat_ids:
-        try:
-            bot_member = await bot.get_chat_member(chat_id, bot.id)
-            bot_has_access = bot_member.status in [
-                ChatMemberStatus.ADMINISTRATOR,
-                ChatMemberStatus.CREATOR
-            ]
-
-            results[chat_id] = f"has access: {bot_has_access}"
-        except Exception as e:
-            results[chat_id] = f"error: {e}"
-            logger.error(f"Error checking chat {chat_id}: {e}")
-
-    return results
 
 
 @router.message(AdminTaskStates.enter_chat_ids, UserExistsFilter())

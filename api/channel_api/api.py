@@ -17,7 +17,7 @@ router = APIRouter(
 
 
 @router.get(
-    '/link',
+    'gecko/post/link',
     summary="Get the last post link",
     description="""    
 Retrieves the link to the most recent post in a specified channel.
@@ -33,7 +33,7 @@ async def get_last_post_link(_=Depends(auth.auth_dependency)):
 
 
 @router.get(
-    '/photo',
+    'gecko/post/photo',
     summary="Get the last post photo",
     description="""
 Retrieves the photo from the most recent post in a channel.

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import Union
 
 from aiogram.enums import ChatMemberStatus
 
@@ -26,3 +27,16 @@ async def check_memberships(tg_user_id: int, chat_ids: list[str | int]) -> bool:
 
     # Return True only if all results are True (user is a member of all chat_ids)
     return all(results)
+
+
+async def validate_bot_in_chats(chat_id: Union[str, int]) -> bool:
+    try:
+        bot_member = await bot.get_chat_member(chat_id, bot.id)
+        bot_has_access = bot_member.status in [ChatMemberStatus.ADMINISTRATOR,
+                                               ChatMemberStatus.MEMBER,
+                                               ChatMemberStatus.RESTRICTED]
+
+        return bot_has_access
+    except Exception as e:
+        logger.error(f"Error checking chat {chat_id}: {e}")
+        return False
