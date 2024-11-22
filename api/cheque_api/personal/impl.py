@@ -24,6 +24,7 @@ async def create_new_cheque_impl(dto: NewPersonalChequeDto, user_id: int) -> Per
         type_=ChequeType.PERSONAL,
         currency=CurrencyType.GMEME,
         description=dto.description,
+        connected_to_user=dto.connected_to_user
     )
 
     return __to_dto(cm)
