@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from starlette.responses import JSONResponse, StreamingResponse
 
 import auth
-from .impl import get_chat_full_info_impl, get_chat_img_impl
+from .impl import get_chat_full_info_impl, get_chat_img_impl, get_chat_short_info_impl
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +22,15 @@ router = APIRouter(
 async def get_chat_full_info(chat_id: Annotated[Union[str, int], Query(description='The chat id, can be as int or as str -> "@channel_group_user"')],
                              _=Depends(auth.auth_dependency)):
     result = await get_chat_full_info_impl(chat_id)
+    return JSONResponse({"status": "OK", **result})
+
+
+@router.get(
+    '/short-info',
+)
+async def get_chat_short_info(chat_id: Annotated[Union[str, int], Query(description='The chat id, can be as int or as str -> "@channel_group_user"')],
+                              _=Depends(auth.auth_dependency)):
+    result = await get_chat_short_info_impl(chat_id)
     return JSONResponse({"status": "OK", **result})
 
 

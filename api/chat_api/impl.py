@@ -38,6 +38,21 @@ async def get_chat_full_info_impl(chat_id: int | str) -> dict:
         raise e
 
 
+async def get_chat_short_info_impl(chat_id: int | str) -> dict:
+    try:
+        data = None
+        cfi: Optional[ChatFullInfo] = await __get_chat_safe(chat_id)
+        if cfi is not None:
+            data = cfi.model_dump(mode='json', include={'id', 'username', 'title', 'first_name', 'last_name', 'photo'})
+
+        return {
+            'data': data,
+        }
+    except BaseException as e:
+        logger.error(f"Error while getting chat full info: {e}")
+        raise e
+
+
 @cache.cacheable(ttl="1h", save_as_blob=True, cache_result_ignore_val=None)
 async def get_chat_img_impl(file_id: str) -> BytesIO | None:
     try:
