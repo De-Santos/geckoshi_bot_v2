@@ -40,13 +40,9 @@ async def get_chat_full_info_impl(chat_id: int | str) -> dict:
 
 async def get_chat_short_info_impl(chat_id: int | str) -> dict:
     try:
-        data = None
-        cfi: Optional[ChatFullInfo] = await __get_chat_safe(chat_id)
-        if cfi is not None:
-            data = cfi.model_dump(mode='json', include={'id', 'username', 'title', 'first_name', 'last_name', 'photo'})
-
+        cfi: ChatFullInfo = await bot.get_chat(chat_id)
         return {
-            'data': data,
+            'data': cfi.model_dump(mode='json', include={'id', 'username', 'title', 'first_name', 'last_name', 'photo'}),
         }
     except BaseException as e:
         logger.error(f"Error while getting chat full info: {e}")
