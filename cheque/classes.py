@@ -1,11 +1,11 @@
+from decimal import Decimal
 from typing import Set
 
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import make_transient
 
-from database import Cheque, with_session, now, TransactionOperation
-from transaction_manager import make_transaction_from_system, generate_trace, TraceType
+from database import Cheque, with_session, now, get_cheque_activations_count
 
 
 class ChequeModifier:
@@ -62,26 +62,28 @@ class ChequeModifier:
 
     @with_session
     async def delete_cheque(self, initiator: int, s: AsyncSession = None) -> None:
-        await make_transaction_from_system(
-            target=self.entity.created_by_id,
-            operation=TransactionOperation.INCREMENT,
-            amount=self.entity.amount,
-            created_by=initiator,
-            description='cheque amount allocation rollback',
-            trace=generate_trace(TraceType.CHEQUE, str(self.entity.trace_uuid)),
-            session=s,
-            currency_type=self.entity.currency_type,
-            auto_commited=False
-        )
-
         stmt = (update(Cheque)
                 .where(Cheque.id.__eq__(self.entity.id))
-                .values(deleted_by_id=initiator, deleted_at=now()))
-        await s.execute(stmt)
+                .values(deleted_by_id=initiator, deleted_at=now())
+                .returning(Cheque))
+
+        result = await s.execute(stmt)
+        updated_cheque = result.scalar_one_or_none()
+        self.__update_entity(updated_cheque)
 
     @with_session
-    async def update_cheque(self, s: AsyncSession = None, **kwargs) -> None:
-        self.__validate_update(**kwargs)
+    async def get_activated_amount(self, s: AsyncSession = None) -> Decimal:
+        activations_count = await get_cheque_activations_count(self.entity.id, s=s)
+        return self.get_per_user_amount() * activations_count
+
+    def get_per_user_amount(self) -> Decimal:
+        return self.entity.amount / self.entity.activation_limit
+
+    @with_session
+    async def update(self, s: AsyncSession = None, unsafe: bool = False, **kwargs) -> None:
+        if not unsafe:
+            self.__validate_update(**kwargs)
+
         stmt = (update(Cheque)
                 .where(Cheque.id.__eq__(self.entity.id))
                 .values(**kwargs)

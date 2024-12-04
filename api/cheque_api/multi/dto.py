@@ -1,22 +1,12 @@
-from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, Field
 
 
-class NewPersonalChequeDto(BaseModel):
+class NewMultiChequeDto(BaseModel):
     name: Optional[str]
     amount: Decimal
-    connected_to_user: int | None = Field(default=None)
+    activation_limit: int = Field(gt=0)
+    require_subscriptions: List[int] = Field(default_factory=list)
     description: Optional[str] = Field(default=None)
-
-
-class PersonalChequeDto(BaseModel):
-    id: int
-    name: str
-    description: Optional[str]
-    amount: Decimal | None = Field(default=None)
-    connected_to_user: int | None = Field(default=None)
-    created_at: datetime | None = Field(default=None)
-    link: str | None = Field(default=None)

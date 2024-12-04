@@ -30,6 +30,7 @@ class SettingsKey(Enum):
     MIN_WITHDRAW_IN_AIRDROP = 2
     PREMIUM_GMEME_PRICE = 3
     MIN_GMEME_CHEQUE_AMOUNT = 4
+    MIN_GMEME_PER_USER_CHEQUE_AMOUNT = 5
 
 
 class MailingStatus(Enum):

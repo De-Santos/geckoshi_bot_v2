@@ -11,7 +11,7 @@ from sqlalchemy.sql.functions import coalesce
 
 import cache
 from database import Cheque, \
-    ChequeActivation, ChequeActivationStatus
+    ChequeActivation, ChequeActivationStatus, ChequeType
 from lang.lang_based_provider import Lang
 from utils.pagination import Pagination
 from .decorators import with_session
@@ -766,7 +766,23 @@ async def get_active_cheque_by_id(id_: int, s: AsyncSession = None) -> Optional[
 
 
 @with_session
+async def get_deleted_cheque_by_id(id_: int, s: AsyncSession = None) -> Optional[Cheque]:
+    stmt = (
+        select(Cheque)
+        .where(and_(
+            Cheque.id == id_,
+            Cheque.deleted_at.is_not(None),
+            Cheque.deleted_by_id.is_not(None),
+        ))
+    )
+
+    result = await s.execute(stmt)
+    return result.scalar_one_or_none()
+
+
+@with_session
 async def get_active_cheque_page(user_id: int,
+                                 type_: ChequeType,
                                  page: int = 1,
                                  limit: int = 1,
                                  s: AsyncSession = None
@@ -774,7 +790,8 @@ async def get_active_cheque_page(user_id: int,
     # Subquery to count activations for each cheque
     activation_count_subquery = (
         select(func.count(ChequeActivation.id))
-        .where(and_(ChequeActivation.cheque_id.__eq__(Cheque.id), ChequeActivation.status.__eq__(ChequeActivationStatus.COMPLETED)))
+        .where(and_(ChequeActivation.cheque_id.__eq__(Cheque.id),
+                    ChequeActivation.status.__eq__(ChequeActivationStatus.COMPLETED)))
         .scalar_subquery()
     )
 
@@ -783,6 +800,7 @@ async def get_active_cheque_page(user_id: int,
         select(Cheque)
         .where(
             and_(
+                Cheque.type.__eq__(type_),
                 Cheque.deleted_at.is_(None),
                 activation_count_subquery < Cheque.activation_limit,
                 Cheque.created_by_id == user_id
@@ -816,6 +834,7 @@ async def get_active_cheque_page(user_id: int,
 
 @with_session
 async def get_historic_cheque_page(user_id: int,
+                                   type_: ChequeType,
                                    page: int = 1,
                                    limit: int = 1,
                                    s: AsyncSession = None
@@ -832,6 +851,7 @@ async def get_historic_cheque_page(user_id: int,
         select(Cheque)
         .where(
             and_(
+                Cheque.type.__eq__(type_),
                 Cheque.created_by_id == user_id,  # Only cheques created by the user
                 Cheque.deleted_at.is_(None),
                 activation_count_subquery >= Cheque.activation_limit  # Activation limit reached
@@ -863,7 +883,50 @@ async def get_historic_cheque_page(user_id: int,
     )
 
 
-@cache.cacheable(ttl="20m", cache_result_ignore_val=False)
+@with_session
+async def get_deleted_cheque_page(user_id: int,
+                                  type_: ChequeType,
+                                  page: int = 1,
+                                  limit: int = 1,
+                                  s: AsyncSession = None
+                                  ) -> Pagination:
+    # Main query to filter historic (inactive) cheques based on the activation limit and deletion status
+    stmt = (
+        select(Cheque)
+        .where(
+            and_(
+                Cheque.type.__eq__(type_),
+                Cheque.created_by_id == user_id,  # Only cheques created by the user
+                Cheque.deleted_at.is_not(None),
+            )
+        )
+        .order_by(Cheque.created_at.desc())  # Sort by creation date, newest first
+    )
+
+    # Get the total count of matching cheques asynchronously
+    count_stmt = stmt.with_only_columns(func.count()).order_by(None)
+    total_cheques = (await s.execute(count_stmt)).scalar()
+
+    # Calculate offset based on the current page number
+    offset = (page - 1) * limit
+
+    stmt = stmt.limit(limit).offset(offset)
+    result = await s.execute(stmt)
+    cheques = list(result.scalars().all())
+
+    # Calculate pagination details
+    total_pages = (total_cheques + limit - 1) // limit if limit > 0 else 1
+    current_page = min(max(page, 1), total_pages)  # Ensure current_page is within the valid range
+
+    return Pagination(
+        items=cheques,
+        total_items=total_cheques,
+        current_page=current_page,
+        total_pages=total_pages
+    )
+
+
+@cache.cacheable(ttl="10m", cache_result_ignore_val=False)
 @with_session
 async def is_activation_exists(cheque_id: int, user_id: int, s: AsyncSession = None) -> bool:
     ext = (select(ChequeActivation)
@@ -888,7 +951,6 @@ async def get_cheque_activation(id_: int, s: AsyncSession = None) -> ChequeActiv
 async def get_cheque_activation_page(user_id: int,
                                      page: int = 1,
                                      limit: int = 1,
-                                     eager_load: bool = False,
                                      s: AsyncSession = None) -> Pagination:
     stmt = (
         select(ChequeActivation)
@@ -920,3 +982,15 @@ async def get_cheque_activation_page(user_id: int,
         current_page=current_page,
         total_pages=total_pages
     )
+
+
+@with_session
+async def get_cheque_activations_count(cheque_id: int, s: AsyncSession = None) -> int:
+    result = await s.execute(
+        select(func.count(ChequeActivation.id))
+        .where(ChequeActivation.cheque_id.__eq__(cheque_id))
+        .where(ChequeActivation.status.__eq__(ChequeActivationStatus.COMPLETED))
+    )
+
+    count = result.scalar() or 0
+    return count

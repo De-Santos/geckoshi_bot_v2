@@ -24,3 +24,13 @@ class ChequeInactive(HTTPException):
 class MultipleChequeActivationForbidden(HTTPException):
     def __init__(self) -> None:
         super().__init__(status.HTTP_403_FORBIDDEN, "Multiple cheque activation forbidden")
+
+
+class InaccessibleChatInChequeRequirements(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(status.HTTP_403_FORBIDDEN, "Cheque has inaccessible chat in requirements")
+
+
+class InvalidChequeData(HTTPException):
+    def __init__(self, reason: str) -> None:
+        super().__init__(status.HTTP_403_FORBIDDEN, f"Limits check failed: {reason}")

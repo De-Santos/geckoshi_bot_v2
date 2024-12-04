@@ -222,6 +222,7 @@ class Cheque(Base):
     description: Mapped[str] = mapped_column(type_=Text, nullable=True)
     connected_to_user: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)
     activation_limit: Mapped[int] = mapped_column(type_=BigInteger, nullable=False, server_default=text('1'))
+    require_subscriptions: Mapped[list] = mapped_column(type_=JSONB, server_default=func.jsonb('[]'))
 
     created_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime(timezone=True), default=now, nullable=False)
@@ -229,6 +230,7 @@ class Cheque(Base):
     deleted_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
     allocation_transaction_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey('transactions.id'), type_=PG_UUID, nullable=False)
+    payback_transaction_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey('transactions.id'), type_=PG_UUID, nullable=True)
     trace_uuid: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), default=uuid.uuid4, nullable=False)
 
 
@@ -246,6 +248,6 @@ class ChequeActivation(Base):
     status: Mapped[ChequeActivationStatus] = mapped_column(SQLEnum(ChequeActivationStatus), nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=now)
     processed_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=True)
-    failed_message: Mapped[str] = mapped_column(type_=Text, nullable=True)
+    failed_message: Mapped[dict] = mapped_column(type_=JSONB, server_default=func.jsonb('{}'))
     payout_transaction_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey('transactions.id'), type_=PG_UUID, nullable=True)
     trace_uuid: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), default=uuid.uuid4, nullable=False)

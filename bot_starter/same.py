@@ -1,7 +1,7 @@
 import asyncio
 
 from rabbit import MessageConsumerRunner
-from rabbit.consumer_runners import PersonalChequeActivationConsumerRunner
+from rabbit.consumer_runners import PersonalChequeActivationConsumerRunner, ChequePaybackConsumerRunner, MultiChequeActivationConsumerRunner
 from singleton import GlobalContext
 from variables import bot
 from .log import logger
@@ -12,8 +12,12 @@ async def crate_consumer():
     gb = GlobalContext()
     gb.message_consumer_runner = MessageConsumerRunner(asyncio.get_event_loop())
     gb.personal_cheque_activation_consumer_runner = PersonalChequeActivationConsumerRunner(asyncio.get_event_loop())
+    gb.multi_cheque_activation_consumer_runner = MultiChequeActivationConsumerRunner(asyncio.get_event_loop())
+    gb.cheque_payback_consumer_runner = ChequePaybackConsumerRunner(asyncio.get_event_loop())
     gb.message_consumer_runner.run()
     gb.personal_cheque_activation_consumer_runner.run()
+    gb.multi_cheque_activation_consumer_runner.run()
+    gb.cheque_payback_consumer_runner.run()
 
 
 async def shutdown() -> None:
@@ -24,6 +28,12 @@ async def shutdown() -> None:
 
     if gb.personal_cheque_activation_consumer_runner:
         gb.personal_cheque_activation_consumer_runner.stop()
+
+    if gb.multi_cheque_activation_consumer_runner:
+        gb.multi_cheque_activation_consumer_runner.stop()
+
+    if gb.cheque_payback_consumer_runner:
+        gb.cheque_payback_consumer_runner.stop()
 
     logger.info("Removing webhook and cleaning up...")
     await bot.delete_webhook(drop_pending_updates=True)

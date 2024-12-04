@@ -4,10 +4,26 @@ from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import CurrencyType, with_session, Cheque, ChequeType, TransactionOperation, get_active_cheque_by_id, get_active_cheque_page, get_historic_cheque_page
+from database import CurrencyType, with_session, Cheque, ChequeType, TransactionOperation, get_active_cheque_by_id, get_active_cheque_page, get_deleted_cheque_page, get_deleted_cheque_by_id, get_historic_cheque_page, SettingsKey
+from exceptions.cheque import InvalidChequeData
+from settings import get_setting
 from transaction_manager import make_transaction_from_system, generate_trace, TraceType
 from utils.pagination import Pagination
 from .classes import ChequeModifier
+
+
+async def __check_limits(c: Cheque) -> None:
+    if c.type == ChequeType.PERSONAL:
+
+        min_gmeme_amount = await get_setting(SettingsKey.MIN_GMEME_CHEQUE_AMOUNT)
+        if c.amount < min_gmeme_amount:
+            raise InvalidChequeData(f"min gmeme cheque amount is {min_gmeme_amount}")
+
+    if c.type == ChequeType.MULTY:
+
+        min_gmeme_per_user_amount = await get_setting(SettingsKey.MIN_GMEME_PER_USER_CHEQUE_AMOUNT)
+        if (c.amount / c.activation_limit) < min_gmeme_per_user_amount:
+            raise InvalidChequeData(f"min gmeme per user amount is {min_gmeme_per_user_amount}")
 
 
 @with_session
@@ -16,10 +32,12 @@ async def generate(
         creator_id: int,
         type_: ChequeType,
         currency: CurrencyType,
+        activation_limit: int,
         s: AsyncSession = None,
         **kwargs
 ) -> ChequeModifier:
     trace_uid = uuid4()
+    # todo: maybe add gas
 
     uid = await make_transaction_from_system(
         target=creator_id,
@@ -40,8 +58,11 @@ async def generate(
         created_by_id=creator_id,
         trace_uuid=trace_uid,
         allocation_transaction_id=uid,
+        activation_limit=activation_limit,
         **kwargs,
     )
+
+    await __check_limits(entity)
     s.add(entity)
     await s.commit()
     return ChequeModifier(entity=entity)
@@ -54,27 +75,40 @@ async def get_active(id_: int) -> Optional[ChequeModifier]:
     return ChequeModifier(entity=cheque)
 
 
-async def get_active_page(user_id: int, page: int = 1, limit: int = 1) -> Pagination[ChequeModifier]:
-    def map_(cheque: Cheque) -> ChequeModifier:
-        return ChequeModifier(entity=cheque)
+async def get_deleted(id_: int) -> Optional[ChequeModifier]:
+    cheque: Optional[Cheque] = await get_deleted_cheque_by_id(id_)
+    if cheque is None:
+        return None
+    return ChequeModifier(entity=cheque)
 
-    cheque_page = await get_active_cheque_page(user_id, page, limit)
-    cheque_page.map_each(map_)
+
+async def get_active_page(user_id: int, type_: ChequeType, page: int = 1, limit: int = 1) -> Pagination[ChequeModifier]:
+    cheque_page = await get_active_cheque_page(user_id, type_, page, limit)
+    cheque_page.map_each(__map)
     return cheque_page
 
 
-async def get_historic_page(user_id: int, page: int = 1, limit: int = 1) -> Pagination[ChequeModifier]:
-    def map_(cheque: Cheque) -> ChequeModifier:
-        return ChequeModifier(entity=cheque)
-
-    cheque_page = await get_historic_cheque_page(user_id, page, limit)
-    cheque_page.map_each(map_)
+async def get_historic_page(user_id: int, type_: ChequeType, page: int = 1, limit: int = 1) -> Pagination[ChequeModifier]:
+    cheque_page = await get_historic_cheque_page(user_id, type_, page, limit)
+    cheque_page.map_each(__map)
     return cheque_page
+
+
+async def get_deleted_page(user_id: int, type_: ChequeType, page: int = 1, limit: int = 1) -> Pagination[ChequeModifier]:
+    cheque_page = await get_deleted_cheque_page(user_id, type_, page, limit)
+    cheque_page.map_each(__map)
+    return cheque_page
+
+
+def __map(cheque: Cheque) -> ChequeModifier:
+    return ChequeModifier(entity=cheque)
 
 
 __all__ = [
     'generate',
     'get_active',
+    'get_deleted',
     'get_active_page',
-    'get_historic_page'
+    'get_historic_page',
+    'get_deleted_page'
 ]

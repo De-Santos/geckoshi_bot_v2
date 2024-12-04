@@ -6,22 +6,23 @@ from starlette.responses import JSONResponse
 
 import auth
 from utils.pagination import PaginatedResponse
-from .dto import NewPersonalChequeDto, PersonalChequeDto
-from .impl import create_new_cheque_impl, update_cheque_impl, get_cheque_impl, get_my_cheque_page_impl, get_my_historic_cheque_page_impl, delete_cheque_impl
+from .dto import NewMultiChequeDto
+from .impl import create_new_cheque_impl, update_cheque_impl, get_my_cheque_page_impl, get_my_deleted_cheque_page_impl, delete_cheque_impl, get_my_historic_cheque_page_impl
+from ..dto import ChequeDto
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
-    prefix="/personal",
-    tags=["cheque-personal"],
+    prefix="/multi",
+    tags=["cheque-multi"],
 )
 
 
 @router.post(
     '',
-    response_model=PersonalChequeDto
+    response_model=ChequeDto
 )
-async def create_new_cheque(dto: NewPersonalChequeDto,
+async def create_new_cheque(dto: NewMultiChequeDto,
                             user_id=Depends(auth.auth_dependency)):
     result = await create_new_cheque_impl(dto, user_id)
     return JSONResponse({
@@ -32,9 +33,9 @@ async def create_new_cheque(dto: NewPersonalChequeDto,
 
 @router.patch(
     '',
-    response_model=PersonalChequeDto
+    response_model=ChequeDto
 )
-async def update_cheque(dto: PersonalChequeDto,
+async def update_cheque(dto: ChequeDto,
                         user_id=Depends(auth.auth_dependency)):
     result = await update_cheque_impl(dto, user_id)
     return JSONResponse({
@@ -44,21 +45,8 @@ async def update_cheque(dto: PersonalChequeDto,
 
 
 @router.get(
-    '',
-    response_model=PersonalChequeDto
-)
-async def get_cheque(cheque_id: Annotated[int, Query(alias='id', description="Id of the cheque")],
-                     user_id=Depends(auth.auth_dependency)):
-    result = await get_cheque_impl(cheque_id, user_id)
-    return JSONResponse({
-        "status": "OK",
-        "data": result.model_dump(mode='json')
-    })
-
-
-@router.get(
     '/my',
-    response_model=PersonalChequeDto
+    response_model=ChequeDto
 )
 async def get_my_cheque_page(user_id=Depends(auth.auth_dependency),
                              page: int = 1,
@@ -69,7 +57,7 @@ async def get_my_cheque_page(user_id=Depends(auth.auth_dependency),
 
 @router.get(
     '/my/historic',
-    response_model=PersonalChequeDto
+    response_model=ChequeDto
 )
 async def get_my_historic_cheque_page(user_id=Depends(auth.auth_dependency),
                                       page: int = 1,
@@ -81,5 +69,17 @@ async def get_my_historic_cheque_page(user_id=Depends(auth.auth_dependency),
 @router.delete('')
 async def delete_cheque(cheque_id: Annotated[int, Query(alias='id', description="Id of the cheque")],
                         user_id=Depends(auth.auth_dependency)):
-    await delete_cheque_impl(cheque_id, user_id)
-    return JSONResponse({"status": "OK"})
+    result: bool = await delete_cheque_impl(cheque_id, user_id)
+    return JSONResponse({"status": "OK",
+                         "result": result})
+
+
+@router.get(
+    '/my/deleted',
+    response_model=ChequeDto
+)
+async def get_my_deleted_cheques(user_id=Depends(auth.auth_dependency),
+                                 page: int = 1,
+                                 limit: int = 1):
+    result = await get_my_deleted_cheque_page_impl(user_id, page, limit)
+    return PaginatedResponse(result)

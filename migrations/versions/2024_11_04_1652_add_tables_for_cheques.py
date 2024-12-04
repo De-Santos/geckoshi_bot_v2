@@ -9,6 +9,8 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy import text
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import ENUM
 
 # revision identifiers, used by Alembic.
@@ -29,14 +31,17 @@ def upgrade() -> None:
                     sa.Column('description', sa.Text(), nullable=True),
                     sa.Column('connected_to_user', sa.BigInteger(), nullable=True),
                     sa.Column('activation_limit', sa.BigInteger(), server_default=sa.text('1'), nullable=False),
+                    sa.Column('require_subscriptions', postgresql.JSONB(astext_type=sa.Text()), server_default=sa.text("jsonb('[]')"), nullable=False),
                     sa.Column('created_by_id', sa.BigInteger(), nullable=False),
                     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
                     sa.Column('deleted_by_id', sa.BigInteger(), nullable=True),
                     sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
                     sa.Column('allocation_transaction_id', sa.UUID(), nullable=False),
+                    sa.Column('payback_transaction_id', sa.UUID(), nullable=True),
                     sa.Column('trace_uuid', sa.UUID(), nullable=False),
                     sa.CheckConstraint('connected_to_user != created_by_id', name='check_connected_user_not_created_by'),
                     sa.ForeignKeyConstraint(['allocation_transaction_id'], ['transactions.id'], ),
+                    sa.ForeignKeyConstraint(['payback_transaction_id'], ['transactions.id'], ),
                     sa.ForeignKeyConstraint(['created_by_id'], ['users.telegram_id'], ),
                     sa.ForeignKeyConstraint(['deleted_by_id'], ['users.telegram_id'], ),
                     sa.PrimaryKeyConstraint('id')
@@ -48,7 +53,7 @@ def upgrade() -> None:
                     sa.Column('status', ENUM('IN_PROGRESS', 'COMPLETED', 'FAILED', name='chequeactivationstatus', create_type=True), nullable=False),
                     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
                     sa.Column('processed_at', sa.DateTime(timezone=True), nullable=True),
-                    sa.Column('failed_message', sa.Text(), nullable=True),
+                    sa.Column('failed_message', postgresql.JSONB(astext_type=sa.Text()), server_default=sa.text("jsonb('{}')"), nullable=False),
                     sa.Column('payout_transaction_id', sa.UUID(), nullable=True),
                     sa.Column('trace_uuid', sa.UUID(), nullable=False),
                     sa.ForeignKeyConstraint(['cheque_id'], ['cheques.id'], ),
@@ -58,6 +63,9 @@ def upgrade() -> None:
                     )
     op.create_index('unique_completed_activation_per_user_cheque', 'cheque_activations', ['user_id', 'cheque_id'], unique=True, postgresql_where=sa.text("status = 'COMPLETED'"))
     # ### end Alembic commands ###
+    op.execute(text("""ALTER TYPE settingskey ADD VALUE 'MIN_GMEME_PER_USER_CHEQUE_AMOUNT'"""))
+    op.execute(text("""INSERT INTO "public"."settings" ("id", "int_val", "str_val") VALUES ('MIN_GMEME_CHEQUE_AMOUNT', '10', NULL);"""))
+    op.execute(text("""INSERT INTO "public"."settings" ("id", "int_val", "str_val") VALUES ('MIN_GMEME_PER_USER_CHEQUE_AMOUNT', '10', NULL);"""))
 
 
 def downgrade() -> None:

@@ -18,7 +18,11 @@ class MessageDto(BaseModel):
         return deserialize_inline_keyboard_markup(self.button_markup)
 
 
-class ActivationPersonalChequeDto(BaseModel):
+class ActivationChequeDto(BaseModel):
     user_id: int
     cheque_id: int
     cheque_activation_id: int
+
+
+class ChequePaybackDto(BaseModel):
+    cheque_id: int
