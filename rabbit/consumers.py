@@ -1,22 +1,29 @@
 import datetime
 import functools
 import logging
+import os
 import traceback
 import uuid
 from abc import abstractmethod, ABC
 from asyncio import AbstractEventLoop
 from contextlib import asynccontextmanager
 from decimal import Decimal
+from typing import Union
 
 import pika
+from pika import BasicProperties
 from pika.adapters.asyncio_connection import AsyncioConnection
 from pika.channel import Channel
+from pika.delivery_mode import DeliveryMode
+from pika.exceptions import AMQPError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import cheque
+import locker
 from chat_processor.member import check_memberships
 from cheque import ChequeModifier
 from database import get_session, get_mailing_message, MailingMessageStatus, MailingStatus, finish_mailing, get_cheque_activation, ChequeActivationStatus, TransactionOperation, now, with_session
+from locker import LockPrefixes
 from rabbit.classes import MessageDto, ActivationChequeDto, ChequePaybackDto
 from transaction_manager import make_transaction_from_system, generate_trace, TraceType
 from variables import bot
@@ -344,7 +351,7 @@ class MessageConsumer(object):
 
 class PersonalChequeActivationConsumer(object):
     from rabbit import Queue
-    QUEUE = Queue.PERSONAL_CHEQUE_ACTIVATION.value
+    QUEUE: str = Queue.PERSONAL_CHEQUE_ACTIVATION.value
 
     def __init__(self, url, loop, prefetch_count):
         self.logger = logging.getLogger(__class__.__name__)
@@ -478,65 +485,66 @@ class PersonalChequeActivationConsumer(object):
             finally:
                 await session.close()
 
-        async with _get_session() as s:
-            try:
-                # Fetch cheque activation record
-                activation_record = await get_cheque_activation(dto.cheque_activation_id, s=s)
-                self.logger.info("Activation record: %s", activation_record)
-
-                # Fetch active cheque
-                cheque_modifier = await cheque.get_active(dto.cheque_id)
-                self.logger.info("Cheque record: %s", cheque_modifier)
-
-                # Validate cheque creator and user connection
-                if not cheque_modifier.is_connected_to_user(dto.user_id) and cheque_modifier.is_creator(dto.user_id):
-                    await self._fail_activation(
-                        activation_record,
-                        "The cheque is intended for another user.",
-                        dto.user_id,
-                    )
-                    return
-
-                # Create a transaction for the payout
-                transaction_id = await self._create_transaction(dto, cheque_modifier, session=s)
-                self.logger.info(
-                    "Transaction successful with ID %s for user_id %s, cheque_id %s, amount %s, currency_type %s",
-                    transaction_id,
-                    dto.user_id,
-                    dto.cheque_id,
-                    cheque_modifier.entity.amount,
-                    cheque_modifier.entity.currency_type,
-                )
-
-                # Mark activation as completed
-                activation_record.status = ChequeActivationStatus.COMPLETED
-                activation_record.payout_transaction_id = transaction_id
-
-            except Exception as e:
-                self._handle_activation_error(e, activation_record, dto)
-
-            finally:
-                activation_record.processed_at = now()
+        async with locker.acquire_lock((LockPrefixes.CHEQUE_ACTIVATION_LOCK, dto.cheque_id), 360):
+            async with _get_session() as s:
                 try:
-                    await s.commit()
-                    self.logger.info("Personal cheque processed successfully: %s", dto)
+                    # Fetch cheque activation record
+                    activation_record = await get_cheque_activation(dto.cheque_activation_id, s=s)
+                    self.logger.info("Activation record: %s", activation_record)
 
-                except Exception as db_error:
-                    self.logger.error(
-                        "Database commit error for activation %s. Error: %s",
-                        dto.cheque_activation_id,
-                        db_error,
-                    )
-                    try:
-                        await self._handle_commit_error(db_error, dto)
-                    except Exception as rollback_error:
-                        self.logger.critical(
-                            "Error handling failed for activation %s after DB error. Error: %s",
-                            dto.cheque_activation_id,
-                            rollback_error,
+                    # Fetch active cheque
+                    cheque_modifier = await cheque.get_active(dto.cheque_id)
+                    self.logger.info("Cheque record: %s", cheque_modifier)
+
+                    # Validate cheque creator and user connection
+                    if not cheque_modifier.is_connected_to_user(dto.user_id) and cheque_modifier.is_creator(dto.user_id):
+                        await self._fail_activation(
+                            activation_record,
+                            "The cheque is intended for another user.",
+                            dto.user_id,
                         )
+                        return
 
-                self.ack_message(basic_deliver.delivery_tag)
+                    # Create a transaction for the payout
+                    transaction_id = await self._create_transaction(dto, cheque_modifier, session=s)
+                    self.logger.info(
+                        "Transaction successful with ID %s for user_id %s, cheque_id %s, amount %s, currency_type %s",
+                        transaction_id,
+                        dto.user_id,
+                        dto.cheque_id,
+                        cheque_modifier.entity.amount,
+                        cheque_modifier.entity.currency_type,
+                    )
+
+                    # Mark activation as completed
+                    activation_record.status = ChequeActivationStatus.COMPLETED
+                    activation_record.payout_transaction_id = transaction_id
+
+                except Exception as e:
+                    self._handle_activation_error(e, activation_record, dto)
+
+                finally:
+                    activation_record.processed_at = now()
+                    try:
+                        await s.commit()
+                        self.logger.info("Personal cheque processed successfully: %s", dto)
+
+                    except Exception as db_error:
+                        self.logger.error(
+                            "Database commit error for activation %s. Error: %s",
+                            dto.cheque_activation_id,
+                            db_error,
+                        )
+                        try:
+                            await self._handle_commit_error(db_error, dto)
+                        except Exception as rollback_error:
+                            self.logger.critical(
+                                "Error handling failed for activation %s after DB error. Error: %s",
+                                dto.cheque_activation_id,
+                                rollback_error,
+                            )
+
+                    self.ack_message(basic_deliver.delivery_tag)
 
     @staticmethod
     async def _create_transaction(dto, cheque_modifier, session):
@@ -748,76 +756,77 @@ class MultiChequeActivationConsumer(object):
             finally:
                 await session.close()
 
-        async with _get_session() as s:
-            try:
-                # Fetch cheque activation record
-                activation_record = await get_cheque_activation(dto.cheque_activation_id, s=s)
-                self.logger.info("Activation record: %s", activation_record)
-
-                # Fetch active cheque
-                cheque_modifier: ChequeModifier = await cheque.get_active(dto.cheque_id)
-                self.logger.info("Cheque record: %s", cheque_modifier)
-
-                # Validate cheque creator
-                if cheque_modifier.is_creator(dto.user_id):
-                    await self._fail_activation(
-                        activation_record,
-                        "The cheque is intended for another user.",
-                        dto.user_id,
-                    )
-                    return
-
-                # Check user subscriptions
-                check_result = await check_memberships(dto.user_id, cheque_modifier.entity.require_subscriptions, return_info=True)
-                if not all(check_result.values()):
-                    await self._fail_activation(
-                        activation_record,
-                        "You have to be subscribed to all required subscriptions.",
-                        dto.user_id,
-                        additional_info=check_result,
-                    )
-                    return
-
-                # Create a transaction for the payout
-                transaction_id = await self._create_transaction(dto, cheque_modifier, session=s)
-                self.logger.info(
-                    "Transaction successful with ID %s for user_id %s, cheque_id %s, amount %s, currency_type %s",
-                    transaction_id,
-                    dto.user_id,
-                    dto.cheque_id,
-                    cheque_modifier.entity.amount,
-                    cheque_modifier.entity.currency_type,
-                )
-
-                # Mark activation as completed
-                activation_record.status = ChequeActivationStatus.COMPLETED
-                activation_record.payout_transaction_id = transaction_id
-
-            except Exception as e:
-                self._handle_activation_error(e, activation_record, dto)
-
-            finally:
-                activation_record.processed_at = now()
+        async with locker.acquire_lock((LockPrefixes.CHEQUE_ACTIVATION_LOCK, dto.cheque_id), 360):
+            async with _get_session() as s:
                 try:
-                    await s.commit()
-                    self.logger.info("Multi cheque processed successfully: %s", dto)
+                    # Fetch cheque activation record
+                    activation_record = await get_cheque_activation(dto.cheque_activation_id, s=s)
+                    self.logger.info("Activation record: %s", activation_record)
 
-                except Exception as db_error:
-                    self.logger.error(
-                        "Database commit error for activation %s. Error: %s",
-                        dto.cheque_activation_id,
-                        db_error,
-                    )
-                    try:
-                        await self._handle_commit_error(db_error, dto)
-                    except Exception as handle_error:
-                        self.logger.critical(
-                            "Error handling failed for activation %s after DB error. Error: %s",
-                            dto.cheque_activation_id,
-                            handle_error,
+                    # Fetch active cheque
+                    cheque_modifier: ChequeModifier = await cheque.get_active(dto.cheque_id)
+                    self.logger.info("Cheque record: %s", cheque_modifier)
+
+                    # Validate cheque creator
+                    if cheque_modifier.is_creator(dto.user_id):
+                        await self._fail_activation(
+                            activation_record,
+                            "The cheque is intended for another user.",
+                            dto.user_id,
                         )
+                        return
 
-                self.ack_message(basic_deliver.delivery_tag)
+                    # Check user subscriptions
+                    check_result = await check_memberships(dto.user_id, cheque_modifier.entity.require_subscriptions, return_info=True)
+                    if not all(check_result.values()):
+                        await self._fail_activation(
+                            activation_record,
+                            "You have to be subscribed to all required subscriptions.",
+                            dto.user_id,
+                            additional_info=check_result,
+                        )
+                        return
+
+                    # Create a transaction for the payout
+                    transaction_id = await self._create_transaction(dto, cheque_modifier, session=s)
+                    self.logger.info(
+                        "Transaction successful with ID %s for user_id %s, cheque_id %s, amount %s, currency_type %s",
+                        transaction_id,
+                        dto.user_id,
+                        dto.cheque_id,
+                        cheque_modifier.entity.amount,
+                        cheque_modifier.entity.currency_type,
+                    )
+
+                    # Mark activation as completed
+                    activation_record.status = ChequeActivationStatus.COMPLETED
+                    activation_record.payout_transaction_id = transaction_id
+
+                except Exception as e:
+                    self._handle_activation_error(e, activation_record, dto)
+
+                finally:
+                    activation_record.processed_at = now()
+                    try:
+                        await s.commit()
+                        self.logger.info("Multi cheque processed successfully: %s", dto)
+
+                    except Exception as db_error:
+                        self.logger.error(
+                            "Database commit error for activation %s. Error: %s",
+                            dto.cheque_activation_id,
+                            db_error,
+                        )
+                        try:
+                            await self._handle_commit_error(db_error, dto)
+                        except Exception as handle_error:
+                            self.logger.critical(
+                                "Error handling failed for activation %s after DB error. Error: %s",
+                                dto.cheque_activation_id,
+                                handle_error,
+                            )
+
+                    self.ack_message(basic_deliver.delivery_tag)
 
     @staticmethod
     async def _create_transaction(dto, cheque_modifier, session):
@@ -896,22 +905,21 @@ class MultiChequeActivationConsumer(object):
 class ChequePaybackConsumer(object):
     from rabbit import Queue
     QUEUE = Queue.CHEQUE_PAYBACK_ORDERS.value
+    DLX_QUEUE = f"{QUEUE}.dlx"  # Dead-letter queue for delayed processing
+    DLX_EXCHANGE = f"{QUEUE}.dlx.exchange"  # DLX exchange name
+    RETRY_DELAY_MS = int(os.getenv("CHEQUE_PAYBACK_RETRY_DELAY_MS", 60000))  # Delay in milliseconds
 
     def __init__(self, url, loop, prefetch_count):
         self.logger = logging.getLogger(__class__.__name__)
-
         self.should_reconnect = False
         self.was_consuming = False
-
-        self._connection: AsyncioConnection | None = None
-        self._channel: Channel | None = None
+        self._connection: Union[pika.SelectConnection, None] = None
+        self._channel: Union[pika.channel.Channel, None] = None
         self._url = url
         self._closing = False
         self._consumer_tag = None
         self._consuming = False
         self._outer_async_loop: AbstractEventLoop = loop
-        # In production, experiment with higher prefetch values
-        # for higher consumer throughput
         self._prefetch_count = prefetch_count
 
     def connect(self) -> AsyncioConnection:
@@ -921,7 +929,31 @@ class ChequePaybackConsumer(object):
             on_open_callback=self.on_connection_open,
             on_open_error_callback=self.on_connection_open_error,
             on_close_callback=self.on_connection_closed,
-            custom_ioloop=self._outer_async_loop)
+            custom_ioloop=self._outer_async_loop
+        )
+
+    # New Method: Publish to Delayed Queue
+    def setup_queues(self):
+        self.logger.info("Declaring main queue and delayed queue")
+
+        # Declare DLX exchange
+        self._channel.exchange_declare(
+            exchange=self.DLX_EXCHANGE,
+            exchange_type="direct",
+            durable=True,
+        )
+
+        # Declare DLX queue
+        self._channel.queue_declare(
+            queue=self.DLX_QUEUE,
+            durable=True,
+            arguments={
+                "x-dead-letter-exchange": "",
+                "x-dead-letter-routing-key": self.QUEUE,
+                "x-message-ttl": self.RETRY_DELAY_MS,
+            },
+            callback=self.on_queue_declared
+        )
 
     def close_connection(self):
         self._consuming = False
@@ -942,7 +974,7 @@ class ChequePaybackConsumer(object):
     def on_connection_closed(self, _unused_connection, reason: BaseException):
         self._channel = None
         if self._closing:
-            self._connection.ioloop.stop()
+            self.logger.info('Connection is closing')
         else:
             self.logger.warning('Connection closed, reconnect necessary: %s', reason)
             self.reconnect()
@@ -959,50 +991,81 @@ class ChequePaybackConsumer(object):
         self.logger.info('Channel opened')
         self._channel = channel
         self.add_on_channel_close_callback()
+        self.setup_queues()
 
     def add_on_channel_close_callback(self):
         self.logger.info('Adding channel close callback')
         self._channel.add_on_close_callback(self.on_channel_closed)
-        self.setup_queue(self.QUEUE)
 
     def on_channel_closed(self, channel, reason):
         self.logger.warning('Channel %i was closed: %s', channel, reason)
         self.close_connection()
 
-    def setup_queue(self, queue_name):
-        self.logger.info('Declaring queue %s', queue_name)
-        cb = functools.partial(self.on_queue_declareok, userdata=queue_name)
-        self._channel.queue_declare(queue=queue_name, callback=cb, durable=True)
+    def on_queue_declared(self, _unused_frame):
+        # Declare main queue with DLX routing
+        self._channel.queue_declare(
+            queue=self.QUEUE,
+            durable=True,
+            arguments={
+                "x-dead-letter-exchange": self.DLX_EXCHANGE,
+                "x-dead-letter-routing-key": self.DLX_QUEUE,
+            },
+            callback=self.on_main_queue_declared
+        )
 
-    def on_queue_declareok(self, _unused_frame, userdata):
-        queue_name = userdata
-        self.logger.info('Queue %s has been declared successfully', queue_name)
+    def on_main_queue_declared(self, _unused_frame):
+        self.logger.info("Main queue has been declared successfully")
         self.set_qos()
 
     def set_qos(self):
         self._channel.basic_qos(
-            prefetch_count=self._prefetch_count, callback=self.on_basic_qos_ok)
+            prefetch_count=self._prefetch_count, callback=self.on_basic_qos_ok
+        )
 
     def on_basic_qos_ok(self, _unused_frame):
-        self.logger.info('QOS set to: %d', self._prefetch_count)
+        self.logger.info("QOS set to: %d", self._prefetch_count)
         self.start_consuming()
 
     def start_consuming(self):
-        self.logger.info('Issuing consumer related RPC commands')
+        self.logger.info("Starting to consume messages")
         self.add_on_cancel_callback()
         self._consumer_tag = self._channel.basic_consume(self.QUEUE, self.on_message)
         self.was_consuming = True
         self._consuming = True
 
     def add_on_cancel_callback(self):
-        self.logger.info('Adding consumer cancellation callback')
+        self.logger.info("Adding consumer cancellation callback")
         self._channel.add_on_cancel_callback(self.on_consumer_cancelled)
 
     def on_consumer_cancelled(self, method_frame):
-        self.logger.info('Consumer was cancelled remotely, shutting down: %r',
-                         method_frame)
+        self.logger.info("Consumer was cancelled remotely: %r", method_frame)
         if self._channel:
             self._channel.close()
+
+    def __publish_to_delayed_queue(self, message: bytes) -> bool:
+        """
+        Manually publishes a message to the delayed queue.
+        :param message: The message to be published.
+        """
+        if not self._channel or not self._channel.is_open:
+            self.logger.error("Channel is not open. Cannot publish to delayed queue.")
+            return False
+        uid = uuid.uuid4()
+        self.logger.info("UID: [%s] - Publishing message to delayed queue: %s", uid, message)
+        try:
+            self._channel.basic_publish(
+                exchange='',
+                routing_key=self.DLX_QUEUE,
+                body=message,
+                properties=BasicProperties(
+                    delivery_mode=DeliveryMode.Persistent
+                )
+            )
+            self.logger.info("UID: [%s] - Message successfully published to delayed queue: %s", uid, message)
+            return True
+        except AMQPError as e:
+            self.logger.error("UID: [%s] - Failed publish message to delayed queue: %s, error: %s", uid, message, e)
+            return False
 
     def on_message(self, _unused_channel, basic_deliver, properties, body):
         self.logger.info('Received message # %s from %s: %s', basic_deliver.delivery_tag, properties.app_id, body.decode())
@@ -1018,8 +1081,13 @@ class ChequePaybackConsumer(object):
             self.nack_message(basic_deliver.delivery_tag)
 
     async def __process_payback(self, dto: ChequePaybackDto, basic_deliver) -> None:
+        self.logger.info("Start cheque activation: %s", dto)
+        if await self._is_locked(dto.cheque_id):
+            self.logger.warning("Cheque %s is locked. Re-queuing...", dto.cheque_id)
+            self.__publish_to_delayed_queue(dto.model_dump_json().encode())
+            self.ack_message(basic_deliver.delivery_tag)
+            return
         try:
-            self.logger.info("Start cheque activation: %s", dto)
             s = get_session()
             await s.begin()
             c = await cheque.get_deleted(dto.cheque_id)
@@ -1043,7 +1111,6 @@ class ChequePaybackConsumer(object):
             except Exception as e:
                 await s.rollback()
                 self.logger.error(f"Failed to process the message: {dto} with error: {e}")
-                self.logger.warning(f"Stack trace: {traceback.format_exc()}")
             finally:
                 await s.close()
         except Exception as critical_error:
@@ -1058,6 +1125,10 @@ class ChequePaybackConsumer(object):
     @staticmethod
     def __calculate_payback_amount(cm: ChequeModifier, activated_amount: Decimal) -> Decimal:
         return cm.entity.amount - activated_amount
+
+    @staticmethod
+    async def _is_locked(cheque_id: int) -> bool:
+        return (await locker.is_lock_persisting((LockPrefixes.CHEQUE_ACTIVATION_LOCK, cheque_id)))[0]
 
     def ack_message(self, delivery_tag):
         self.logger.info('Acknowledging message %s', delivery_tag)
