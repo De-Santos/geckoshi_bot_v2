@@ -1092,7 +1092,8 @@ class ChequePaybackConsumer(object):
             await s.begin()
             c = await cheque.get_deleted(dto.cheque_id)
             if c.entity.payback_transaction_id is not None:
-                raise RuntimeError(f"cheque[{c.entity.id}] payback already done!")
+                self.logger.warning(f"cheque[{c.entity.id}] payback already done!")
+                return
 
             try:
                 transaction_id: uuid.UUID = await make_transaction_from_system(

@@ -3,6 +3,7 @@ from typing import Optional
 import cheque_processor
 import links
 from cheque import ChequeModifier, get_active
+from cheque.methods import get
 from database import get_cheque_activation_page, ChequeActivation, Cheque, ChequeType
 from exceptions.cheque import ChequeInactive, ChequeForbidden
 from providers.tg_arg_provider import ArgType
@@ -48,3 +49,14 @@ async def get_cheque_impl(cheque_id: int, user_id: int) -> ChequeDto:
             raise ChequeForbidden()
 
     return __cheque_to_dto(cm.entity)
+
+
+async def get_cheque_activation_count_impl(cheque_id: int, user_id: int) -> int:
+    cm, count = await get(cheque_id)
+
+    if cm is None:
+        raise ChequeInactive()
+    elif not cm.is_creator(user_id):
+        raise ChequeForbidden()
+
+    return count

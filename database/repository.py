@@ -743,6 +743,36 @@ async def get_total_amount_by_user_event(user_id: int, event_bonus_id: int, s: A
 
 
 @with_session
+async def get_cheque_by_id(id_: int, s: AsyncSession = None) -> Optional[tuple]:
+    # Alias for ChequeActivation to count activations
+    cheque_activation_alias = aliased(ChequeActivation)
+
+    # Main query to get the cheque and count the number of completed activations
+    stmt = (
+        select(
+            Cheque,
+            func.count(cheque_activation_alias.id).label('activation_count')
+        )
+        .join(
+            cheque_activation_alias,
+            and_(Cheque.id == cheque_activation_alias.cheque_id,
+                 cheque_activation_alias.status == ChequeActivationStatus.COMPLETED),
+            isouter=True
+        )
+        .where(Cheque.id == id_)
+        .group_by(Cheque.id)
+    )
+
+    result = await s.execute(stmt)
+    row = result.first()
+
+    if row:
+        cheque, activation_count = row
+        return cheque, activation_count
+    return None, 0
+
+
+@with_session
 async def get_active_cheque_by_id(id_: int, s: AsyncSession = None) -> Optional[Cheque]:
     # Subquery to count the number of activations for the given cheque
     activation_count_subquery = (

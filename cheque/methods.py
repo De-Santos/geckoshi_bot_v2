@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import CurrencyType, with_session, Cheque, ChequeType, TransactionOperation, get_active_cheque_by_id, get_active_cheque_page, get_deleted_cheque_page, get_deleted_cheque_by_id, get_historic_cheque_page, SettingsKey
+from database import CurrencyType, with_session, Cheque, ChequeType, TransactionOperation, get_active_cheque_by_id, get_active_cheque_page, get_deleted_cheque_page, get_deleted_cheque_by_id, get_historic_cheque_page, SettingsKey, get_cheque_by_id
 from exceptions.cheque import InvalidChequeData
 from settings import get_setting
 from transaction_manager import make_transaction_from_system, generate_trace, TraceType
@@ -68,6 +68,13 @@ async def generate(
     return ChequeModifier(entity=entity)
 
 
+async def get(id_: int) -> tuple[Optional[ChequeModifier], int]:
+    cheque, count = await get_cheque_by_id(id_)
+    if cheque is None:
+        return None, 0
+    return ChequeModifier(entity=cheque), count
+
+
 async def get_active(id_: int) -> Optional[ChequeModifier]:
     cheque: Optional[Cheque] = await get_active_cheque_by_id(id_)
     if cheque is None:
@@ -110,5 +117,6 @@ __all__ = [
     'get_deleted',
     'get_active_page',
     'get_historic_page',
-    'get_deleted_page'
+    'get_deleted_page',
+    'get'
 ]
