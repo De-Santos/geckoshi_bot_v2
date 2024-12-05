@@ -37,6 +37,7 @@ async def create_new_cheque_impl(dto: NewMultiChequeDto, user_id: int) -> Cheque
         currency=CurrencyType.GMEME,
         description=dto.description,
         activation_limit=dto.activation_limit,
+        password=dto.password,
     )
 
     return __to_dto(cm)
@@ -49,7 +50,7 @@ async def update_cheque_impl(dto: ChequeDto, user_id: int) -> ChequeDto:
     elif not cm.is_creator(user_id):
         raise ChequeModificationForbidden()
 
-    await cm.update(name=dto.name, description=dto.description)
+    await cm.update(name=dto.name, description=dto.description, password=dto.password)
 
     return __to_dto(cm)
 

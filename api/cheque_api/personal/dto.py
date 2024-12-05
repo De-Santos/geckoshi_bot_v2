@@ -9,3 +9,4 @@ class NewPersonalChequeDto(BaseModel):
     amount: Decimal
     connected_to_user: int | None = Field(default=None)
     description: Optional[str] = Field(default=None)
+    password: Optional[str] = Field(default=None)

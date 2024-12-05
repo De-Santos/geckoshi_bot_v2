@@ -24,11 +24,12 @@ def __activation_to_dto(activation: ChequeActivation) -> ChequeActivationDto:
     return cad
 
 
-async def activate_cheque_impl(cheque_id: int, user_id: int) -> bool:
+async def activate_cheque_impl(cheque_id: int, password: str, user_id: int) -> bool:
     cm: Optional[ChequeModifier] = await get_active(cheque_id)
     if cm is None:
         raise ChequeInactive()
-
+    elif cm.entity.password and len(cm.entity.password) != 0 and cm.entity.password != password:
+        raise ChequeForbidden()
     return await cheque_processor.activate_cheque(cm, user_id)
 
 
@@ -48,7 +49,9 @@ async def get_cheque_impl(cheque_id: int, user_id: int) -> ChequeDto:
         if not (cm.is_creator(user_id) or cm.is_connected_to_user(user_id)):
             raise ChequeForbidden()
 
-    return __cheque_to_dto(cm.entity)
+    dto = __cheque_to_dto(cm.entity)
+    dto.password = None
+    return dto
 
 
 async def get_cheque_activation_count_impl(cheque_id: int, user_id: int) -> int:

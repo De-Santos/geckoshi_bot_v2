@@ -29,6 +29,7 @@ def upgrade() -> None:
                     sa.Column('amount', sa.Numeric(precision=20, scale=8), nullable=False),
                     sa.Column('currency_type', ENUM('GMEME', 'BMEME', name='currencytype', create_type=False), nullable=False),
                     sa.Column('description', sa.Text(), nullable=True),
+                    sa.Column('password', sa.Text(), nullable=True),
                     sa.Column('connected_to_user', sa.BigInteger(), nullable=True),
                     sa.Column('activation_limit', sa.BigInteger(), server_default=sa.text('1'), nullable=False),
                     sa.Column('require_subscriptions', postgresql.JSONB(astext_type=sa.Text()), server_default=sa.text("jsonb('[]')"), nullable=False),

@@ -15,6 +15,7 @@ class ChequeDto(BaseModel):
     amount: Decimal | None = Field(default=None)
     currency_type: CurrencyType
     description: Optional[str] = Field(default=None)
+    password: Optional[str] = Field(default=None)
     connected_to_user: Optional[int] = Field(default=None)
     activation_limit: int
     require_subscriptions: List[int] = Field(default_factory=list)

@@ -220,6 +220,7 @@ class Cheque(Base):
     amount: Mapped[Decimal] = mapped_column(type_=Numeric(precision=20, scale=8), nullable=False)
     currency_type: Mapped[CurrencyType] = mapped_column(SQLEnum(CurrencyType), nullable=False)
     description: Mapped[str] = mapped_column(type_=Text, nullable=True)
+    password: Mapped[str] = mapped_column(type_=Text, nullable=True)
     connected_to_user: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)
     activation_limit: Mapped[int] = mapped_column(type_=BigInteger, nullable=False, server_default=text('1'))
     require_subscriptions: Mapped[list] = mapped_column(type_=JSONB, server_default=func.jsonb('[]'))

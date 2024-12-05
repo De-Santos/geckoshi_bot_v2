@@ -24,11 +24,12 @@ router = APIRouter(
     response_model=bool
 )
 async def activate_cheque(cheque_id: Annotated[int | str, Query(alias='id', description="Id of the cheque")],
+                          password: Annotated[str, Query(alias='p', description="Password of the cheque")],
                           encoded: Annotated[bool, Query(alias='e', description="Is the cheque id is encoded")] = False,
                           user_id=Depends(auth.auth_dependency)):
     if encoded:
         cheque_id = TgArg(cheque_id).parse()
-    result = await activate_cheque_impl(int(cheque_id), user_id)
+    result = await activate_cheque_impl(int(cheque_id), password, user_id)
     return JSONResponse({
         "status": "OK",
         "data": result

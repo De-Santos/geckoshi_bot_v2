@@ -10,3 +10,4 @@ class NewMultiChequeDto(BaseModel):
     activation_limit: int = Field(gt=0)
     require_subscriptions: List[int] = Field(default_factory=list)
     description: Optional[str] = Field(default=None)
+    password: Optional[str] = Field(default=None)

@@ -13,6 +13,7 @@ class ChequeModifier:
         Cheque.name,
         Cheque.description,
         Cheque.connected_to_user,
+        Cheque.password,
     }
 
     def __init__(self, entity: Cheque):
