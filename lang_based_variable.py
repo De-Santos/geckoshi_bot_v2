@@ -91,10 +91,18 @@ class MessageKey(Enum):
     CHEQUE_IS_NOT_MODIFIABLE = "cheque_is_not_modifiable"
     CHEQUE_MODIFIED_SUCCESSFULLY = "cheque_modified_successfully"
     CHEQUE_NOT_FOUND = "cheque_not_found"
+    CHEQUE_INACTIVE = "cheque_inactive"
+    CHEQUE_FORBIDDEN = "cheque_forbidden"
     REQUEST_CHEQUE_LINK_USER = "request_cheque_link_user"
     CHEQUE_ALREADY_LINKED_TO_USER = "cheque_already_linked_to_user"
     CHEQUE_LINKED_TO_USER_SUCCESSFULLY = "cheque_linked_to_user_successfully"
     FAILED_TO_FIND_THE_USER = "failed_to_find_the_user"
+
+    INLINE_MODE_SHARE_REF_LINK_INLINE_TITLE = "inline_mode_share_ref_link_inline_title"
+    INLINE_MODE_SHARE_REF_LINK_INLINE_DESCRIPTION = "inline_mode_share_ref_link_inline_description"
+    INLINE_MODE_SHARE_REF_LINK_MESSAGE = "inline_mode_share_ref_message"
+    INLINE_MODE_GO_TO_THE_BOT = "inline_mode_go_the_the_bot"
+    INLINE_MODE_CHEQUE_MESSAGE = "inline_mode_cheque_message"
 
 
 class KeyboardKey(Enum):
@@ -137,6 +145,9 @@ class KeyboardKey(Enum):
     CHEQUE_ACTION_MENU = "cheque_action_menu"
     CHEQUE_MODIFICATION_MENU = "cheque_modification_menu"
     CHEQUE_ALREADY_LINKED_TO_USER_MENU = "cheque_already_linked_to_user_menu"
+
+    INLINE_MODE_SHARE_REF_LINK_BUTTON = "inline_mode_share_ref_link_button"
+    INLINE_MODE_CHEQUE_ACTIVATION_BUTTON = "inline_mode_cheque_activation_button"
 
 
 class M(BaseModel):
@@ -505,10 +516,17 @@ message_data = {
         MessageKey.CHEQUE_IS_NOT_MODIFIABLE: "❌ Чек не может быть изменён !",
         MessageKey.CHEQUE_MODIFIED_SUCCESSFULLY: "✅ Чек изменён успешно !",
         MessageKey.CHEQUE_NOT_FOUND: "😞 Чек не найден !",
+        MessageKey.CHEQUE_INACTIVE: "😞 Чек не активен !",
+        MessageKey.CHEQUE_FORBIDDEN: "⛔️ Чек недоступен !",
         MessageKey.REQUEST_CHEQUE_LINK_USER: "Отправьте @username пользователя или перешлите сообщение от него.",
         MessageKey.CHEQUE_ALREADY_LINKED_TO_USER: "Обратите внимание пользователь @{username} уже привязан к данному чеку.",
         MessageKey.CHEQUE_LINKED_TO_USER_SUCCESSFULLY: "✅ Чек успешно привязан к пользователю @{username}!",
         MessageKey.FAILED_TO_FIND_THE_USER: "😞 Не удалось найти пользователя с юзернеймом: @{username}.",
+        MessageKey.INLINE_MODE_SHARE_REF_LINK_INLINE_TITLE: "Поделиться ссылкой-приглашением в бот",
+        MessageKey.INLINE_MODE_SHARE_REF_LINK_INLINE_DESCRIPTION: "Пригласи друга и заработай $GMEME",
+        MessageKey.INLINE_MODE_SHARE_REF_LINK_MESSAGE: "<b>Geckoshi</b> – это проект, воплощающий мечту о криптовалюте. Он станет символом надежды и риска, а его имя станет известным в криптовалютном сообществе. У Geckoshi есть две монеты $GMEME и $BMEME - мемные монеты, созданные на блокчейне TON🦎",
+        MessageKey.INLINE_MODE_CHEQUE_MESSAGE: "Чек: <b>{name}</b>\nОписание: <i>{description}</i>\nСумма: <code>{amount}</code>{currency}\n🔥 Нажми кнопку для активации чека ⬇️"
+
     },
     Lang.EN: {
         MessageKey.LANG_CHANGE: "Language successfully changed to English!",
@@ -576,6 +594,10 @@ message_data = {
         MessageKey.USER_DIRTY_INCOMING_STATISTIC: "<b>📊 Dirty user incoming statistics.\n⚠️ These are users who entered the bot but did not complete registration.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
         MessageKey.USER_INCOMING_STATISTIC: "<b>📊 User incoming statistics.\n⚠️ These are users who entered the bot and completed registration.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
         MessageKey.TASK_DONE_STATISTIC: "<b>📊 Task Completion Statistics</b>\n<pre>{text_table}</pre>",
+        MessageKey.INLINE_MODE_SHARE_REF_LINK_INLINE_TITLE: "Share Invite Link to Bot",
+        MessageKey.INLINE_MODE_SHARE_REF_LINK_INLINE_DESCRIPTION: "Invite your friend and earn $GMEME",
+        MessageKey.INLINE_MODE_SHARE_REF_LINK_MESSAGE: "<b>Geckoshi</b> – is a project that embodies the cryptocurrency dream. It will become a symbol of hope and risk, and its name will become known throughout the cryptocurrency community. Geckoshi has two coins $GMEME and $BMEME - these are meme coins created on the TON blockchain🦎",
+        MessageKey.INLINE_MODE_CHEQUE_MESSAGE: "Cheque: <b>{name}</b>\nDescription: <i>{description}</i>\nAmount: <code>{amount}</code>{currency}\n🔥 Push the button to activate cheque ⬇️",
 
     },
     Lang.TR: {
@@ -1020,7 +1042,16 @@ keyboard_data = {
                 M(text="Удалить привязку", callback_class=RemoveLinkChequeToUser, with_callback_param_required=True),
             ],
         ],
-
+        KeyboardKey.INLINE_MODE_SHARE_REF_LINK_BUTTON: [
+            [
+                M(text="🎁 Присоединиться 🎁", url="{ref_link}", with_url_placeholder=True),
+            ],
+        ],
+        KeyboardKey.INLINE_MODE_CHEQUE_ACTIVATION_BUTTON: [
+            [
+                M(text="🎟 Активировать 🎟", url="{link}", with_url_placeholder=True),
+            ],
+        ],
     },
     Lang.EN: {
         KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB: [
@@ -1217,6 +1248,16 @@ keyboard_data = {
         KeyboardKey.SKIP: [
             [
                 M(text="Skip ⤵️", callback_class=Skip),
+            ],
+        ],
+        KeyboardKey.INLINE_MODE_SHARE_REF_LINK_BUTTON: [
+            [
+                M(text="🎁 Join 🎁", url="{ref_link}", with_url_placeholder=True),
+            ],
+        ],
+        KeyboardKey.INLINE_MODE_CHEQUE_ACTIVATION_BUTTON: [
+            [
+                M(text="🎟 Activate 🎟", url="{link}", with_url_placeholder=True),
             ],
         ],
     },

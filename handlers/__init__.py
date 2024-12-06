@@ -7,6 +7,7 @@ from handlers.bonus import router as bonus_router
 from handlers.channel import router as channel_router
 from handlers.cheque import public_base_router as cheque_public_router
 from handlers.exit import router as exit_router
+from handlers.inline import router as inline_router
 from handlers.nft import router as nft_router
 from handlers.p2p import router as p2p_router
 from handlers.premium import router as premium_router
@@ -27,6 +28,7 @@ base_router.callback_query.middleware(ActivityStatisticMiddleware())
 
 base_router.message.middleware(LangProviderMiddleware())
 base_router.callback_query.middleware(LangProviderMiddleware())
+base_router.inline_query.middleware(LangProviderMiddleware())
 
 base_router.message.filter(ChatTypeFilter(ChatType.PRIVATE))
 base_router.callback_query.filter(ChatTypeFilter(ChatType.PRIVATE))
@@ -46,6 +48,7 @@ base_router.include_router(admin_router)
 # base_router.include_router(task_router)
 # base_router.include_router(statistic.public_router)
 # base_router.include_router(bonus_router)
+base_router.include_router(inline_router)
 
 custom_router = Router(name="custom_router")
 custom_router.message.filter(ChatTypeFilter(ChatType.CHANNEL))

@@ -50,6 +50,7 @@ async def get_cheque_impl(cheque_id: int, user_id: int) -> ChequeDto:
             raise ChequeForbidden()
 
     dto = __cheque_to_dto(cm.entity)
+    dto.requires_password = dto.password is not None
     dto.password = None
     return dto
 

@@ -1,14 +1,13 @@
 import handlers
 from bot_starter.same import crate_consumer, shutdown
-from database import init_db
 from variables import bot, dp
 from .log import logger
 
 
 async def dev() -> None:
-    logger.info("Initializing database...")
-    await init_db()
-    logger.info("Database initialized successfully.")
+    # logger.info("Initializing database...")
+    # await init_db()
+    # logger.info("Database initialized successfully.")
 
     logger.info("Removing existing webhook (if any) and dropping pending updates...")
     await bot.delete_webhook(drop_pending_updates=True)

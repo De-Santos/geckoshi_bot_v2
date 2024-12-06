@@ -16,6 +16,7 @@ class ChequeDto(BaseModel):
     currency_type: CurrencyType
     description: Optional[str] = Field(default=None)
     password: Optional[str] = Field(default=None)
+    requires_password: bool = Field(default=False)
     connected_to_user: Optional[int] = Field(default=None)
     activation_limit: int
     require_subscriptions: List[int] = Field(default_factory=list)
@@ -24,7 +25,14 @@ class ChequeDto(BaseModel):
     payback_transaction_id: uuid.UUID | None = Field(default=None)
     link: str | None = Field(default=None)
 
+    @property
+    def amount_per_user(self) -> Optional[Decimal]:
+        if self.amount is None or self.activation_limit is None:
+            return None
+        return self.amount / self.activation_limit
+
     model_config = ConfigDict(
         use_enum_values=True,
         validate_assignment=True,
+
     )
