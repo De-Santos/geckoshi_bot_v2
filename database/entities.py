@@ -22,12 +22,15 @@ def now(native: bool = False) -> datetime.datetime:
     return dt
 
 
+CustomNumeric = Numeric(precision=20, scale=8)
+
+
 class User(Base):
     __tablename__ = 'users'
 
     telegram_id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True)
-    balance: Mapped[Decimal] = mapped_column(type_=Numeric(precision=20, scale=8), default=Decimal(0))
-    bmeme_balance: Mapped[Decimal] = mapped_column(type_=Numeric(precision=20, scale=8), default=Decimal(0))
+    balance: Mapped[Decimal] = mapped_column(type_=CustomNumeric, default=Decimal(0))
+    bmeme_balance: Mapped[Decimal] = mapped_column(type_=CustomNumeric, default=Decimal(0))
     referred_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger)
     blocked: Mapped[bool] = mapped_column(default=False)
     language: Mapped[Lang] = mapped_column(SQLEnum(Lang), default=Lang.EN)
@@ -43,12 +46,12 @@ class Transaction(Base):
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     operation: Mapped[TransactionOperation] = mapped_column(SQLEnum(TransactionOperation), nullable=False)
     type: Mapped[TransactionType] = mapped_column(SQLEnum(TransactionType), nullable=False)
-    amount: Mapped[Decimal] = mapped_column(type_=Numeric(precision=20, scale=8))
+    amount: Mapped[Decimal] = mapped_column(type_=CustomNumeric)
     currency_type: Mapped[CurrencyType] = mapped_column(SQLEnum(CurrencyType), nullable=False)
-    destination_balance_before: Mapped[Decimal] = mapped_column(type_=Numeric(precision=20, scale=8), nullable=False)
-    destination_balance_after: Mapped[Decimal] = mapped_column(type_=Numeric(precision=20, scale=8), nullable=False)
-    source_balance_before: Mapped[Decimal] = mapped_column(type_=Numeric(precision=20, scale=8), nullable=False)
-    source_balance_after: Mapped[Decimal] = mapped_column(type_=Numeric(precision=20, scale=8), nullable=False)
+    destination_balance_before: Mapped[Decimal] = mapped_column(type_=CustomNumeric, nullable=False)
+    destination_balance_after: Mapped[Decimal] = mapped_column(type_=CustomNumeric, nullable=False)
+    source_balance_before: Mapped[Decimal] = mapped_column(type_=CustomNumeric, nullable=False)
+    source_balance_after: Mapped[Decimal] = mapped_column(type_=CustomNumeric, nullable=False)
     status: Mapped[TransactionStatus] = mapped_column(SQLEnum(TransactionStatus))
     initiator_type: Mapped[TransactionInitiatorType] = mapped_column(SQLEnum(TransactionInitiatorType), nullable=False)
     description: Mapped[str] = mapped_column()
@@ -104,8 +107,8 @@ class SlotsBetHistory(Base):
     __tablename__ = 'slots_bet_history'
 
     id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True, autoincrement=True)
-    bet_amount: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
-    win_amount: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)
+    bet_amount: Mapped[Decimal] = mapped_column(type_=CustomNumeric, nullable=False)
+    win_amount: Mapped[Decimal] = mapped_column(type_=CustomNumeric, nullable=True)
     type: Mapped[BetType] = mapped_column(SQLEnum(BetType))
     player_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
     player: Mapped[User] = relationship("User", foreign_keys=[player_id])
@@ -129,8 +132,8 @@ class Task(Base):
     coin_type: Mapped[CurrencyType] = mapped_column(SQLEnum(CurrencyType), nullable=False)
 
     done_limit: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)
-    coin_pool: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)
-    done_reward: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)
+    coin_pool: Mapped[Decimal] = mapped_column(type_=CustomNumeric, nullable=True)
+    done_reward: Mapped[Decimal] = mapped_column(type_=CustomNumeric, nullable=True)
 
     created_by_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
     created_by: Mapped[User] = relationship("User", foreign_keys=[created_by_id])
@@ -149,13 +152,13 @@ class TaskDoneHistory(Base):
     __tablename__ = 'tasks_done_history'
 
     id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True, autoincrement=True)
-    reward: Mapped[int] = mapped_column(type_=BigInteger, nullable=True)
+    reward: Mapped[Decimal] = mapped_column(type_=CustomNumeric, nullable=True)
 
     user_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
     user: Mapped[User] = relationship("User", foreign_keys=[user_id])
 
     task_id: Mapped[int] = mapped_column(ForeignKey('tasks.id'), type_=BigInteger, nullable=False)
-    task: Mapped[Mailing] = relationship("Task", foreign_keys=[task_id])
+    task: Mapped[Task] = relationship("Task", foreign_keys=[task_id])
     created_at: Mapped[datetime.datetime] = mapped_column("created_at", DateTime(timezone=True), default=now)
 
 
@@ -187,8 +190,8 @@ class EventBonus(Base):
     name: Mapped[str] = mapped_column(type_=Text, nullable=True)
     cooldown: Mapped[str] = mapped_column(nullable=False)
     conversion_to: Mapped[CurrencyType] = mapped_column(SQLEnum(CurrencyType), nullable=False)
-    min_win: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
-    max_win: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
+    min_win: Mapped[Decimal] = mapped_column(type_=CustomNumeric, nullable=False)
+    max_win: Mapped[Decimal] = mapped_column(type_=CustomNumeric, nullable=False)
     start_datetime: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_datetime: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
@@ -203,7 +206,7 @@ class EventBonusActivation(Base):
 
     user_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'), type_=BigInteger, nullable=False)
     datetime_: Mapped[datetime.datetime] = mapped_column("datetime", DateTime(timezone=True), default=now)
-    amount: Mapped[int] = mapped_column(type_=BigInteger, nullable=False)
+    amount: Mapped[Decimal] = mapped_column(type_=CustomNumeric, nullable=False)
     event_bonus_id: Mapped[int] = mapped_column(ForeignKey('event_bonuses.id'), type_=BigInteger, nullable=False)
 
 
@@ -217,7 +220,7 @@ class Cheque(Base):
     id: Mapped[int] = mapped_column(type_=BigInteger, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(type_=Text, nullable=True, default=lambda: f"cheque-{str(uuid.uuid4())[:5]}")
     type: Mapped[ChequeType] = mapped_column(SQLEnum(ChequeType), nullable=False)
-    amount: Mapped[Decimal] = mapped_column(type_=Numeric(precision=20, scale=8), nullable=False)
+    amount: Mapped[Decimal] = mapped_column(type_=CustomNumeric, nullable=False)
     currency_type: Mapped[CurrencyType] = mapped_column(SQLEnum(CurrencyType), nullable=False)
     description: Mapped[str] = mapped_column(type_=Text, nullable=True)
     password: Mapped[str] = mapped_column(type_=Text, nullable=True)

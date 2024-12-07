@@ -42,10 +42,10 @@ async def answer_cheque_result(query: InlineQuery, lang: Lang, cheque_id: int) -
 
     cheque_result = InlineQueryResultArticle(
         id=str(uuid4()),
-        title=cheque.name + " " + str(cheque.amount_per_user) + CurrencyType(cheque.currency_type).name,
+        title=cheque.name + " " + f"{cheque.amount_per_user:.2f}" + f" {CurrencyType(cheque.currency_type).name}",
         description=cheque.description,
-        input_message_content=InputTextMessageContent(message_text=get_cheque_message(cheque, lang)),
-        reply_markup=get_inline_mode_cheque_activate_button(lang, links.generate(ArgType.REFERRAL, query.from_user.id))
+        input_message_content=InputTextMessageContent(message_text=get_cheque_message(cheque)),
+        reply_markup=get_inline_mode_cheque_activate_button(links.generate(ArgType.CHEQUE, cheque.id))
     )
     await query.answer([cheque_result], cache_time=1)
 
@@ -55,8 +55,8 @@ def generate_default_result(query: InlineQuery, lang: Lang) -> list[InlineQueryR
         id=str(uuid4()),
         title=get_message(MessageKey.INLINE_MODE_SHARE_REF_LINK_INLINE_TITLE, lang),
         description=get_message(MessageKey.INLINE_MODE_SHARE_REF_LINK_INLINE_DESCRIPTION, lang),
-        input_message_content=InputTextMessageContent(message_text=get_message(MessageKey.INLINE_MODE_SHARE_REF_LINK_MESSAGE, lang)),
-        reply_markup=get_inline_mode_share_ref_link_button_kbm(lang, links.generate(ArgType.REFERRAL, query.from_user.id))
+        input_message_content=InputTextMessageContent(message_text=get_message(MessageKey.INLINE_MODE_SHARE_REF_LINK_MESSAGE)),
+        reply_markup=get_inline_mode_share_ref_link_button_kbm(links.generate(ArgType.REFERRAL, query.from_user.id))
     )
     return [invite_link_result]
 
@@ -70,8 +70,8 @@ def exception_translater(e: Exception, lang: Lang) -> str | None:
     return None
 
 
-def get_cheque_message(cheque: ChequeDto, lang: Lang) -> str:
-    return format_string(get_message(MessageKey.INLINE_MODE_CHEQUE_MESSAGE, lang),
+def get_cheque_message(cheque: ChequeDto) -> str:
+    return format_string(get_message(MessageKey.INLINE_MODE_CHEQUE_MESSAGE),
                          name=cheque.name,
                          description=cheque.description if cheque.description or len(cheque.description) == 0 else "...",
                          amount=cheque.amount_per_user,

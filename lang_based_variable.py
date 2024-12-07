@@ -438,6 +438,8 @@ class ChequeView(CallbackData, prefix="cheque_view"):
 
 message_data = {
     MessageKey.START: """<b>Geckoshi Аирдроп первый в мире инвестиционной мем монеты 🦎 Ниже выберите подходящий вам язык 🌐 и начните зарабатывать $GMEME прямо сейчас!\n\n____\n\n\nGeckoshi Airdrop the world's first investment meme coin 🦎 Below, select the lang that suits you 🌐 and start earning $GMEME right now!</b>""",
+    MessageKey.INLINE_MODE_SHARE_REF_LINK_MESSAGE: "💰 Geckoshi: Play, Explore, Earn!\n\n🎁 Start Earning GMEME Now!\n🔥 Join the adventure with Geckoshi and become a valued member of a vibrant crypto community! 🦎",
+    MessageKey.INLINE_MODE_CHEQUE_MESSAGE: "💰Geckoshi: Discover the crypto world with rewards!\n\n🎟 Cheque amount: <code>{amount:.3f}</code> {currency}\n🔥 Push to activate the cheque ⬇️",
 
     Lang.RU: {
         MessageKey.LANG_CHANGE: "Язык успешно изменён на русский !",
@@ -524,9 +526,6 @@ message_data = {
         MessageKey.FAILED_TO_FIND_THE_USER: "😞 Не удалось найти пользователя с юзернеймом: @{username}.",
         MessageKey.INLINE_MODE_SHARE_REF_LINK_INLINE_TITLE: "Поделиться ссылкой-приглашением в бот",
         MessageKey.INLINE_MODE_SHARE_REF_LINK_INLINE_DESCRIPTION: "Пригласи друга и заработай $GMEME",
-        MessageKey.INLINE_MODE_SHARE_REF_LINK_MESSAGE: "<b>Geckoshi</b> – это проект, воплощающий мечту о криптовалюте. Он станет символом надежды и риска, а его имя станет известным в криптовалютном сообществе. У Geckoshi есть две монеты $GMEME и $BMEME - мемные монеты, созданные на блокчейне TON🦎",
-        MessageKey.INLINE_MODE_CHEQUE_MESSAGE: "Чек: <b>{name}</b>\nОписание: <i>{description}</i>\nСумма: <code>{amount}</code>{currency}\n🔥 Нажми кнопку для активации чека ⬇️"
-
     },
     Lang.EN: {
         MessageKey.LANG_CHANGE: "Language successfully changed to English!",
@@ -594,11 +593,8 @@ message_data = {
         MessageKey.USER_DIRTY_INCOMING_STATISTIC: "<b>📊 Dirty user incoming statistics.\n⚠️ These are users who entered the bot but did not complete registration.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
         MessageKey.USER_INCOMING_STATISTIC: "<b>📊 User incoming statistics.\n⚠️ These are users who entered the bot and completed registration.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
         MessageKey.TASK_DONE_STATISTIC: "<b>📊 Task Completion Statistics</b>\n<pre>{text_table}</pre>",
-        MessageKey.INLINE_MODE_SHARE_REF_LINK_INLINE_TITLE: "Share Invite Link to Bot",
+        MessageKey.INLINE_MODE_SHARE_REF_LINK_INLINE_TITLE: "Share Invite Link to the Bot",
         MessageKey.INLINE_MODE_SHARE_REF_LINK_INLINE_DESCRIPTION: "Invite your friend and earn $GMEME",
-        MessageKey.INLINE_MODE_SHARE_REF_LINK_MESSAGE: "<b>Geckoshi</b> – is a project that embodies the cryptocurrency dream. It will become a symbol of hope and risk, and its name will become known throughout the cryptocurrency community. Geckoshi has two coins $GMEME and $BMEME - these are meme coins created on the TON blockchain🦎",
-        MessageKey.INLINE_MODE_CHEQUE_MESSAGE: "Cheque: <b>{name}</b>\nDescription: <i>{description}</i>\nAmount: <code>{amount}</code>{currency}\n🔥 Push the button to activate cheque ⬇️",
-
     },
     Lang.TR: {
         MessageKey.LANG_CHANGE: "Dil başarıyla Türkçe olarak değiştirildi!",
@@ -666,7 +662,8 @@ message_data = {
         MessageKey.USER_DIRTY_INCOMING_STATISTIC: "<b>📊 Kirli kullanıcı giriş istatistikleri.\n⚠️ Bunlar bota giren ancak kaydını tamamlamayan kullanıcılardır.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
         MessageKey.USER_INCOMING_STATISTIC: "<b>📊 Kullanıcı giriş istatistikleri.\n⚠️ Bunlar bota girip kaydını tamamlayan kullanıcılardır.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
         MessageKey.TASK_DONE_STATISTIC: "<b>📊 Aktif Görevlerin İstatistikleri</b>\n<pre>{text_table}</pre>",
-
+        MessageKey.INLINE_MODE_SHARE_REF_LINK_INLINE_TITLE: "Bot'a Davet Linkini Paylaş",
+        MessageKey.INLINE_MODE_SHARE_REF_LINK_INLINE_DESCRIPTION: "Arkadaşını davet et ve $GMEME kazan",
     },
     Lang.DE: {
         MessageKey.LANG_CHANGE: "Die Sprache wurde erfolgreich auf Deutsch geändert!",
@@ -734,6 +731,8 @@ message_data = {
         MessageKey.USER_DIRTY_INCOMING_STATISTIC: "<b>📊 Statistiken über nicht registrierte Nutzer.\n⚠️ Dies sind Nutzer, die den Bot betreten, aber die Registrierung nicht abgeschlossen haben.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
         MessageKey.USER_INCOMING_STATISTIC: "<b>📊 Nutzerstatistiken.\n⚠️ Dies sind Nutzer, die den Bot betreten und die Registrierung abgeschlossen haben.\n({min_date} - {max_date})</b>\n<pre>{text_table}</pre>",
         MessageKey.TASK_DONE_STATISTIC: "<b>📊 Statistik über abgeschlossene Aufgaben</b>\n<pre>{text_table}</pre>",
+        MessageKey.INLINE_MODE_SHARE_REF_LINK_INLINE_TITLE: "Einladungslink zum Bot teilen",
+        MessageKey.INLINE_MODE_SHARE_REF_LINK_INLINE_DESCRIPTION: "Lade deinen Freund ein und verdiene $GMEME",
     },
 }
 
@@ -806,6 +805,16 @@ keyboard_data = {
     KeyboardKey.CAPTCHA_REGENERATE_BUTTON: [
         [
             M(text="🔄", callback_class=CaptchaRegenerate),
+        ],
+    ],
+    KeyboardKey.INLINE_MODE_SHARE_REF_LINK_BUTTON: [
+        [
+            M(text="🎁 Join! 🎁", url="{ref_link}", with_url_placeholder=True),
+        ],
+    ],
+    KeyboardKey.INLINE_MODE_CHEQUE_ACTIVATION_BUTTON: [
+        [
+            M(text="🎟 Activate 🎟", url="{link}", with_url_placeholder=True),
         ],
     ],
 
@@ -1042,16 +1051,6 @@ keyboard_data = {
                 M(text="Удалить привязку", callback_class=RemoveLinkChequeToUser, with_callback_param_required=True),
             ],
         ],
-        KeyboardKey.INLINE_MODE_SHARE_REF_LINK_BUTTON: [
-            [
-                M(text="🎁 Присоединиться 🎁", url="{ref_link}", with_url_placeholder=True),
-            ],
-        ],
-        KeyboardKey.INLINE_MODE_CHEQUE_ACTIVATION_BUTTON: [
-            [
-                M(text="🎟 Активировать 🎟", url="{link}", with_url_placeholder=True),
-            ],
-        ],
     },
     Lang.EN: {
         KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB: [
@@ -1249,17 +1248,7 @@ keyboard_data = {
             [
                 M(text="Skip ⤵️", callback_class=Skip),
             ],
-        ],
-        KeyboardKey.INLINE_MODE_SHARE_REF_LINK_BUTTON: [
-            [
-                M(text="🎁 Join 🎁", url="{ref_link}", with_url_placeholder=True),
-            ],
-        ],
-        KeyboardKey.INLINE_MODE_CHEQUE_ACTIVATION_BUTTON: [
-            [
-                M(text="🎟 Activate 🎟", url="{link}", with_url_placeholder=True),
-            ],
-        ],
+        ]
     },
     Lang.TR: {
         KeyboardKey.START_REQUIRE_SUBSCRIPTION_KB: [

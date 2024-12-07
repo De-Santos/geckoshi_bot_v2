@@ -63,10 +63,63 @@ def upgrade() -> None:
                     sa.PrimaryKeyConstraint('id')
                     )
     op.create_index('unique_completed_activation_per_user_cheque', 'cheque_activations', ['user_id', 'cheque_id'], unique=True, postgresql_where=sa.text("status = 'COMPLETED'"))
+
+    op.alter_column('event_bonus_activations', 'amount',
+                    existing_type=sa.BIGINT(),
+                    type_=sa.Numeric(precision=20, scale=8),
+                    existing_nullable=False)
+    op.alter_column('event_bonuses', 'min_win',
+                    existing_type=sa.BIGINT(),
+                    type_=sa.Numeric(precision=20, scale=8),
+                    existing_nullable=False)
+    op.alter_column('event_bonuses', 'max_win',
+                    existing_type=sa.BIGINT(),
+                    type_=sa.Numeric(precision=20, scale=8),
+                    existing_nullable=False)
+    op.alter_column('slots_bet_history', 'bet_amount',
+                    existing_type=sa.BIGINT(),
+                    type_=sa.Numeric(precision=20, scale=8),
+                    existing_nullable=False)
+    op.alter_column('slots_bet_history', 'win_amount',
+                    existing_type=sa.BIGINT(),
+                    type_=sa.Numeric(precision=20, scale=8),
+                    existing_nullable=True)
+    op.alter_column('tasks', 'coin_pool',
+                    existing_type=sa.BIGINT(),
+                    type_=sa.Numeric(precision=20, scale=8),
+                    existing_nullable=True)
+    op.alter_column('tasks', 'done_reward',
+                    existing_type=sa.BIGINT(),
+                    type_=sa.Numeric(precision=20, scale=8),
+                    existing_nullable=True)
+    op.alter_column('tasks_done_history', 'reward',
+                    existing_type=sa.BIGINT(),
+                    type_=sa.Numeric(precision=20, scale=8),
+                    existing_nullable=True)
+    op.alter_column('transactions', 'amount',
+                    existing_type=sa.BIGINT(),
+                    type_=sa.Numeric(precision=20, scale=8),
+                    existing_nullable=False)
+    op.alter_column('transactions', 'destination_balance_before',
+                    existing_type=sa.BIGINT(),
+                    type_=sa.Numeric(precision=20, scale=8),
+                    existing_nullable=False)
+    op.alter_column('transactions', 'destination_balance_after',
+                    existing_type=sa.BIGINT(),
+                    type_=sa.Numeric(precision=20, scale=8),
+                    existing_nullable=False)
+    op.alter_column('transactions', 'source_balance_before',
+                    existing_type=sa.BIGINT(),
+                    type_=sa.Numeric(precision=20, scale=8),
+                    existing_nullable=False)
+    op.alter_column('transactions', 'source_balance_after',
+                    existing_type=sa.BIGINT(),
+                    type_=sa.Numeric(precision=20, scale=8),
+                    existing_nullable=False)
     # ### end Alembic commands ###
-    op.execute(text("""ALTER TYPE settingskey ADD VALUE 'MIN_GMEME_PER_USER_CHEQUE_AMOUNT'"""))
-    op.execute(text("""INSERT INTO "public"."settings" ("id", "int_val", "str_val") VALUES ('MIN_GMEME_CHEQUE_AMOUNT', '10', NULL);"""))
-    op.execute(text("""INSERT INTO "public"."settings" ("id", "int_val", "str_val") VALUES ('MIN_GMEME_PER_USER_CHEQUE_AMOUNT', '10', NULL);"""))
+    # op.execute(text("""ALTER TYPE settingskey ADD VALUE 'MIN_GMEME_PER_USER_CHEQUE_AMOUNT'"""))
+    # op.execute(text("""INSERT INTO "public"."settings" ("id", "int_val", "str_val") VALUES ('MIN_GMEME_CHEQUE_AMOUNT', '10', NULL);"""))
+    # op.execute(text("""INSERT INTO "public"."settings" ("id", "int_val", "str_val") VALUES ('MIN_GMEME_PER_USER_CHEQUE_AMOUNT', '10', NULL);"""))
 
 
 def downgrade() -> None:

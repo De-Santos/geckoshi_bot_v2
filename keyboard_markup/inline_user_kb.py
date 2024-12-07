@@ -277,15 +277,15 @@ def get_cheque_already_linked_to_user_menu_kbm(lang: Lang, cheque_id: int) -> In
     return build_markup(lang, KeyboardKey.CHEQUE_ALREADY_LINKED_TO_USER_MENU, callback_data_param=params)
 
 
-def get_inline_mode_share_ref_link_button_kbm(lang: Lang, ref_link: str) -> InlineKeyboardMarkup:
+def get_inline_mode_share_ref_link_button_kbm(ref_link: str) -> InlineKeyboardMarkup:
     url_params = [
         {'ref_link': ref_link},
     ]
-    return build_markup(lang, KeyboardKey.INLINE_MODE_SHARE_REF_LINK_BUTTON, url_params=url_params)
+    return build_markup(None, KeyboardKey.INLINE_MODE_SHARE_REF_LINK_BUTTON, url_params=url_params)
 
 
-def get_inline_mode_cheque_activate_button(lang: Lang, link: str) -> InlineKeyboardMarkup:
+def get_inline_mode_cheque_activate_button(link: str) -> InlineKeyboardMarkup:
     url_params = [
         {'link': link},
     ]
-    return build_markup(lang, KeyboardKey.INLINE_MODE_CHEQUE_ACTIVATION_BUTTON, url_params=url_params)
+    return build_markup(None, KeyboardKey.INLINE_MODE_CHEQUE_ACTIVATION_BUTTON, url_params=url_params)

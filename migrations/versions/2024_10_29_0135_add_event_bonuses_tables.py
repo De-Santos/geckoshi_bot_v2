@@ -13,7 +13,7 @@ from sqlalchemy.dialects.postgresql import ENUM as PGEnum
 
 # revision identifiers, used by Alembic.
 revision: str = '71ebdf16831f'
-down_revision: Union[str, None] = '4c16c23ac734'
+down_revision: Union[str, None] = 'b11f94f71d55'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
