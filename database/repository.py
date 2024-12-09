@@ -997,7 +997,6 @@ async def get_cheque_activation_page(user_id: int,
     offset = (page - 1) * limit
 
     stmt = stmt.limit(limit).offset(offset)
-    print(stmt)
     result = await s.execute(stmt)
     activations = list(result.scalars().all())
 

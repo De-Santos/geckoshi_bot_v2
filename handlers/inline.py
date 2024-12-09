@@ -72,7 +72,5 @@ def exception_translater(e: Exception, lang: Lang) -> str | None:
 
 def get_cheque_message(cheque: ChequeDto) -> str:
     return format_string(get_message(MessageKey.INLINE_MODE_CHEQUE_MESSAGE),
-                         name=cheque.name,
-                         description=cheque.description if cheque.description or len(cheque.description) == 0 else "...",
                          amount=cheque.amount_per_user,
-                         currency='$' + CurrencyType(cheque.currency_type).name, )
+                         currency='$' + CurrencyType(cheque.currency_type).name)
