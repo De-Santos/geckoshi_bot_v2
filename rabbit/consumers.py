@@ -761,18 +761,21 @@ class MultiChequeActivationConsumer(object):
                 try:
                     # Fetch cheque activation record
                     activation_record = await get_cheque_activation(dto.cheque_activation_id, s=s)
-                    self.logger.info("Activation record: %s", activation_record)
 
                     # Fetch active cheque
                     cheque_modifier: ChequeModifier = await cheque.get_active(dto.cheque_id)
-                    self.logger.info("Cheque record: %s", cheque_modifier)
+
+                    if cheque_modifier is None:
+                        await self._fail_activation(
+                            activation_record,
+                            "The cheque is inactive."
+                        )
 
                     # Validate cheque creator
                     if cheque_modifier.is_creator(dto.user_id):
                         await self._fail_activation(
                             activation_record,
                             "The cheque is intended for another user.",
-                            dto.user_id,
                         )
                         return
 
@@ -782,7 +785,6 @@ class MultiChequeActivationConsumer(object):
                         await self._fail_activation(
                             activation_record,
                             "You have to be subscribed to all required subscriptions.",
-                            dto.user_id,
                             additional_info=check_result,
                         )
                         return
@@ -842,12 +844,12 @@ class MultiChequeActivationConsumer(object):
             auto_commited=False,
         )
 
-    async def _fail_activation(self, activation_record, message, user_id, additional_info=None):
+    async def _fail_activation(self, activation_record, message, additional_info=None):
         activation_record.status = ChequeActivationStatus.FAILED
         activation_record.failed_message = {"message": message}
         if additional_info:
             activation_record.failed_message["additional"] = additional_info
-        self.logger.warning("Cheque activation failed for user_id %s: %s", user_id, message)
+        self.logger.warning("Cheque activation failed for user_id %s: %s", activation_record.user_id, message)
 
     def _handle_activation_error(self, exception, activation_record, dto):
         activation_record.status = ChequeActivationStatus.FAILED
