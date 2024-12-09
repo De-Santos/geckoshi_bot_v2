@@ -15,7 +15,11 @@ async def auth_dependency(authorization: str = Header(None, alias='Authorization
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     if bool(int(os.getenv('REMOVE_AUTHORIZATION'))):
-        return int(os.getenv('DEFAULT_USER_ID'))
+        if authorization is None or authorization.strip() == "" or len(authorization.split()) == 1:
+            return int(os.getenv('DEFAULT_USER_ID'))
+        t = authorization.split()[1]
+        if t.isnumeric():
+            return int(t)
 
     if authorization is None or authorization.strip() == "" or len(authorization.split()) == 1:
         error()
