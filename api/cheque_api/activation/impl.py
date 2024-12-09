@@ -15,6 +15,7 @@ from ..dto import ChequeDto
 def __cheque_to_dto(c: Cheque) -> ChequeDto:
     cd = ChequeDto.model_validate(c, from_attributes=True)
     cd.link = links.simple_generate(ArgType.CHEQUE, c.id)
+    cd.password = None
     return cd
 
 

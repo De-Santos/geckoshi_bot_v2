@@ -38,6 +38,7 @@ async def create_new_cheque_impl(dto: NewMultiChequeDto, user_id: int) -> Cheque
         description=dto.description,
         activation_limit=dto.activation_limit,
         password=dto.password,
+        require_subscriptions=dto.require_subscriptions,
     )
 
     return __to_dto(cm)
